@@ -1,0 +1,12 @@
+<div class="overlay" (click)="cancel()">
+  <div class="add-server" (click)="$event.stopPropagation()">
+    <input type="text" placeholder="Class name" [(ngModel)]="serverName">
+    <input type="text" placeholder="Description" [(ngModel)]="description">
+    <div class="add-button" (click)="addServer()">Add</div>
+    <div class="cancel-button" (click)="cancel()">Cancel</div>
+  </div>
+
+  <div class="join-server" (click)="$event.stopPropagation()">
+    <input type="text" placeholder="Class code" [(ngModel)]="serverCode">
+    <div class="add-button" (click)="joinServer()">Join</div>
+</div>

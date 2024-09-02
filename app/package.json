@@ -1,0 +1,14 @@
+{
+  "name": "uniVerse",
+  "description": "University management system",
+  "author": {
+    "name": "Denis-Cristian Stanciu",
+    "email": "cristian.stanciu0500@gmail.com"
+  },
+  "version": "0.0.1",
+  "main": "main.js",
+  "private": true,
+  "dependencies": {
+    "axios": "1.7.5"
+  }
+}

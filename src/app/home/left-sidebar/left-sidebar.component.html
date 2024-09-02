@@ -1,0 +1,12 @@
+<div class="button" id="home" [routerLink]="['', 'dashboard']"
+routerLinkActive="router-link-active" routerLinkActive="active">
+  <img src="assets/buttons/home.png">
+</div>
+<div class="button" id="server" *ngFor="let server of servers$ | async" [routerLink]="['server', server.id]" routerLinkActive="active">
+  <p>{{getServerInitials(server.name)}}</p>
+  </div>
+
+<div class="button" id="add-server" (click)="toggleAddServer()">
+  +
+</div>
+<app-add-server *ngIf="showAddServer" (close)="closeAddServer()"></app-add-server>

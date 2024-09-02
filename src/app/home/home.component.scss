@@ -1,0 +1,51 @@
+:host {
+  color: var(--white);
+}
+
+
+.container {
+  background-color: var(--grey);
+  display: grid;
+  grid-template-columns: 70px 1fr 200px;
+  height: calc(100vh - 14px);
+  min-height: 400px;
+  min-width: 600px;
+  grid-gap: 7px;
+
+  // child elements
+  .left-sidebar, .main-content, .right-sidebar {
+    border-radius: 7px;
+  }
+}
+
+.sidebar {
+  background-color: var(--dark-grey);
+}
+
+.left-sidebar {
+  grid-column: 1 / 2;
+  text-align: center;
+}
+
+.main-content {
+  grid-column: 2 / 3;
+  background-color: var(--dark-grey);
+  padding: 20px;
+  overflow-y:scroll;
+
+  // set scrollbar color
+  &::-webkit-scrollbar {
+    background-color: var(--light-grey);
+    width: 7px;
+  }
+
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--grey);
+
+  }
+}
+
+.right-sidebar {
+  grid-column: 3 / 4;
+}
