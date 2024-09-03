@@ -15,7 +15,8 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'dashboard',
+        // redirectTo: 'dashboard',
+        redirectTo: '/server/3',
         pathMatch: 'full'
       },
       {

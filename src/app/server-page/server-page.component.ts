@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
 import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
 
+
 @Component({
   selector: 'app-server-page',
   standalone: true,
-  imports: [],
+  imports: [RouterModule],
   templateUrl: './server-page.component.html',
   styleUrls: ['./server-page.component.scss']
 })
@@ -19,7 +20,8 @@ export class ServerPageComponent {
   constructor(
     private route: ActivatedRoute,
     private serverService: ServersService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {
     this.route.params.pipe(
       map(params => params.id),

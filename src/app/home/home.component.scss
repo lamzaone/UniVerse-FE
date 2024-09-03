@@ -25,25 +25,19 @@
 .left-sidebar {
   grid-column: 1 / 2;
   text-align: center;
+  overflow: scroll;
+
+  // hide scrollbars
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .main-content {
   grid-column: 2 / 3;
   background-color: var(--dark-grey);
-  padding: 20px;
-  overflow-y:scroll;
+  overflow: hidden;
 
-  // set scrollbar color
-  &::-webkit-scrollbar {
-    background-color: var(--light-grey);
-    width: 7px;
-  }
-
-
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--grey);
-
-  }
 }
 
 .right-sidebar {
