@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
+  flex-direction: row;
   background-color: rgba(0, 0, 0, 0.548);
   backdrop-filter: blur(5px);
   top: 0;
@@ -15,31 +15,68 @@
 
 }
 
-.add-server {
+.add-server,.join-server {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+
+}
+
+.container {
+  display:flex;
+  flex-direction: column;
   background-color: var(--light-grey);
+  justify-content: center;
+  align-items: center;
+
   border-radius: 10px;
   padding: 1rem;
-  width: 30%;
-  height: 50%;
+  width: 25vw;
+  min-width: 330px;
+  height: 50vh;
   z-index: 101;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  /* Optional: Adds a shadow for better visibility */
+
+  // if width of .container is less than 500px, change the grid to two rows
+
+
+
 }
 
-.cancel-button {
-width: 100px;
-height: 20px;
-background-color: red;
-color: white;  /* Optional: Makes text color contrast with background */
-border: none;  /* Optional: Removes default button border */
-border-radius: 5px;  /* Optional: Adds rounded corners */
-cursor: pointer;  /* Optional: Adds a pointer cursor on hover */
+.flexbox{
+  height:90%;
+  display:grid;
+  grid-template-columns: auto 2px auto;
+
+  grid-gap: 10px;
+
+  @media (max-width: 1350px) {
+    grid-template-columns: auto;
+    grid-template-rows: auto 2px auto;
+    width: 30vw;
+    height: 50vh;
+  }
+
 }
 
-.add-button {
+.divider{
+  height: 100%;
+  width:100%;
+  max-width: 300px;
+  min-width: 2px;
+  justify-self: center;
+  align-self: center;;
+  background-color: var(--grey);
+}
+
+
+.add-button, .cancel-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.1rem 1rem;
+  margin-top: 10px;
   width: 100px;
   height: 20px;
   background-color: green;
@@ -47,4 +84,8 @@ cursor: pointer;  /* Optional: Adds a pointer cursor on hover */
   border: none;  /* Optional: Removes default button border */
   border-radius: 5px;  /* Optional: Adds rounded corners */
   cursor: pointer;  /* Optional: Adds a pointer cursor on hover */
+
+  &.cancel-button {
+    background-color: red;
+  }
 }
