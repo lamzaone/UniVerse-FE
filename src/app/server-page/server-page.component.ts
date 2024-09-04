@@ -4,12 +4,13 @@ import { map } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
 import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
+import { RoomListComponent } from "./room-list/room-list.component";
 
 
 @Component({
   selector: 'app-server-page',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, RoomListComponent],
   templateUrl: './server-page.component.html',
   styleUrls: ['./server-page.component.scss']
 })

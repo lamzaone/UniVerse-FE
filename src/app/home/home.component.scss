@@ -7,10 +7,11 @@
   background-color: var(--grey);
   display: grid;
   grid-template-columns: 70px 1fr 200px;
-  height: calc(100vh - 14px);
+  height: 100vh;
   min-height: 400px;
   min-width: 600px;
   grid-gap: 7px;
+  box-sizing: border-box;
 
   // child elements
   .left-sidebar, .main-content, .right-sidebar {
