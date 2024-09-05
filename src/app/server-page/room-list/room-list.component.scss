@@ -26,29 +26,47 @@
 
 
 .container{
+  height: calc(100vh - 13rem);
   display:flex;
   flex-direction:column;
   border-radius: 5px;
     background-color: var(--grey);
     overflow-y:scroll;
 
-    transition: all 2s ease-in-out;
 
     &::-webkit-scrollbar {
       // dark thin scrollbar
       width: 0px;
       background-color: #f5f5f500;
-      transition: all 2s ease-in-out;
 
     }
     &::-webkit-scrollbar-thumb {
       border-radius: 10px;
       background-color: var(--light-grey);
-      transition: all 2s ease-in-out;
     }
 
     &:hover::-webkit-scrollbar{
       width:5px;
-      transition: all 0.5s ease-in-out;
     }
+
+}
+
+.category{
+  background-color: var(--dark-grey);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 2rem;
+  width: 100%;
+  text-align: center;
+  color: var(--white);
+  margin: 0;
+}
+
+.text{
+  color: var(--white);
+  padding: 5px;
+  border-bottom: 1px solid var(--dark-grey);
+
+
 }

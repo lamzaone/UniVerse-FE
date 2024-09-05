@@ -1,8 +1,18 @@
 <div class="container" (contextmenu)="onRightClick($event)">
   <!-- Room Categories -->
   <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
-    <h3>{{ category.name }}</h3>
-    <div *ngFor="let room of category.rooms" cdkDrag>{{ room.name }}</div>
+    <div class="category"><h3>{{ category.name }}</h3></div>
+    <div *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type">{{ room.name }}</div>
+  </div>
+
+  <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
+    <div class="category"><h3>{{ category.name }}</h3></div>
+    <div *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type">{{ room.name }}</div>
+  </div>
+
+  <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
+    <div class="category"><h3>{{ category.name }}</h3></div>
+    <div *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type">{{ room.name }}</div>
   </div>
 
   <!-- Context Menu -->
