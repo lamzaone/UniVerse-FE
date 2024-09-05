@@ -40,5 +40,11 @@ export class ServerPageComponent {
         console.error('Error fetching server:', error);  // Handle any errors
       }
     );
+
+  }
+
+  openMenu($event:any) {
+    console.log($event);
+
   }
 }

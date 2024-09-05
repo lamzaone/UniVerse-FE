@@ -1,1 +1,15 @@
-<p>room-list works!</p>
+<div class="container" (contextmenu)="onRightClick($event)">
+  <!-- Room Categories -->
+  <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
+    <h3>{{ category.name }}</h3>
+    <div *ngFor="let room of category.rooms" cdkDrag>{{ room.name }}</div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
+    <ul>
+      <li (click)="createCategory()">Create a category</li>
+      <li (click)="createRoom()">Create a new room</li>
+    </ul>
+  </div>
+</div>

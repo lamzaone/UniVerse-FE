@@ -9,7 +9,7 @@
       <h1>{{server?.name}}</h1>
 
     </div>
-    <div class="rooms">
+    <div class="rooms" (auxclick)="openMenu($event)">
       <app-room-list></app-room-list>
     </div>
 
