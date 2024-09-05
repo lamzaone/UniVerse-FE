@@ -19,6 +19,7 @@ import { LoginModule } from './login/login.module';
 import { LeftSidebarComponent } from './home/left-sidebar/left-sidebar.component';
 import { DashboardComponent } from './home/dashboard/dashboard.component';
 import { AddServerComponent } from './home/add-server/add-server.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 // AoT requires an exported function for factories
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -38,6 +39,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new Transl
     DashboardComponent,
     AddServerComponent,
     LoginModule,
+    DragDropModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

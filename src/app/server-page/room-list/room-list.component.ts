@@ -6,11 +6,12 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DragDropModule],
   templateUrl: './room-list.component.html',
   styleUrls: ['./room-list.component.scss'],
 })
