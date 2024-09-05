@@ -47,15 +47,32 @@ export class RoomListComponent {
   }
 
   drop(event: CdkDragDrop<any[]>, categoryId: number | null): void {
+    const previousContainerData = event.previousContainer.data;
+    const containerData = event.container.data;
+
+    if (!previousContainerData || !containerData) {
+      console.error('Invalid drag and drop data', event);
+      return; // Ensure both are defined
+    }
+
     if (event.previousContainer === event.container) {
       // Reorder within the same category
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-      this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex);
+      moveItemInArray(containerData, event.previousIndex, event.currentIndex);
+      this.updateRoomPositions(containerData, categoryId); // Update room positions after reorder
     } else {
       // Move to a different category
-      transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
-      this.moveRoom(event.container.data[event.currentIndex].id, categoryId, event.currentIndex);
+      transferArrayItem(previousContainerData, containerData, event.previousIndex, event.currentIndex);
+      this.updateRoomPositions(containerData, categoryId); // Update room positions after moving to a different category
     }
+  }
+
+  updateRoomPositions(rooms: any[], categoryId: number | null): void {
+    rooms.forEach((room, index) => {
+      if (room.category_id === categoryId) {
+        room.position = index; // Ensure index is set correctly for its category
+        this.moveRoom(room.id, categoryId, index); // Call backend to update the room position
+      }
+    });
   }
 
   reorderRoom(roomId: number, newPosition: number) {

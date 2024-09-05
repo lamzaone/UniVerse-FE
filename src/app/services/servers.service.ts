@@ -101,24 +101,54 @@ export class ServersService {
     );
   }
 
+  moveRoom(roomId: number, newCategoryId: number | null, newPosition: number): Observable<any> {
+    return from(
+      axios.put(
+        `http://localhost:8000/server/room/${roomId}/move`, // Correct endpoint
+        {}, // Empty body, as no data is required in the request body
+        {
+          params: {  // Correctly use 'params' to add query parameters
+            new_category_id: newCategoryId,
+            new_position: newPosition
+          }
+        }
+      )
+    );
+  }
+
   reorderRoom(roomId: number, newPosition: number): Observable<any> {
     return from(
       axios.put(`http://localhost:8000/server/room/${roomId}/reorder`, { new_position: newPosition })
     );
   }
 
-  moveRoom(roomId: number, newCategoryId: number | null, newPosition: number): Observable<any> {
-    return from(
-      axios.put(`http://localhost:8000/server/room/${roomId}/move`, { new_category_id: newCategoryId, new_position: newPosition })
-    );
-  }
 
   fetchCategoriesAndRooms(serverId: number): void {
+    // from(axios.get(`http://localhost:8000/server/${serverId}/categories`))
+    //   .subscribe({
+    //     next: (response) => {
+    //       if (response.status === 200) {
+    //         this.categoriesSubject.next(response.data);
+    //       } else {
+    //         console.error('Error getting categories for server:', serverId);
+    //       }
+    //     },
+    //     error: (error) => {
+    //       console.error('Error fetching categories:', error);
+    //     }
+    //   });
+
+    // Fetch categories and rooms for the server and then SORT ROOMS ASCENDING BASED ON POSITION
+
     from(axios.get(`http://localhost:8000/server/${serverId}/categories`))
       .subscribe({
         next: (response) => {
           if (response.status === 200) {
-            this.categoriesSubject.next(response.data);
+            let categories = response.data;
+            categories.forEach((category: any) => {
+              category.rooms.sort((a: any, b: any) => a.position - b.position);
+            });
+            this.categoriesSubject.next(categories);
           } else {
             console.error('Error getting categories for server:', serverId);
           }
