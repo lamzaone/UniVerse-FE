@@ -1,6 +1,6 @@
 .container {
   display: grid;
-  grid-template-columns: 13rem auto; /* Sidebar is 13rem, main content takes remaining space */
+  grid-template-columns: 14rem auto; /* Sidebar is 13rem, main content takes remaining space */
   grid-gap: 0.5rem; /* Gap between columns */
   height: 100vh; /* Full viewport height */
   width: 100%; /* Full width of the container */
@@ -28,9 +28,6 @@
     background-color: red;
   }
 
-  // & .rooms{
-
-  // }
 }
 
 .main-content {
