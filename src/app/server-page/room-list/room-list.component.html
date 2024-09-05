@@ -1,9 +1,6 @@
 <div class="container" (contextmenu)="onRightClick($event)">
   <!-- Room Categories -->
-  <div *ngFor="let category of (categories$ | async); let i = index"
-       cdkDropList
-       [cdkDropListData]="category.rooms"
-       (cdkDropListDropped)="drop($event, category.id)">
+  <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
     <h3>{{ category.name }}</h3>
     <div *ngFor="let room of category.rooms" cdkDrag>{{ room.name }}</div>
   </div>

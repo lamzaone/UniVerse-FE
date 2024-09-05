@@ -6,86 +6,41 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule, DragDropModule],
+  imports: [CommonModule],
   templateUrl: './room-list.component.html',
-  styleUrls: ['./room-list.component.scss'],
+  styleUrl: './room-list.component.scss'
 })
 export class RoomListComponent {
-  public categoriesSubject: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
-  public categories$: Observable<any[]> = this.categoriesSubject.asObservable();
+  categories$:Observable<any> = new Observable<any>();
+
+  constructor(private serversService:ServersService,
+    private route:ActivatedRoute){
+      this.route.params.subscribe(params => {
+        this.categories$ = this.serversService.fetchCategoriesAndRooms(params.id);
+    });
+  }
 
   showContextMenu = false;
   contextMenuPosition = { x: 0, y: 0 };
   uncategorizedRooms: any[] = [];
 
-  constructor(private serversService: ServersService, private route:ActivatedRoute) {
-    this.loadCategoriesAndRooms();
-  }
 
-  loadCategoriesAndRooms(): void {
-    this.categories$ = this.serversService.categories$.pipe(
-      tap((categories) => {
-        this.categoriesSubject.next(categories);
-      })
-    );
+  // drop(event: CdkDragDrop<any[]>, categoryId: number | null): void {
+  //   if (event.previousContainer === event.container) {
+  //     // Reorder within the same category
+  //     moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+  //     this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex);
+  //   } else {
+  //     // Move to a different category
+  //     transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+  //     this.moveRoom(event.container.data[event.currentIndex].id, categoryId, event.currentIndex);
+  //   }
+  // }
 
-    let id = this.route.params.pipe(
-      map((params: any) => params.id)
-    );
-    id.subscribe((value) => {
-      this.serversService.fetchCategoriesAndRooms(value);
-    });
-  }
-
-  ngOnInit(): void {
-    this.loadCategoriesAndRooms();
-  }
-
-  drop(event: CdkDragDrop<any[]>, categoryId: number | null): void {
-    const previousContainerData = event.previousContainer.data;
-    const containerData = event.container.data;
-
-    if (!previousContainerData || !containerData) {
-      console.error('Invalid drag and drop data', event);
-      return; // Ensure both are defined
-    }
-
-    if (event.previousContainer === event.container) {
-      // Reorder within the same category
-      moveItemInArray(containerData, event.previousIndex, event.currentIndex);
-      this.updateRoomPositions(containerData, categoryId); // Update room positions after reorder
-    } else {
-      // Move to a different category
-      transferArrayItem(previousContainerData, containerData, event.previousIndex, event.currentIndex);
-      this.updateRoomPositions(containerData, categoryId); // Update room positions after moving to a different category
-    }
-  }
-
-  updateRoomPositions(rooms: any[], categoryId: number | null): void {
-    rooms.forEach((room, index) => {
-      if (room.category_id === categoryId) {
-        room.position = index; // Ensure index is set correctly for its category
-        this.moveRoom(room.id, categoryId, index); // Call backend to update the room position
-      }
-    });
-  }
-
-  reorderRoom(roomId: number, newPosition: number) {
-    this.serversService.reorderRoom(roomId, newPosition).subscribe(() => {
-      console.log(`Room ${roomId} reordered to position ${newPosition}`);
-    });
-  }
-
-  moveRoom(roomId: number, newCategoryId: number | null, newPosition: number) {
-    this.serversService.moveRoom(roomId, newCategoryId, newPosition).subscribe(() => {
-      console.log(`Room ${roomId} moved to category ${newCategoryId} at position ${newPosition}`);
-    });
-  }
 
   createCategory(): void {
     console.log('Create a category');

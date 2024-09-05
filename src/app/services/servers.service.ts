@@ -5,18 +5,13 @@ import { BehaviorSubject, from, Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-
 export class ServersService {
 
   private serversSubject: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]); // BehaviorSubject to hold server data
   public servers$: Observable<any[]> = this.serversSubject.asObservable(); // Observable to expose server data
 
-  public categoriesSubject: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
-  public categories$: Observable<any[]> = this.categoriesSubject.asObservable();
-
   constructor(private authService: AuthService) {
     this.fetchServers();
-
   }
 
   user = this.authService.getUser();
@@ -88,85 +83,19 @@ export class ServersService {
     }
   }
 
-
-  createCategory(serverId: number, categoryName: string): Observable<any> {
+  fetchCategoriesAndRooms(serverId: number): Observable<any> {
     return from(
-      axios.post(`http://localhost:8000/server/${serverId}/category/create`, { category_name: categoryName })
-    );
-  }
-
-  createRoom(serverId: number, roomName: string, roomType: string, categoryId: number): Observable<any> {
-    return from(
-      axios.post(`http://localhost:8000/server/${serverId}/room/create`, { room_name: roomName, room_type: roomType, category_id: categoryId })
-    );
-  }
-
-  moveRoom(roomId: number, newCategoryId: number | null, newPosition: number): Observable<any> {
-    return from(
-      axios.put(
-        `http://localhost:8000/server/room/${roomId}/move`, // Correct endpoint
-        {}, // Empty body, as no data is required in the request body
-        {
-          params: {  // Correctly use 'params' to add query parameters
-            new_category_id: newCategoryId,
-            new_position: newPosition
-          }
+      axios.get('http://localhost:8000/server/' + serverId + '/categories')
+      .then((response) => {
+        if (response.status === 200) {
+          return response.data;
         }
-      )
+        throw new Error('Error fetching categories and rooms');
+      })
+      .catch((error) => {
+        console.error('Error fetching categories and rooms:', error);
+        throw error;
+      })
     );
   }
-
-  reorderRoom(roomId: number, newPosition: number): Observable<any> {
-    return from(
-      axios.put(`http://localhost:8000/server/room/${roomId}/reorder`, { new_position: newPosition })
-    );
-  }
-
-
-  fetchCategoriesAndRooms(serverId: number): void {
-    // from(axios.get(`http://localhost:8000/server/${serverId}/categories`))
-    //   .subscribe({
-    //     next: (response) => {
-    //       if (response.status === 200) {
-    //         this.categoriesSubject.next(response.data);
-    //       } else {
-    //         console.error('Error getting categories for server:', serverId);
-    //       }
-    //     },
-    //     error: (error) => {
-    //       console.error('Error fetching categories:', error);
-    //     }
-    //   });
-
-    // Fetch categories and rooms for the server and then SORT ROOMS ASCENDING BASED ON POSITION
-
-    from(axios.get(`http://localhost:8000/server/${serverId}/categories`))
-      .subscribe({
-        next: (response) => {
-          if (response.status === 200) {
-            let categories = response.data;
-            categories.forEach((category: any) => {
-              category.rooms.sort((a: any, b: any) => a.position - b.position);
-            });
-            this.categoriesSubject.next(categories);
-          } else {
-            console.error('Error getting categories for server:', serverId);
-          }
-        },
-        error: (error) => {
-          console.error('Error fetching categories:', error);
-        }
-      });
-  }
 }
-export interface Room {
-  id: number;
-  name: string;
-}
-
-export interface Category {
-  id: number;
-  name: string;
-  rooms: Room[];
-}
-
