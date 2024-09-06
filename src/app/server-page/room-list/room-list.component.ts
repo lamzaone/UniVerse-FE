@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ServersService } from '../../services/servers.service';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
 
@@ -20,7 +20,12 @@ export class RoomListComponent {
   constructor(private serversService:ServersService,
     private route:ActivatedRoute){
       this.route.params.subscribe(params => {
-        this.categories$ = this.serversService.fetchCategoriesAndRooms(params.id);
+        this.categories$ = this.serversService.fetchCategoriesAndRooms(params.id).pipe(filter((categories: any[]) => {
+          categories.forEach((category: any) => {
+            category.rooms = category.rooms.sort((a: any, b: any) => a.position - b.position);
+          });
+          return true;
+        }));
     });
   }
 

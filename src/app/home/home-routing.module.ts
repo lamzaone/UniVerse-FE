@@ -6,6 +6,8 @@ import { AuthGuard } from '../auth.guard';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DetailComponent } from '../detail/detail.component';
 import { ServerPageComponent } from '../server-page/server-page.component';
+import { TextRoomComponent } from '../server-page/text-room/text-room.component';
+import { ServerDashboardComponent } from '../server-page/server-dashboard/server-dashboard.component';
 
 const routes: Routes = [
   {
@@ -33,6 +35,18 @@ const routes: Routes = [
         path: 'server/:id',
         component: ServerPageComponent,
         canActivate: [AuthGuard],
+        children: [
+          {
+            path:'',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            component: ServerDashboardComponent,
+            canActivate: [AuthGuard],
+          }
+        ]
       }
     ]
   }
