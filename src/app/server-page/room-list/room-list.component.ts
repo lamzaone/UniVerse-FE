@@ -4,13 +4,13 @@ import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/dr
 import { ServersService } from '../../services/servers.service';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './room-list.component.html',
   styleUrl: './room-list.component.scss'
 })

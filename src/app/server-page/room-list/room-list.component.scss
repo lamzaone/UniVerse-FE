@@ -64,10 +64,16 @@
   margin: 0;
 }
 
-.text{
-  color: var(--white);
-  padding: 5px;
-  border-bottom: 1px solid var(--dark-grey);
+.room{
+  width: 13rem;
 
 
+
+  &.text{
+    color: var(--white);
+    padding: 5px;
+    border-bottom: 1px solid var(--dark-grey);
+  }
 }
+
+

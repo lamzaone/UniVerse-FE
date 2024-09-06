@@ -2,17 +2,17 @@
   <!-- Room Categories -->
   <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
     <div class="category"><h3>{{ category.name }}</h3></div>
-    <div *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type">{{ room.name }}</div>
+    <div class="room" *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type" [routerLink]="['text', room.id]" routerLinkActive="router-link-active" >{{ room.name }}</div>
   </div>
 
   <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
     <div class="category"><h3>{{ category.name }}</h3></div>
-    <div *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type">{{ room.name }}</div>
+    <div class="room" *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type" [routerLink]="['text', room.id]" routerLinkActive="router-link-active" >{{ room.name }}</div>
   </div>
 
   <div *ngFor="let category of (categories$ | async); let i = index" cdkDropList (cdkDropListDropped)="drop($event, category.id)">
     <div class="category"><h3>{{ category.name }}</h3></div>
-    <div *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type">{{ room.name }}</div>
+    <div class="room" *ngFor="let room of category.rooms" cdkDrag [ngClass]="room.type" [routerLink]="['text', room.id]" routerLinkActive="router-link-active" >{{ room.name }}</div>
   </div>
 
   <!-- Context Menu -->

@@ -45,9 +45,15 @@ const routes: Routes = [
             path: 'dashboard',
             component: ServerDashboardComponent,
             canActivate: [AuthGuard],
+          },
+          {
+            path: 'text/:id',
+            component: TextRoomComponent,
+            canActivate: [AuthGuard],
           }
         ]
-      }
+      },
+
     ]
   }
 ];
