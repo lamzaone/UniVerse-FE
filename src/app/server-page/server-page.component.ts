@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
@@ -16,7 +16,7 @@ import { RoomListComponent } from "./room-list/room-list.component";
 })
 export class ServerPageComponent {
   route_id:number | null = null;
-  server:any = null;
+  server = signal([]);
 
   constructor(
     private route: ActivatedRoute,
@@ -33,8 +33,7 @@ export class ServerPageComponent {
       })
     ).subscribe(
       server => {
-        this.server = server;  // Update the server data when available
-        console.log(this.server);  // Log the server to see the fetched data
+        this.server.set(server);  // Update the server details
       },
       error => {
         console.error('Error fetching server:', error);  // Handle any errors
