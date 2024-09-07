@@ -21,25 +21,22 @@ export class ServerPageComponent {
   constructor(
     private route: ActivatedRoute,
     private serverService: ServersService,
-    private authService: AuthService,
-    private router: Router
+    private authService: AuthService
   ) {
     this.route.params.pipe(
       map(params => params.id),
       switchMap(id => {
-        this.route_id = +id;  // Ensure that `id` is treated as a number
-        // Fetch the server details asynchronously
+        this.route_id = +id;
         return this.serverService.getServer(this.route_id, this.authService.getUser().id);
       })
-    ).subscribe(
-      server => {
+    ).subscribe({
+      next: server => {
         this.server.set(server);  // Update the server details
       },
-      error => {
+      error: error => {
         console.error('Error fetching server:', error);  // Handle any errors
       }
-    );
-
+    });
   }
 
   openMenu($event:any) {
