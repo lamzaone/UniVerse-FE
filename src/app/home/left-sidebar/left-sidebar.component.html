@@ -2,7 +2,7 @@
 routerLinkActive="router-link-active" routerLinkActive="active">
   <img src="assets/buttons/home.png">
 </div>
-<div class="button" id="server" *ngFor="let server of servers$ | async" [routerLink]="['server', server.id]" routerLinkActive="active">
+<div class="button" id="server" *ngFor="let server of servers()" [routerLink]="['server', server.id]" routerLinkActive="active">
   <p>{{getServerInitials(server.name)}}</p>
   </div>
 

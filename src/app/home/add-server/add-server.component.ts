@@ -15,28 +15,34 @@ export class AddServerComponent {
   description: string = "";
   serverCode: string = "";
 
-  @Output() close = new EventEmitter<void>();
+  @Output() close = new EventEmitter<void>(); // EventEmitter to close the component from parent
 
   constructor(private router: Router, private serversService: ServersService) {}
 
-  // emit cancel to close the component form within the parent component
+  // Emit cancel to close the component form within the parent component
   cancel() {
     this.close.emit();
   }
 
-  // create a new server observable
-  addServer() {
-    this.serversService.createServer(this.serverName, this.description).subscribe((response) => {
+  // Create a new server using the ServersService and navigate to it
+  async addServer() {
+    try {
+      const response = await this.serversService.createServer(this.serverName, this.description);
       this.router.navigate(['/server/' + response.id]);
       this.close.emit();
-    });
+    } catch (error) {
+      console.error('Error adding server:', error);
+    }
   }
 
-  // join a server observable
-  joinServer() {
-    this.serversService.joinServer(this.serverCode).subscribe((response) => {
+  // Join a server using the server code and navigate to it
+  async joinServer() {
+    try {
+      const response = await this.serversService.joinServer(this.serverCode);
       this.router.navigate(['/server/' + response.id]);
       this.close.emit();
-    });
+    } catch (error) {
+      console.error('Error joining server:', error);
+    }
   }
 }

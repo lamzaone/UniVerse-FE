@@ -1,10 +1,8 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { RouterLinkActive } from '@angular/router';
+import { Component, computed, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AddServerComponent } from '../add-server/add-server.component';
 import { ServersService } from '../../services/servers.service';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-left-sidebar',
@@ -14,24 +12,24 @@ import { Observable } from 'rxjs';
   styleUrls: ['./left-sidebar.component.scss']
 })
 export class LeftSidebarComponent {
-  showAddServer: boolean = false;
-  servers$: Observable<any[]>;
+  showAddServer: boolean = false; // Flag to show/hide AddServerComponent
 
-  constructor(private serverService: ServersService) {
-    this.servers$ = this.serverService.servers$; // subscribe to servers$ observable
-  }
+  // Signal to hold servers data from ServersService
+  servers = this.serverService.servers;
 
-  // method for toggling AddServerComponent
+  constructor(private serverService: ServersService) {}
+
+  // Method for toggling AddServerComponent
   toggleAddServer() {
     this.showAddServer = !this.showAddServer;
   }
 
-  // method to hide AddServerComponent
+  // Method to hide AddServerComponent
   closeAddServer() {
     this.showAddServer = false;
   }
 
-  // method to retrieve initials
+  // Method to retrieve initials from server name
   getServerInitials(serverName: string) {
     serverName = serverName.trim();
     let nameParts = serverName.split(' ');

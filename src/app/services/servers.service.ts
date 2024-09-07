@@ -1,101 +1,100 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 import axios from 'axios';
-import { BehaviorSubject, from, Observable } from 'rxjs';
+
 @Injectable({
   providedIn: 'root'
 })
 export class ServersService {
-
-  private serversSubject: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]); // BehaviorSubject to hold server data
-  public servers$: Observable<any[]> = this.serversSubject.asObservable(); // Observable to expose server data
+  public servers = signal<any[]>([]); // Signal to hold server data
+  user = this.authService.getUser();  // Fetch user from AuthService
 
   constructor(private authService: AuthService) {
-    this.fetchServers();
+    this.fetchServers();  // Fetch initial servers
   }
 
-  user = this.authService.getUser();
-
-
-  createServer(serverName: string, description: string): Observable<any> {
-    return from(
-      axios.post('http://localhost:8000/server/create', {
+  // Create a server and update servers signal
+  async createServer(serverName: string, description: string) {
+    try {
+      const response = await axios.post('http://localhost:8000/server/create', {
         name: serverName,
         description: description,
         owner_id: this.user.id
-      })
-      .then((createdResponse) => {
-        if (createdResponse.status === 200) {
-          this.fetchServers();
-          return createdResponse.data;
-        }
-        throw new Error('Server creation failed');
-      })
-      .catch((error) => {
-        console.error('Server creation error:', error);
-        throw error;
-      })
-    );
-  }
-
-  fetchServers() {
-    from(axios.get('http://localhost:8000/server/user/' + this.user.id))
-      .subscribe({
-        next: (response) => {
-          if (response.status === 200) {
-            this.serversSubject.next(response.data);
-          } else {
-            console.error('Error getting servers for current user');
-          }
-        },
-        error: (error) => {
-          console.error('Error fetching servers:', error);
-        }
       });
-  }
 
-  joinServer(serverCode: string): Observable<any> {
-    return from(
-      axios.post('http://localhost:8000/server/join', {
-        invite_code: serverCode,
-        user_id: this.user.id
-      })
-      .then((response) => {
-        if (response.status === 200) {
-          this.fetchServers();
-          return response.data;
-        }
-        throw new Error('Joining server failed');
-      })
-      .catch((error) => {
-        console.error('Error joining server with code:', serverCode);
-        throw error;
-      })
-    );
-  }
-
-  async getServer(serverId:number, userId:number){
-    const response = await axios.post('http://localhost:8000/server', {server_id:serverId, user_id:userId});
-    if (response.status === 200){
-      return response.data;
-    }else{
-      console.error('Error getting server with id:', serverId);
+      if (response.status === 200) {
+        this.fetchServers();  // Refresh server list
+        return response.data;
+      } else {
+        throw new Error('Server creation failed');
+      }
+    } catch (error) {
+      console.error('Server creation error:', error);
+      throw error;
     }
   }
 
-  fetchCategoriesAndRooms(serverId: number): Observable<any> {
-    return from(
-      axios.get('http://localhost:8000/server/' + serverId + '/categories')
-      .then((response) => {
-        if (response.status === 200) {
-          return response.data;
-        }
+  // Fetch servers for the user and update servers signal
+  async fetchServers() {
+    try {
+      const response = await axios.get('http://localhost:8000/server/user/' + this.user.id);
+      if (response.status === 200) {
+        this.servers.set(response.data);  // Update the servers signal
+      } else {
+        console.error('Error getting servers for current user');
+      }
+    } catch (error) {
+      console.error('Error fetching servers:', error);
+    }
+  }
+
+  // Join a server and update servers signal
+  async joinServer(serverCode: string) {
+    try {
+      const response = await axios.post('http://localhost:8000/server/join', {
+        invite_code: serverCode,
+        user_id: this.user.id
+      });
+
+      if (response.status === 200) {
+        this.fetchServers();  // Refresh server list
+        return response.data;
+      } else {
+        throw new Error('Joining server failed');
+      }
+    } catch (error) {
+      console.error('Error joining server with code:', serverCode);
+      throw error;
+    }
+  }
+
+  // Fetch a specific server
+  async getServer(serverId: number, userId: number) {
+    try {
+      const response = await axios.post('http://localhost:8000/server', { server_id: serverId, user_id: userId });
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        console.error('Error getting server with id:', serverId);
+      }
+    } catch (error) {
+      console.error('Error fetching server:', error);
+      throw error;
+    }
+  }
+
+  // Fetch categories and rooms for a server
+  async fetchCategoriesAndRooms(serverId: number) {
+    try {
+      const response = await axios.get('http://localhost:8000/server/' + serverId + '/categories');
+      if (response.status === 200) {
+        return response.data;
+      } else {
         throw new Error('Error fetching categories and rooms');
-      })
-      .catch((error) => {
-        console.error('Error fetching categories and rooms:', error);
-        throw error;
-      })
-    );
+      }
+    } catch (error) {
+      console.error('Error fetching categories and rooms:', error);
+      throw error;
+    }
   }
 }

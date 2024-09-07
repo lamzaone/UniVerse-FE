@@ -1,51 +1,67 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ServersService } from '../../services/servers.service';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-room-list',
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './room-list.component.html',
-  styleUrl: './room-list.component.scss'
+  styleUrls: ['./room-list.component.scss']
 })
 export class RoomListComponent {
-  categories$:Observable<any> = new Observable<any>();
-
-  constructor(private serversService:ServersService,
-    private route:ActivatedRoute){
-      this.route.params.subscribe(params => {
-        this.categories$ = this.serversService.fetchCategoriesAndRooms(params.id).pipe(filter((categories: any[]) => {
-          categories.forEach((category: any) => {
-            category.rooms = category.rooms.sort((a: any, b: any) => a.position - b.position);
-          });
-          return true;
-        }));
-    });
-  }
+  categories = signal<any[]>([]); // Signal to hold categories and rooms
 
   showContextMenu = false;
   contextMenuPosition = { x: 0, y: 0 };
   uncategorizedRooms: any[] = [];
 
+  constructor(private serversService: ServersService, private route: ActivatedRoute) {
+    // Fetch categories and rooms based on the route parameter
+    this.route.params.subscribe(params => {
+      this.fetchCategoriesAndRooms(params.id);
+    });
+  }
 
-  // drop(event: CdkDragDrop<any[]>, categoryId: number | null): void {
-  //   if (event.previousContainer === event.container) {
-  //     // Reorder within the same category
-  //     moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-  //     this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex);
-  //   } else {
-  //     // Move to a different category
-  //     transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
-  //     this.moveRoom(event.container.data[event.currentIndex].id, categoryId, event.currentIndex);
-  //   }
-  // }
+  // Fetch categories and rooms and update the signal
+  async fetchCategoriesAndRooms(serverId: string) {
+    try {
+      const categories = await this.serversService.fetchCategoriesAndRooms(+serverId);
+      categories.forEach((category: any) => {
+        category.rooms = category.rooms.sort((a: any, b: any) => a.position - b.position);
+      });
+      this.categories.set(categories); // Update the signal with sorted categories and rooms
+    } catch (error) {
+      console.error('Error fetching categories and rooms:', error);
+    }
+  }
 
+  // Handle drag and drop events
+  drop(event: CdkDragDrop<any[]>, categoryId: number | null): void {
+    if (event.previousContainer === event.container) {
+      // Reorder within the same category
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+      this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex);
+    } else {
+      // Move to a different category
+      transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+      this.moveRoom(event.container.data[event.currentIndex].id, categoryId, event.currentIndex);
+    }
+  }
+
+  // Placeholder function for reordering rooms
+  reorderRoom(roomId: number, newPosition: number): void {
+    console.log('Reordering room with ID', roomId, 'to position', newPosition);
+    // Implement logic to reorder room
+  }
+
+  // Placeholder function for moving rooms to a different category
+  moveRoom(roomId: number, categoryId: number | null, newPosition: number): void {
+    console.log('Moving room with ID', roomId, 'to category ID', categoryId, 'at position', newPosition);
+    // Implement logic to move room
+  }
 
   createCategory(): void {
     console.log('Create a category');
