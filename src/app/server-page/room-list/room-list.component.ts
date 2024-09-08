@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ServersService } from '../../services/servers.service';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-
+import { DragDropModule } from '@angular/cdk/drag-drop';
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, DragDropModule],
   templateUrl: './room-list.component.html',
   styleUrls: ['./room-list.component.scss']
 })

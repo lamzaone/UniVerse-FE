@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
 import { AuthService } from '../services/auth.service';
-import { switchMap } from 'rxjs/operators';
+import { SocketService } from '../services/socket.service';
 import { RoomListComponent } from "./room-list/room-list.component";
 
 interface Server{
@@ -24,14 +24,14 @@ interface Server{
 
 export class ServerPageComponent {
 
-
-  route_id:number | null = null;
+  route_id: number | null = null;
   server = signal({} as Server);
 
   constructor(
     private route: ActivatedRoute,
     private serverService: ServersService,
-    private authService: AuthService
+    private authService: AuthService,
+    private socketService: SocketService
   ) {
     this.route.params.pipe(
       map(params => params.id),
@@ -42,6 +42,7 @@ export class ServerPageComponent {
     ).subscribe({
       next: server => {
         this.server.set(server);  // Update the server details
+        this.socketService.joinServer(this.route_id!.toString());  // Connect to the server socket
       },
       error: error => {
         console.error('Error fetching server:', error);  // Handle any errors
@@ -49,8 +50,12 @@ export class ServerPageComponent {
     });
   }
 
-  openMenu($event:any) {
+  openMenu($event: any) {
     console.log($event);
+    // Join text room logic can be added here if needed
+  }
 
+  joinRoom(roomId: number) {
+    this.socketService.joinTextRoom(roomId.toString());  // Connect to the room socket
   }
 }

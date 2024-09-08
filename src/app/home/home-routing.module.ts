@@ -47,7 +47,7 @@ const routes: Routes = [
             canActivate: [AuthGuard],
           },
           {
-            path: 'text/:id',
+            path: 'text/:room_id',
             component: TextRoomComponent,
             canActivate: [AuthGuard],
           }
