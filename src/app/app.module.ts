@@ -24,6 +24,10 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 // AoT requires an exported function for factories
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
+
+import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
+const config: SocketIoConfig = { url: 'http://localhost:5000', options: {} };  // Adjust URL as necessary
+
 @NgModule({
   declarations: [AppComponent],
   imports: [
@@ -36,6 +40,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new Transl
     DetailModule,
     AppRoutingModule,
     LeftSidebarComponent,
+    SocketIoModule.forRoot(config),
     DashboardComponent,
     AddServerComponent,
     LoginModule,

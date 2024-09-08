@@ -62,10 +62,19 @@
   text-align: center;
   color: var(--white);
   margin: 0;
+  margin-bottom: 1rem;
 }
 
 .room{
+  width:12.5rem;
 
+  transition: 0.2s ease-in-out all;
+
+
+  &:hover{
+    background-color: var(--light-grey);
+    // margin-left: 2px;
+  }
 
 
   &.text{
@@ -73,6 +82,17 @@
     padding: 5px;
     border-bottom: 1px solid var(--dark-grey);
   }
+
+  &:last-child{
+    border-bottom: none;
+    margin-bottom: 2rem;
+  }
+
+
 }
 
 
+.router-link-active{
+  background-color: var(--light-grey);
+  // margin-left: 2px;
+}

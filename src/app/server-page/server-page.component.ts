@@ -6,6 +6,13 @@ import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { RoomListComponent } from "./room-list/room-list.component";
 
+interface Server{
+  id: number;
+  name: string;
+  description: string;
+  owner_id: number;
+  invite_code: string;
+}
 
 @Component({
   selector: 'app-server-page',
@@ -14,9 +21,12 @@ import { RoomListComponent } from "./room-list/room-list.component";
   templateUrl: './server-page.component.html',
   styleUrls: ['./server-page.component.scss']
 })
+
 export class ServerPageComponent {
+
+
   route_id:number | null = null;
-  server = signal([]);
+  server = signal({} as Server);
 
   constructor(
     private route: ActivatedRoute,

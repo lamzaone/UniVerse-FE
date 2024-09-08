@@ -1,11 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import axios from 'axios';
+
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private userData: any = null;  // Store user data here
+  // Use Angular signal for user data
+  public userData = signal<any>(null);
   private ipcRenderer: any;
 
   constructor(private router: Router) {
@@ -13,9 +15,9 @@ export class AuthService {
       this.ipcRenderer = window.require('electron').ipcRenderer;
       this.ipcRenderer.on('google-oauth-success', (event: any, data: any) => {
         this.setUser(data);
-        localStorage.setItem('jwt_token', data.token);  // Store JWT token
-        localStorage.setItem('refresh_token', data.refresh_token);  // Store refresh token
-        this.router.navigate(['/']);  // Navigate to the main application
+        localStorage.setItem('jwt_token', data.token); // Store JWT token
+        localStorage.setItem('refresh_token', data.refresh_token); // Store refresh token
+        this.router.navigate(['/']); // Navigate to the main application
       });
 
       this.ipcRenderer.on('google-oauth-error', (event: any, error: any) => {
@@ -23,11 +25,9 @@ export class AuthService {
       });
     }
 
-    if (this.isLoggedIn()) {
+    if (localStorage.getItem('jwt_token')) {
       this.checkToken();
     }
-
-
   }
 
   private isElectron(): boolean {
@@ -39,63 +39,62 @@ export class AuthService {
     const refreshToken = localStorage.getItem('refresh_token');
 
     if (token) {
-        try {
-            // Validate the token with the backend
-            const response = await axios.post('http://localhost:8000/auth/validate', { token });
+      try {
+        // Validate the token with the backend
+        const response = await axios.post('http://localhost:8000/auth/validate', { token });
 
-            // If the token is valid, update the user information
-            this.setUser(response.data);
-            localStorage.setItem('jwt_token', response.data.token);
-            localStorage.setItem('refresh_token', response.data.refresh_token);
-            this.router.navigate(['/']);  // Navigate to the main application
-        } catch (error) {
-            console.error('Token validation error:', error);
+        // If the token is valid, update the user information
+        this.setUser(response.data);
+        localStorage.setItem('jwt_token', response.data.token);
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+        this.router.navigate(['/']); // Navigate to the main application
+      } catch (error) {
+        console.error('Token validation error:', error);
 
-            if (refreshToken) {
-                try {
-                    // Attempt to refresh the token
-                    const refreshResponse = await axios.post('http://localhost:8000/auth/refresh', { token: refreshToken });
+        if (refreshToken) {
+          try {
+            // Attempt to refresh the token
+            const refreshResponse = await axios.post('http://localhost:8000/auth/refresh', { token: refreshToken });
 
-                    // If successful, update the user information and store the new tokens
-                    this.setUser(refreshResponse.data);
-                    localStorage.setItem('jwt_token', refreshResponse.data.token);
-                    localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
-                } catch (refreshError) {
-                    console.error('Token refresh error:', refreshError);
-                    this.clearUser();
-                    this.router.navigate(['/login']);  // Redirect to login on failure
-                }
-            } else {
-                this.clearUser();
-                this.router.navigate(['/login']);  // Redirect to login if no refresh token is available
-            }
+            // If successful, update the user information and store the new tokens
+            this.setUser(refreshResponse.data);
+            localStorage.setItem('jwt_token', refreshResponse.data.token);
+            localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
+          } catch (refreshError) {
+            console.error('Token refresh error:', refreshError);
+            this.clearUser();
+            this.router.navigate(['/login']); // Redirect to login on failure
+          }
+        } else {
+          this.clearUser();
+          this.router.navigate(['/login']); // Redirect to login if no refresh token is available
         }
+      }
     } else {
-        this.clearUser();
-        this.router.navigate(['/login']);  // Redirect to login if no token is available
+      this.clearUser();
+      this.router.navigate(['/login']); // Redirect to login if no token is available
     }
-}
-
-  setUser(data: any) {
-    this.userData = data;
-    localStorage.setItem('user', JSON.stringify(data));
   }
 
+  // Set user data using signal
+  setUser(data: any) {
+    this.userData.set(data);
+  }
+
+  // Get user data from signal
   getUser() {
-    if (!this.userData) {
-      this.userData = JSON.parse(localStorage.getItem('user') ?? "null");
-    }
-    return this.userData;
+    return this.userData();
   }
 
   isLoggedIn(): boolean {
-    return !!this.getUser();  // Check if user is logged in
+    return !!this.userData(); // Check if user is logged in
   }
 
+  // Clear user data and remove tokens
   clearUser() {
-    this.userData = null;
-    localStorage.removeItem('user');  // Clear user data from local storage
-
+    this.userData.set(null);
+    localStorage.removeItem('jwt_token'); // Clear JWT token
+    localStorage.removeItem('refresh_token'); // Clear refresh token
   }
 
   loginWithGoogle() {
@@ -108,10 +107,7 @@ export class AuthService {
 
   logout() {
     this.clearUser();
-    localStorage.removeItem('jwt_token');  // Clear JWT token
-    localStorage.removeItem('refresh_token');  // Clear refresh token
-    // reload the page
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login']); // Redirect to login
   }
 
   private getGoogleOAuthUrl(): string {
@@ -120,6 +116,5 @@ export class AuthService {
     const scope = encodeURIComponent('openid email profile'); // Correct scopes
     const responseType = 'token id_token';
     return `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
-}
-
+  }
 }

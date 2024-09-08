@@ -5,8 +5,8 @@
 <a routerLink="/detail">{{ 'PAGES.HOME.GO_TO_DETAIL' | translate }}</a>
 
 <div *ngIf="user">
-  <h1>{{ 'PAGES.HOME.WELCOME' | translate }} <br>{{ user.name }}</h1>
-  <img [src]="user.picture" alt="{{ user.name }}">
-  <p>Email: {{ user.email }}</p>
+  <h1>{{ 'PAGES.HOME.WELCOME' | translate }} <br>{{ user().name }}</h1>
+  <img [src]="user().picture" alt="{{ user().name }}">
+  <p>Email: {{ user().email }}</p>
   <button (click)="logout()">{{ 'PAGES.HOME.LOGOUT' |  translate}}</button>
 </div>

@@ -11,6 +11,10 @@ export class ServersService {
 
   constructor(private authService: AuthService) {
     this.fetchServers();  // Fetch initial servers
+
+    this.servers().forEach((server) => {
+      console.log('Server:', server);
+    });
   }
 
   // Create a server and update servers signal
