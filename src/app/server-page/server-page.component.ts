@@ -6,7 +6,7 @@ import { AuthService } from '../services/auth.service';
 import { SocketService } from '../services/socket.service';
 import { RoomListComponent } from "./room-list/room-list.component";
 
-interface Server{
+interface Server {
   id: number;
   name: string;
   description: string;
@@ -21,7 +21,6 @@ interface Server{
   templateUrl: './server-page.component.html',
   styleUrls: ['./server-page.component.scss']
 })
-
 export class ServerPageComponent {
 
   route_id: number | null = null;
@@ -33,6 +32,7 @@ export class ServerPageComponent {
     private authService: AuthService,
     private socketService: SocketService
   ) {
+    // Listen to route changes and fetch server data
     this.route.params.pipe(
       map(params => params.id),
       switchMap(id => {
@@ -43,11 +43,32 @@ export class ServerPageComponent {
       next: server => {
         this.server.set(server);  // Update the server details
         this.socketService.joinServer(this.route_id!.toString());  // Connect to the server socket
+        this.listenForServerUpdates();  // Start listening for server updates
       },
       error: error => {
         console.error('Error fetching server:', error);  // Handle any errors
       }
     });
+  }
+
+  listenForServerUpdates() {
+    // Listen for messages from the server socket
+    this.socketService.onServerMessage((data: any) => {
+      if (data === "server_updated") {
+        this.refreshServerData();  // Refresh server data if server is updated
+      }
+    });
+  }
+
+  refreshServerData() {
+    if (this.route_id) {
+      // Re-fetch server details from the server
+      this.serverService.getServer(this.route_id, this.authService.getUser().id).then(server => {
+        this.server.set(server);  // Update server data
+      }).catch(error => {
+        console.error('Error fetching server on update:', error);
+      });
+    }
   }
 
   openMenu($event: any) {

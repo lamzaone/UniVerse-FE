@@ -1,3 +1,4 @@
+// socket.service.ts
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 
@@ -6,67 +7,62 @@ import { AuthService } from './auth.service';
 })
 export class SocketService {
   private userId: string | null = null;
-  private mainSocket: WebSocket | null = null;
-  private serverSocket: WebSocket | null = null;
-  private textRoomSocket: WebSocket | null = null;
+  private sockets: { [key: string]: WebSocket | null } = {};
 
   constructor(private authService: AuthService) {
     this.userId = this.authService.getUser().id;
-    this.connectMain();
+    this.connectToSocket('main', `ws://localhost:8000/ws/main/${this.userId}`);
   }
 
-  private connectMain() {
-    if (this.userId) {
-      this.mainSocket = new WebSocket(`ws://localhost:8000/ws/main/${this.userId}`);
-      this.mainSocket.onopen = () => console.log('Connected to main server socket');
-      this.mainSocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log('Main server update:', data);
-      };
-      this.mainSocket.onclose = () => console.log('Disconnected from main server socket');
+  private connectToSocket(key: string, url: string): void {
+    if (!this.userId) return;
+
+    if (this.sockets[key]) {
+      this.sockets[key]!.close();
+    }
+
+    this.sockets[key] = new WebSocket(url);
+    this.sockets[key]!.onopen = () => console.log(`Connected to ${key} socket`);
+    this.sockets[key]!.onmessage = (event) => this.handleMessage(key, event);
+    this.sockets[key]!.onclose = () => console.log(`Disconnected from ${key} socket`);
+  }
+
+  private handleMessage(key: string, event: MessageEvent): void {
+    const data = event.data;
+    console.log(`${key.charAt(0).toUpperCase() + key.slice(1)} update:`, data);
+    // Broadcast to listeners if needed
+    this.notifyListeners(key, data);
+  }
+
+  private listeners: { [key: string]: ((data: any) => void)[] } = {};
+
+  private notifyListeners(key: string, data: any) {
+    if (this.listeners[key]) {
+      this.listeners[key].forEach(callback => callback(data));
     }
   }
 
-  joinServer(serverId: string) {
-    if (this.userId) {
-      this.serverSocket?.close(); // Close any previous server socket
-      this.serverSocket = new WebSocket(`ws://localhost:8000/ws/server/${serverId}/${this.userId}`);
-      this.serverSocket.onopen = () => console.log('Connected to server socket');
-      this.serverSocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log('Server update:', data);
-      };
-      this.serverSocket.onclose = () => console.log('Disconnected from server socket');
+  onServerMessage(callback: (data: any) => void) {
+    if (!this.listeners['server']) this.listeners['server'] = [];
+    this.listeners['server'].push(callback);
+  }
+
+  joinServer(serverId: string): void {
+    this.connectToSocket('server', `ws://localhost:8000/ws/server/${serverId}/${this.userId}`);
+  }
+
+  joinTextRoom(roomId: string): void {
+    this.connectToSocket('textRoom', `ws://localhost:8000/ws/textroom/${roomId}/${this.userId}`);
+  }
+
+  sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'textRoom' = 'textRoom'): void {
+    const socket = this.sockets[context];
+    if (socket) {
+      socket.send(JSON.stringify({ userId: this.userId, message, private: privateMsg }));
     }
   }
 
-  joinTextRoom(roomId: string) {
-    if (this.userId && this.serverSocket) {
-      const serverId = this.serverSocket.url.split('/')[4]; // Extract server ID from URL
-      this.textRoomSocket?.close(); // Close any previous text room socket
-      this.textRoomSocket = new WebSocket(`ws://localhost:8000/ws/textroom/${roomId}/${this.userId}`);
-      this.textRoomSocket.onopen = () => console.log('Connected to text room socket');
-      this.textRoomSocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log('Text room message:', data);
-      };
-      this.textRoomSocket.onclose = () => console.log('Disconnected from text room socket');
-    }
-  }
-
-  sendMessage(message: string, privateMsg: boolean = false) {
-    if (this.textRoomSocket) {
-      const roomId = this.textRoomSocket.url.split('/')[5]; // Extract room ID from URL
-      this.textRoomSocket.send(JSON.stringify({ roomId, userId: this.userId, message, private: privateMsg }));
-    } else if (this.serverSocket) {
-      const serverId = this.serverSocket.url.split('/')[4]; // Extract server ID from URL
-      this.serverSocket.send(JSON.stringify({ serverId, userId: this.userId, message, private: privateMsg }));
-    }
-  }
-
-  disconnect() {
-    if (this.mainSocket) this.mainSocket.close();
-    if (this.serverSocket) this.serverSocket.close();
-    if (this.textRoomSocket) this.textRoomSocket.close();
+  disconnectAll(): void {
+    Object.values(this.sockets).forEach(socket => socket?.close());
   }
 }
