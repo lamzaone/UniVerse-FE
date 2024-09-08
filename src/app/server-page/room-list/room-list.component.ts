@@ -4,6 +4,7 @@ import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/dr
 import { ServersService } from '../../services/servers.service';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { SocketService } from '../../services/socket.service';
 @Component({
   selector: 'app-room-list',
   standalone: true,
@@ -17,11 +18,23 @@ export class RoomListComponent {
   showContextMenu = false;
   contextMenuPosition = { x: 0, y: 0 };
   uncategorizedRooms: any[] = [];
+  route_id: number | null = null;
 
-  constructor(private serversService: ServersService, private route: ActivatedRoute) {
+  constructor(private serversService: ServersService, private route: ActivatedRoute, private socketService: SocketService) {
     // Fetch categories and rooms based on the route parameter
     this.route.params.subscribe(params => {
-      this.fetchCategoriesAndRooms(params.id);
+      this.route_id = +params.id;
+      this.fetchCategoriesAndRooms(this.route_id.toString());
+      this.listenToServerUpdates();
+    });
+  }
+
+  listenToServerUpdates() {
+    // Listen for server updates
+    this.socketService.onServerMessage((data: any) => {
+      if (data === 'rooms_updated') {
+        this.fetchCategoriesAndRooms(this.route_id!.toString());
+      }
     });
   }
 

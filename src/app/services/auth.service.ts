@@ -58,6 +58,7 @@ export class AuthService {
 
             // If successful, update the user information and store the new tokens
             this.setUser(refreshResponse.data);
+            this.router.navigate(['/']);
             localStorage.setItem('jwt_token', refreshResponse.data.token);
             localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
           } catch (refreshError) {
