@@ -16,6 +16,7 @@
         [ngClass]="room.type"
         [routerLink]="['text', room.id]"
         routerLinkActive="router-link-active">
+    <ng-template cdkDragPreview></ng-template>
     {{ room.name }}
     </div>
   </div>
