@@ -12,6 +12,7 @@ export class SocketService {
   constructor(private authService: AuthService) {
     this.userId = this.authService.getUser().id;
     this.connectToSocket('main', `ws://localhost:8000/ws/main/${this.userId}`);
+    // TODO: Make main server connection only on dashboard to avoid unnecessary connections
   }
 
   private connectToSocket(key: string, url: string): void {

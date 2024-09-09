@@ -5,6 +5,7 @@ import { ServersService } from '../../services/servers.service';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SocketService } from '../../services/socket.service';
+import axios from 'axios';
 @Component({
   selector: 'app-room-list',
   standalone: true,
@@ -51,30 +52,54 @@ export class RoomListComponent {
     }
   }
 
-  // Handle drag and drop events
-  drop(event: CdkDragDrop<any[]>, categoryId: number | null): void {
+  connectedLists() {
+    // Create an array of list ids that the drop list can connect to
+    return this.categories().map(category => `cdk-drop-list-${category.id}`);
+  }
+
+  // Function to handle drag and drop
+  drop(event: CdkDragDrop<any[]>, targetCategoryId: number | null): void {
     if (event.previousContainer === event.container) {
       // Reorder within the same category
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-      this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex);
+      this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex, targetCategoryId );
     } else {
       // Move to a different category
-      transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
-      this.moveRoom(event.container.data[event.currentIndex].id, categoryId, event.currentIndex);
+      transferArrayItem(
+        event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex
+      );
+      this.moveRoom(
+        event.container.data[event.currentIndex].id,     // Room ID
+        event.currentIndex,                             // New Position
+        targetCategoryId                               // New Category ID
+      );
     }
   }
 
-  // Placeholder function for reordering rooms
-  reorderRoom(roomId: number, newPosition: number): void {
-    console.log('Reordering room with ID', roomId, 'to position', newPosition);
-    // Implement logic to reorder room
+  // Function for reordering rooms within the same category
+  async reorderRoom(room_id: number, position: number, category: number | null) {
+    console.log('Reordering room with ID', room_id, 'to position', position);
+    await axios.post('http://localhost:8000/room/' + room_id + '/reorder', {
+      room_id,
+      position,
+      category
+    });
   }
 
-  // Placeholder function for moving rooms to a different category
-  moveRoom(roomId: number, categoryId: number | null, newPosition: number): void {
-    console.log('Moving room with ID', roomId, 'to category ID', categoryId, 'at position', newPosition);
-    // Implement logic to move room
+  // Function for moving rooms to a different category
+  async moveRoom(room_id: number, position: number, category: number | null) {
+    console.log('Moving room with ID', room_id, 'to category ID', category, 'at position', position);
+    await axios.post('http://localhost:8000/room/' + room_id + '/reorder', {
+      room_id,
+      position,
+      category, // New category ID
+    });
   }
+
+
 
   createCategory(): void {
     console.log('Create a category');
@@ -103,4 +128,5 @@ export class RoomListComponent {
   onEscapePress(event: KeyboardEvent): void {
     this.showContextMenu = false;
   }
+
 }
