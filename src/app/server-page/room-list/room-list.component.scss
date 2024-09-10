@@ -52,6 +52,8 @@
 }
 
 .category{
+
+  position:relative;
   background-color: var(--dark-grey);
   display: flex;
   border-radius:7px;
@@ -65,13 +67,24 @@
   margin-bottom: 0.5rem;
 }
 
+.rooms{
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem;
+}
+
 .room{
   width:12.5rem;
+  border-radius: 5px;
+  margin: 0.1rem 0;
 
   transition: 0.2s ease-in-out all;
 
 
   &:hover{
+
+    transition: 0.2s ease-in-out all;
+
     background-color: var(--light-grey);
     // margin-left: 2px;
   }
@@ -85,7 +98,6 @@
 
   &:last-child{
     border-bottom: none;
-    margin-bottom: 2rem;
   }
 
 
@@ -95,4 +107,24 @@
 .router-link-active{
   background-color: var(--light-grey);
   // margin-left: 2px;
+}
+
+
+.placeholder{
+  display: flex;
+  justify-self: center;
+  align-self: center;
+  background-color: green;
+  margin: 3px 0;
+  border-radius: 500px;
+  height: 3px;
+  width: 90%;
+}
+
+.preview{
+  width:12.5rem;
+  background-color: var(--dark-grey);
+  color: var(--white);
+  padding: 5px;
+  border-bottom: 1px solid var(--dark-grey);
 }

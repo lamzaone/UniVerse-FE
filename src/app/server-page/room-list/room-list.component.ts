@@ -57,7 +57,7 @@ export class RoomListComponent {
     return this.categories().map(category => `cdk-drop-list-${category.id}`);
   }
 
-  // Function to handle drag and drop
+
   drop(event: CdkDragDrop<any[]>, targetCategoryId: number | null): void {
     if (event.previousContainer === event.container) {
       // Reorder within the same category
@@ -65,13 +65,14 @@ export class RoomListComponent {
       this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex, targetCategoryId );
     } else {
       // Move to a different category
-      transferArrayItem(
+      transferArrayItem( //TODO: check if the function works without transferArrayItem
         event.previousContainer.data,
         event.container.data,
         event.previousIndex,
         event.currentIndex
       );
-      this.moveRoom(
+      // this.moveRoom(
+      this.reorderRoom(
         event.container.data[event.currentIndex].id,     // Room ID
         event.currentIndex,                             // New Position
         targetCategoryId                               // New Category ID
@@ -81,7 +82,7 @@ export class RoomListComponent {
 
   // Function for reordering rooms within the same category
   async reorderRoom(room_id: number, position: number, category: number | null) {
-    console.log('Reordering room with ID', room_id, 'to position', position);
+    // console.log('Reordering room with ID', room_id, 'to position', position);
     await axios.post('http://localhost:8000/room/' + room_id + '/reorder', {
       room_id,
       position,
@@ -89,15 +90,6 @@ export class RoomListComponent {
     });
   }
 
-  // Function for moving rooms to a different category
-  async moveRoom(room_id: number, position: number, category: number | null) {
-    console.log('Moving room with ID', room_id, 'to category ID', category, 'at position', position);
-    await axios.post('http://localhost:8000/room/' + room_id + '/reorder', {
-      room_id,
-      position,
-      category, // New category ID
-    });
-  }
 
 
 
