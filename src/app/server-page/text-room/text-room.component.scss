@@ -1,3 +1,37 @@
 .container{
-  background-color: var(--grey);
+  background-color: transparent;
+  display:grid;
+  grid-template-rows: auto 5rem;
+  height: calc(100% - 2rem);
+}
+
+
+.messages{
+  background-color: red;
+}
+
+.input{
+  padding: 5px;
+  background-color: blue;
+  display:grid;
+  grid-template-columns: auto 4rem;
+
+  & input{
+    width: 100%;
+  }
+
+  & .private{
+    background-color: green;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+
+}
+
+
+.room-name{
+  margin: 0.5rem 0 0 0.3rem;
+  line-height: 0.5rem;
 }
