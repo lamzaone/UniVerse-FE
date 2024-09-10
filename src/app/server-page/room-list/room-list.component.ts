@@ -30,6 +30,11 @@ export class RoomListComponent {
     });
   }
 
+  selectRoom(room: {}) {
+    this.serversService.setCurrentRoom(room);
+  }
+
+
   listenToServerUpdates() {
     // Listen for server updates
     this.socketService.onServerMessage((data: any) => {
