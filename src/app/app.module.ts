@@ -26,7 +26,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new Transl
 
 
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
-const config: SocketIoConfig = { url: 'http://localhost:5000', options: {} };  // Adjust URL as necessary
+const config: SocketIoConfig = { url: 'http://79.113.73.5.nip.io:5000', options: {} };  // Adjust URL as necessary
 
 @NgModule({
   declarations: [AppComponent],

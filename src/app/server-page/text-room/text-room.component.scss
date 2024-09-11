@@ -1,24 +1,38 @@
 .container{
   background-color: transparent;
   display:grid;
-  grid-template-rows: auto 5rem;
+  grid-template-rows:1fr auto;
   height: calc(100% - 2rem);
 }
-
 
 .messages{
   background-color: red;
 }
 
 .input{
+  max-height: 20rem;
   padding: 5px;
   background-color: blue;
   display:grid;
   grid-template-columns: auto 4rem;
 
-  & input{
-    width: 100%;
+
+
+  & textarea{
+    background-color: transparent;
+    border:none;
+    max-height: 19rem;
+    stroke: none;
+    resize: none;
+    width: calc(100% - 10px);
+    overflow-y: scroll;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
   }
+
 
   & .private{
     background-color: green;
@@ -26,11 +40,7 @@
     justify-content: center;
     align-items: center;
   }
-
-
 }
-
-
 .room-name{
   margin: 0.5rem 0 0 0.3rem;
   line-height: 0.5rem;

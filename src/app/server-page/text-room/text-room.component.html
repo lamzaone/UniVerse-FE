@@ -1,11 +1,10 @@
 <p class="room-name">C1{{room()?.name}}</p>
-<div class = "container">
-
-  <div class = "messages">
+<div class="container">
+  <div class="messages">
     yeah
   </div>
-  <div class = "input">
-    <input type="text" />
+  <div class="input">
+    <textarea id="textarea" (input)="adjustHeight($event)"></textarea>
     <div class="private">yeah</div>
   </div>
 </div>

@@ -2,7 +2,6 @@ import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, signal } from '@angular/core'; // Add the missing import statement
 import { ServersService } from '../../services/servers.service';
-
 @Component({
   selector: 'app-text-room',
   standalone: true,
@@ -13,8 +12,6 @@ import { ServersService } from '../../services/servers.service';
 export class TextRoomComponent implements OnInit { // Implement the OnInit interface
   route_id: number | null = null;
   room = signal<any>(null);
-
-
   constructor(
     private socketService: SocketService,
     private route: ActivatedRoute,
@@ -24,12 +21,15 @@ export class TextRoomComponent implements OnInit { // Implement the OnInit inter
         this.route_id = +params.room_id;
         this.socketService.joinTextRoom(this.route_id!.toString());
       });
-
       this.room = this.serversService.currentRoom;
     }
-
   ngOnInit(): void { // Add the ngOnInit method
     // Add any initialization logic here
   }
 
+  adjustHeight(event: Event) {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = 'auto'; // Reset height to auto
+    textarea.style.height = `${textarea.scrollHeight}px`; // Set height based on scrollHeight
+  }
 }
