@@ -11,7 +11,7 @@ export class SocketService {
 
   constructor(private authService: AuthService) {
     this.userId = this.authService.getUser().id;
-    this.connectToSocket('main', `ws://79.113.73.5.nip.io:8000/ws/main/${this.userId}`);
+    this.connectToSocket('main', `ws://aetherial.cc:8000/ws/main/${this.userId}`);
     // TODO: Make main server connection only on dashboard to avoid unnecessary connections
   }
 
@@ -49,11 +49,11 @@ export class SocketService {
   }
 
   joinServer(serverId: string): void {
-    this.connectToSocket('server', `ws://79.113.73.5.nip.io:8000/ws/server/${serverId}/${this.userId}`);
+    this.connectToSocket('server', `ws://aetherial.cc:8000/ws/server/${serverId}/${this.userId}`);
   }
 
   joinTextRoom(roomId: string): void {
-    this.connectToSocket('textRoom', `ws://79.113.73.5.nip.io:8000/ws/textroom/${roomId}/${this.userId}`);
+    this.connectToSocket('textRoom', `ws://aetherial.cc:8000/ws/textroom/${roomId}/${this.userId}`);
   }
 
   sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'textRoom' = 'textRoom'): void {
