@@ -9,7 +9,7 @@
             "type": "chrome",
             "request": "attach",
             "port": 9876,
-            "url": "http://aetherial.cc:4200",
+            "url": "https://aetherial.cc",
             "sourceMaps": true,
             "timeout": 10000,
             "trace": "verbose",

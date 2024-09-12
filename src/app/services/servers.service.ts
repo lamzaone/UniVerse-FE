@@ -25,7 +25,7 @@ export class ServersService {
   // Create a server and update servers signal
   async createServer(serverName: string, description: string) {
     try {
-      const response = await axios.post('http://aetherial.cc:8000/server/create', {
+      const response = await axios.post('https://aetherial.cc/api/server/create', {
         name: serverName,
         description: description,
         owner_id: this.user.id
@@ -46,7 +46,7 @@ export class ServersService {
   // Fetch servers for the user and update servers signal
   async fetchServers() {
     try {
-      const response = await axios.get('http://aetherial.cc:8000/server/user/' + this.user.id);
+      const response = await axios.get('https://aetherial.cc/api/server/user/' + this.user.id);
       if (response.status === 200) {
         this.servers.set(response.data);  // Update the servers signal
       } else {
@@ -60,7 +60,7 @@ export class ServersService {
   // Join a server and update servers signal
   async joinServer(serverCode: string) {
     try {
-      const response = await axios.post('http://aetherial.cc:8000/server/join', {
+      const response = await axios.post('https://aetherial.cc/api/server/join', {
         invite_code: serverCode,
         user_id: this.user.id
       });
@@ -80,7 +80,7 @@ export class ServersService {
   // Fetch a specific server
   async getServer(serverId: number, userId: number) {
     try {
-      const response = await axios.post('http://aetherial.cc:8000/server', { server_id: serverId, user_id: userId });
+      const response = await axios.post('https://aetherial.cc/api/server', { server_id: serverId, user_id: userId });
       if (response.status === 200) {
         return response.data;
       } else {
@@ -95,7 +95,7 @@ export class ServersService {
   // Fetch categories and rooms for a server
   async fetchCategoriesAndRooms(serverId: number) {
     try {
-      const response = await axios.get('http://aetherial.cc:8000/server/' + serverId + '/categories');
+      const response = await axios.get('https://aetherial.cc/api/server/' + serverId + '/categories');
       if (response.status === 200) {
         return response.data;
       } else {
