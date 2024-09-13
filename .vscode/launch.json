@@ -9,7 +9,7 @@
             "type": "chrome",
             "request": "attach",
             "port": 9876,
-            "url": "https://aetherial.cc",
+            "url": "https://coldra.in",
             "sourceMaps": true,
             "timeout": 10000,
             "trace": "verbose",
