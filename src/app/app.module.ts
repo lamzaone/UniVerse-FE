@@ -26,7 +26,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new Transl
 
 
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
-const config: SocketIoConfig = { url: 'https://coldra.in/api/ws', options: {} };  // Adjust URL as necessary
+const config: SocketIoConfig = { url: 'https://192.168.1.134.nip.io/api/ws', options: {} };  // Adjust URL as necessary
 
 @NgModule({
   declarations: [AppComponent],

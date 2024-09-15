@@ -88,7 +88,7 @@ export class RoomListComponent {
   // Function for reordering rooms within the same category
   async reorderRoom(room_id: number, position: number, category: number | null) {
     // console.log('Reordering room with ID', room_id, 'to position', position);
-    await axios.post('https://coldra.in/api/room/' + room_id + '/reorder', {
+    await axios.post('https://192.168.1.134.nip.io/api/room/' + room_id + '/reorder', {
       room_id,
       position,
       category

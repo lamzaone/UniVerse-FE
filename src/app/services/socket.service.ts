@@ -11,7 +11,7 @@ export class SocketService {
 
   constructor(private authService: AuthService) {
     this.userId = this.authService.getUser().id;
-    this.connectToSocket('main', `wss://coldra.in/api/ws/main/${this.userId}`);
+    this.connectToSocket('main', `wss://192.168.1.134.nip.io/api/ws/main/${this.userId}`);
     // TODO: Make main server connection only on dashboard to avoid unnecessary connections
   }
 
@@ -49,11 +49,11 @@ export class SocketService {
   }
 
   joinServer(serverId: string): void {
-    this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);
+    this.connectToSocket('server', `wss://192.168.1.134.nip.io/api/ws/server/${serverId}/${this.userId}`);
   }
 
   joinTextRoom(roomId: string): void {
-    this.connectToSocket('textRoom', `wss://coldra.in/api/ws/textroom/${roomId}/${this.userId}`);
+    this.connectToSocket('textRoom', `wss://192.168.1.134.nip.io/api/ws/textroom/${roomId}/${this.userId}`);
   }
 
   sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'textRoom' = 'textRoom'): void {
