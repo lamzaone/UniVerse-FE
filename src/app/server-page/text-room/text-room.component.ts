@@ -46,7 +46,7 @@ export class TextRoomComponent implements OnInit {
   async fetchMessages() {
     try {
       const response = await axios.post(
-        '/api/messages',
+        'https://coldra.in/api/messages',
         {
           room_id: this.route_id,
           user_token: this.authService.userData().token
