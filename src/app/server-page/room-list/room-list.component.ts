@@ -26,8 +26,9 @@ export class RoomListComponent {
     this.route.params.subscribe(params => {
       this.route_id = +params.id;
       this.fetchCategoriesAndRooms(this.route_id.toString());
-      this.listenToServerUpdates();
     });
+
+    this.listenToServerUpdates();
   }
 
   selectRoom(room: {}) {
@@ -70,8 +71,8 @@ export class RoomListComponent {
       this.reorderRoom(event.container.data[event.currentIndex].id, event.currentIndex, targetCategoryId );
     } else {
       // Move to a different category
-      transferArrayItem( //TODO: check if the function works without transferArrayItem
-        event.previousContainer.data,
+      transferArrayItem(
+          event.previousContainer.data,
         event.container.data,
         event.previousIndex,
         event.currentIndex

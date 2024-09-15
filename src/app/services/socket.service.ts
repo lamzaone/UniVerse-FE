@@ -12,7 +12,6 @@ export class SocketService {
   constructor(private authService: AuthService) {
     this.userId = this.authService.getUser().id;
     this.connectToSocket('main', `wss://coldra.in/api/ws/main/${this.userId}`);
-    // TODO: Make main server connection only on dashboard to avoid unnecessary connections
   }
 
   private connectToSocket(key: string, url: string): void {
@@ -47,6 +46,18 @@ export class SocketService {
     if (!this.listeners['server']) this.listeners['server'] = [];
     this.listeners['server'].push(callback);
   }
+
+  onTextRoomMessage(callback: (data: any) => void) {
+    if (!this.listeners['textRoom']) this.listeners['textRoom'] = [];
+    this.listeners['textRoom'].push(callback);
+  }
+
+  onMainMessage(callback: (data: any) => void) {
+    if (!this.listeners['main']) this.listeners['main'] = [];
+    this.listeners['main'].push(callback);
+  }
+
+
 
   joinServer(serverId: string): void {
     this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);

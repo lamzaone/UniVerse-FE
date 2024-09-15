@@ -5,6 +5,7 @@ import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
+import { UsersService } from '../../services/users.service';
 
 @Component({
   selector: 'app-text-room',
@@ -22,8 +23,12 @@ export class TextRoomComponent implements OnInit {
     private socketService: SocketService,
     private route: ActivatedRoute,
     private serversService: ServersService,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    // private usersService: UsersService
+  ) {
+
+    this.listenForMessages();
+  }
 
   ngOnInit(): void {
     // Initialize the route_id and join the text room
@@ -35,7 +40,6 @@ export class TextRoomComponent implements OnInit {
 
     // Initialize the room signal
     this.room = this.serversService.currentRoom;
-
     // Fetch messages
   }
 
@@ -48,10 +52,26 @@ export class TextRoomComponent implements OnInit {
           user_token: this.authService.userData().token
         }
       );
+
+      // // Fetch user info for each message
+      // for (const message of response.data) {
+      //   const user = await this.usersService.getUserInfo(message.user_id);
+      //   message.user = user;
+      // }
+
       this.messages.set(response.data); // Assuming response.data contains the messages
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
+  }
+
+
+  listenForMessages() {
+    this.socketService.onTextRoomMessage((data: any) => {
+      console.log("Received message from socket:", data);
+      this.fetchMessages();
+    });
+
   }
 
   adjustHeight(event: Event) {

@@ -1,7 +1,10 @@
 <p class="room-name">C1{{room()?.name}}</p>
 <div class="container">
   <div class="messages">
-    <div class="message" *ngFor="let message of messages()">{{ message.message }}</div>
+    <div class="message" *ngFor="let message of messages()">
+      <div class="text">{{message.message}}</div>
+
+    </div>
   </div>
   <div class="input">
     <textarea id="textarea" (input)="adjustHeight($event)"></textarea>
