@@ -32,7 +32,7 @@ export class UsersService {
     }
 
     // If the user is not in the cache, fetch from the API
-    return axios.get(`/api/user/${userId}`).then(response => {
+    return axios.get(`https://coldra.in/api/user/${userId}`).then(response => {
       const userInfo = response.data;
       this.userCache[userId] = userInfo; // Store user info in cache
       return userInfo;
