@@ -2,6 +2,8 @@
 <div class="container">
   <div class="messages">
     <div class="message" *ngFor="let message of messages()">
+      <div class="user"><img class="avatar" [src]="message.user.picture">{{message.user.name}}</div>
+
       <div class="text">{{message.message}}</div>
 
     </div>

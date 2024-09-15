@@ -24,7 +24,7 @@ export class TextRoomComponent implements OnInit {
     private route: ActivatedRoute,
     private serversService: ServersService,
     private authService: AuthService,
-    // private usersService: UsersService
+    private usersService: UsersService
   ) {
 
     this.listenForMessages();
@@ -53,11 +53,11 @@ export class TextRoomComponent implements OnInit {
         }
       );
 
-      // // Fetch user info for each message
-      // for (const message of response.data) {
-      //   const user = await this.usersService.getUserInfo(message.user_id);
-      //   message.user = user;
-      // }
+      // Fetch user info for each message
+      for (const message of response.data) {
+        const user = await this.usersService.getUserInfo(message.user_id);
+        message.user = user;
+      }
 
       this.messages.set(response.data); // Assuming response.data contains the messages
     } catch (error) {

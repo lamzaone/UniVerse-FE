@@ -7,6 +7,15 @@
 
 .messages{
   background-color: red;
+  overflow-y: scroll;
+}
+
+.message{
+
+  & .avatar{
+    border-radius: 100px;
+    width: 2.5rem;
+  }
 }
 
 .input{
