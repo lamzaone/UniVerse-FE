@@ -2,15 +2,11 @@
   color: var(--white);
 }
 
-
 .container {
   background-color: var(--grey);
-  display: grid;
-  grid-template-columns: 70px 1fr 15rem;
-  height: 100vh;
-  min-height: 400px;
-  min-width: 600px;
-  grid-gap: 7px;
+  display: flex;
+  height: 100%;
+  gap: 7px;
   box-sizing: border-box;
 
   // child elements
@@ -21,14 +17,16 @@
 
 .sidebar {
   background-color: var(--dark-grey);
+  transition: width 0.3s ease;
 }
 
 .left-sidebar {
-  height: calc(100%);
-
-  grid-column: 1 / 2;
+  width: 70px;
+  height: 100%;
   text-align: center;
   overflow: scroll;
+  transition: width 0.3s ease;
+  position: relative;
 
   // hide scrollbars
   &::-webkit-scrollbar {
@@ -37,12 +35,46 @@
 }
 
 .main-content {
-  grid-column: 2 / 3;
+  width: calc(100% - 70px - 15rem);
   background-color: var(--dark-grey);
   overflow: hidden;
-
+  transition: width 0.3s ease;
 }
 
 .right-sidebar {
-  grid-column: 3 / 4;
+  width: 15rem;
+  background-color: red;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 40px;
+  background-color: var(--white);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+
+  &.left {
+    right: -20px;
+  }
+
+  &.right {
+    left: -20px;
+  }
+}
+
+.sidebar.collapsed {
+  width: 0;
+}
+
+.main-content.collapsed-left {
+  width: calc(100% - 15rem);
+}
+
+.main-content.collapsed-right {
+  width: calc(100% - 70px);
 }

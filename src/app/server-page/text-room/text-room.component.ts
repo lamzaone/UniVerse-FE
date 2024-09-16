@@ -66,7 +66,7 @@ export class TextRoomComponent implements OnInit {
       const lastMessage = document.getElementById('last-message');
       const isLastMessageInView = lastMessage ? lastMessage.getBoundingClientRect().top <= window.innerHeight : false;
 
-      this.messages.set(response.data); // Assuming response.data contains the messages
+      this.messages.set(response.data);
 
       if (isLastMessageInView) this.scrollToLast();
       // scroll to ngModel "last-message" to show the latest message
@@ -86,6 +86,8 @@ export class TextRoomComponent implements OnInit {
   }
 
   async sendMessage(isPrivate: boolean = false): Promise<void> {
+
+    if (this.messageText.trim() == '') return;
     try {
       const response = await axios.post('https://coldra.in/api/message', {
         message: this.messageText,

@@ -15,5 +15,4 @@ import { LeftSidebarComponent } from "./left-sidebar/left-sidebar.component";
 export class HomeModule {
 
 
-
 }
