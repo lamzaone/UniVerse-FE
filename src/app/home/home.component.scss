@@ -45,11 +45,11 @@
 
 
 /* Show the sidebar on screens wider than 768px */
-@media (max-width: 768px) {
-  .sidebar.right-sidebar {
-    display: none;
-  }
-  .main-content {
-    grid-column: 2 / 4;
-  }
-}
+// @media (max-width: 768px) {
+//   .sidebar.right-sidebar {
+//     display: none;
+//   }
+//   .main-content {
+//     grid-column: 2 / 4;
+//   }
+// }
