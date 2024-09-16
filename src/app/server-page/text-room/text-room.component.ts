@@ -1,6 +1,6 @@
 import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
@@ -16,6 +16,7 @@ import { FormsModule, NgModel } from '@angular/forms';
   styleUrls: ['./text-room.component.scss']
 })
 export class TextRoomComponent implements OnInit {
+  @ViewChild('messageInput') messageInput!: ElementRef<HTMLTextAreaElement>;
   route_id: number | null = null;
   room = signal<any>(null);
   messages = signal<any>(null);
@@ -61,13 +62,15 @@ export class TextRoomComponent implements OnInit {
         message.user = user;
       }
 
+      // check if lastMessage is in view
+      const lastMessage = document.getElementById('last-message');
+      const isLastMessageInView = lastMessage ? lastMessage.getBoundingClientRect().top <= window.innerHeight : false;
+
       this.messages.set(response.data); // Assuming response.data contains the messages
 
+      if (isLastMessageInView) this.scrollToLast();
       // scroll to ngModel "last-message" to show the latest message
-      const lastMessage = document.getElementById('last-message');
-      if (lastMessage) {
-        lastMessage.scrollIntoView({ behavior: 'smooth' });
-      }
+
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
@@ -94,13 +97,28 @@ export class TextRoomComponent implements OnInit {
 
       this.messageText = '';
 
-      console.log('Message sent successfully:', response.data);
+      if (this.messageInput) {
+        const textarea = this.messageInput.nativeElement;
+        textarea.style.height = 'auto';
+      }
+
+      this.scrollToLast();
     } catch (error) {
       console.error('Error sending message:', error);
     }
   }
 
+  scrollToLast(){
+    const lastMessage = document.getElementById('last-message');
+    if (lastMessage) {
 
+      lastMessage.scrollIntoView({ behavior: 'smooth' , block:'end'});
+      setTimeout(() => {
+        lastMessage.scrollIntoView({ behavior: 'smooth' , block:'end'});
+      }, 100);
+
+    }
+  }
 
   adjustHeight(event: Event) {
     const textarea = event.target as HTMLTextAreaElement;

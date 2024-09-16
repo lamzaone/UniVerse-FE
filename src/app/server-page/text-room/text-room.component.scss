@@ -2,11 +2,12 @@
   background-color: transparent;
   display:grid;
   grid-template-rows:1fr auto;
-  height: calc(100% - 2rem);
+  height: calc(100% - 1rem);
 }
 
 .messages {
-  /* background-color: red; */
+  height:100%;
+  // background-color: red;
   overflow-y: scroll;
   overflow-x: hidden;
   word-wrap: break-word;
