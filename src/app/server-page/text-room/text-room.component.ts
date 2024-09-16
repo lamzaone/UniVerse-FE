@@ -6,11 +6,12 @@ import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { UsersService } from '../../services/users.service';
+import { FormsModule, NgModel } from '@angular/forms';
 
 @Component({
   selector: 'app-text-room',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './text-room.component.html',
   styleUrls: ['./text-room.component.scss']
 })
@@ -18,6 +19,7 @@ export class TextRoomComponent implements OnInit {
   route_id: number | null = null;
   room = signal<any>(null);
   messages = signal<any>(null);
+  messageText = '';
 
   constructor(
     private socketService: SocketService,
@@ -60,6 +62,12 @@ export class TextRoomComponent implements OnInit {
       }
 
       this.messages.set(response.data); // Assuming response.data contains the messages
+
+      // scroll to ngModel "last-message" to show the latest message
+      const lastMessage = document.getElementById('last-message');
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: 'smooth' });
+      }
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
@@ -74,9 +82,39 @@ export class TextRoomComponent implements OnInit {
 
   }
 
+  async sendMessage(isPrivate: boolean = false): Promise<void> {
+    try {
+      const response = await axios.post('https://coldra.in/api/message', {
+        message: this.messageText,
+        room_id: this.route_id,
+        is_private: isPrivate,
+        user_token: this.authService.userData().token,
+        reply_to: 0
+      });
+
+      this.messageText = '';
+
+      console.log('Message sent successfully:', response.data);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }
+
+
+
   adjustHeight(event: Event) {
     const textarea = event.target as HTMLTextAreaElement;
-    textarea.style.height = 'auto'; // Reset height to auto
-    textarea.style.height = `${textarea.scrollHeight}px`; // Set height based on scrollHeight
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
   }
+
+  // handle enter to sendMessage()
+  handleEnter(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
+  }
+
+
 }
