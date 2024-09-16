@@ -37,7 +37,7 @@
   padding: 1rem;
   width: 25vw;
   min-width: 330px;
-  height: 50vh;
+  height: 50%;
   z-index: 101;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  /* Optional: Adds a shadow for better visibility */
   transition: 0.5s ease-in-out all  0.1s;
@@ -58,7 +58,7 @@
     grid-template-columns: auto;
     grid-template-rows: auto 2px auto;
     width: 30vw;
-    height: 50vh;
+    height: 50%;
   }
 
   transition: 0.5s ease-in-out all  0.1s;

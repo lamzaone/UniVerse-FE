@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: 14rem auto; /* Sidebar is 13rem, main content takes remaining space */
   grid-gap: 0.5rem; /* Gap between columns */
-  height: 100vh; /* Full viewport height */
+  height: 100%; /* Full viewport height */
   width: 100%; /* Full width of the container */
   padding: 0.5rem; /* Added padding to prevent content touching the edges */
   box-sizing: border-box; /* Ensures padding and border are included in width/height */
@@ -10,7 +10,7 @@
 
 .server-info, .main-content {
   border-radius: 5px;
-  height: calc(100% - 1rem); /* Set to auto for proper content fitting */
+  height: calc(100%); /* Set to auto for proper content fitting */
   overflow: hidden;
 }
 
