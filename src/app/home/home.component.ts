@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { isForInitializer } from 'typescript';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +12,7 @@ export class HomeComponent implements OnInit {
   @ViewChild('sidebar') sidebar!: ElementRef;
   @ViewChild('maincontent') maincontent!: ElementRef;
   @ViewChild('leftsidebar') leftsidebar!: ElementRef;
-  @ViewChild('contiainer') container!: ElementRef;
+  @ViewChild('container') container!: ElementRef;
 
   constructor(
     private router: Router,
@@ -61,17 +62,28 @@ export class HomeComponent implements OnInit {
     if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth - 150) {
       // Swipe left
       this.sidebar.nativeElement.style.display = 'block';
-      this.maincontent.nativeElement.style.gridColumn = '2 / 3';
 
     } else if (this.touchstartX > window.outerWidth - 150){
       // Swipe right
       this.sidebar.nativeElement.style.display = 'none';
-      this.maincontent.nativeElement.style.gridColumn = '2 / 4';
     } else if (this.touchstartX < 500 && this.touchendX < this.touchstartX) {
       this.leftsidebar.nativeElement.style.display = 'none';
     } else if (this.touchstartX < 500 && this.touchendX > this.touchstartX) {
       this.leftsidebar.nativeElement.style.display = 'block';
-      this.container.nativeElement.style.gridTemplateColumns ='1fr 15rem';
+      this.container.nativeElement.style.gridTemplateColumns ='70px 1fr 15rem';
     }
+
+    if (this.leftsidebar.nativeElement.style.display == 'none' && this.sidebar.nativeElement.style.display == 'none'){
+      this.container.nativeElement.style.gridTemplateColumns ='1fr';
+    } else if (this.leftsidebar.nativeElement.style.display == 'none' ){
+      this.container.nativeElement.style.gridTemplateColumns ='1fr 15rem';
+      if (this.sidebar.nativeElement.style.display == 'none'){
+      }
+    } else if (this.sidebar.nativeElement.style.display == 'none'){
+      this.container.nativeElement.style.gridTemplateColumns ='70px 1fr';
+    } else {
+      this.container.nativeElement.style.gridTemplateColumns ='70px 1fr 15rem';
+    }
+
   }
 }

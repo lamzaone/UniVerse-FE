@@ -24,7 +24,6 @@
 .left-sidebar {
   height: calc(100%);
 
-  grid-column: 1 / 2;
   text-align: center;
   overflow: scroll;
 
@@ -35,14 +34,12 @@
 }
 
 .main-content {
-  grid-column: 2 / 3;
   background-color: var(--dark-grey);
   overflow: hidden;
 
 }
 
 .right-sidebar {
-  grid-column: 3 / 4;
   background-color: red;
 }
 
