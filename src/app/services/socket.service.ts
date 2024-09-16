@@ -11,8 +11,7 @@ export class SocketService {
 
   constructor(private authService: AuthService) {
     this.userId = this.authService.getUser().id;
-    this.connectToSocket('main', `ws://79.113.73.5.nip.io:8000/ws/main/${this.userId}`);
-    // TODO: Make main server connection only on dashboard to avoid unnecessary connections
+    this.connectToSocket('main', `wss://coldra.in/api/ws/main/${this.userId}`);
   }
 
   private connectToSocket(key: string, url: string): void {
@@ -48,12 +47,24 @@ export class SocketService {
     this.listeners['server'].push(callback);
   }
 
+  onTextRoomMessage(callback: (data: any) => void) {
+    if (!this.listeners['textRoom']) this.listeners['textRoom'] = [];
+    this.listeners['textRoom'].push(callback);
+  }
+
+  onMainMessage(callback: (data: any) => void) {
+    if (!this.listeners['main']) this.listeners['main'] = [];
+    this.listeners['main'].push(callback);
+  }
+
+
+
   joinServer(serverId: string): void {
-    this.connectToSocket('server', `ws://79.113.73.5.nip.io:8000/ws/server/${serverId}/${this.userId}`);
+    this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);
   }
 
   joinTextRoom(roomId: string): void {
-    this.connectToSocket('textRoom', `ws://79.113.73.5.nip.io:8000/ws/textroom/${roomId}/${this.userId}`);
+    this.connectToSocket('textRoom', `wss://coldra.in/api/ws/textroom/${roomId}/${this.userId}`);
   }
 
   sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'textRoom' = 'textRoom'): void {

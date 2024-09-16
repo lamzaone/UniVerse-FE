@@ -1,10 +1,18 @@
-<p class="room-name">C1{{room()?.name}}</p>
 <div class="container">
-  <div class="messages">
-    yeah
+  <div class="messages" #messagesContainer>
+    <div class="message" *ngFor="let message of messages()">
+      <div class="user"><img class="avatar" [src]="message.user.picture">{{message.user.name}} </div>
+
+      <div class="text">{{message.message}}</div>
+
+    </div>
+    <div id="last-message"></div>
   </div>
   <div class="input">
-    <textarea id="textarea" (input)="adjustHeight($event)"></textarea>
-    <div class="private">yeah</div>
+    <textarea #messageInput [(ngModel)]="messageText"
+              (keydown.enter)="sendMessage()"
+              (input)="adjustHeight($event)">
+    </textarea>
+    <div class="private" (click)="sendMessage()">yeah</div>
   </div>
 </div>

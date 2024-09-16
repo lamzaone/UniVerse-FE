@@ -5,8 +5,8 @@
 
 <div class="container">
   <aside class="server-info">
-    <div class="banner">
-      <h1>{{server().name}}</h1>
+    <div class="banner" style="display:flex;flex-direction: column;">
+      <h1>{{server().name}}</h1><p><b>invite: {{server().invite_code}}</b></p>
 
     </div>
     <div class="rooms" (auxclick)="openMenu($event)">
