@@ -87,7 +87,7 @@ export class TextRoomComponent implements OnInit {
 
   async sendMessage(isPrivate: boolean = false): Promise<void> {
 
-    if (this.messageText == '') return;
+    if (this.messageText.trim() == '') return;
     try {
       const response = await axios.post('https://coldra.in/api/message', {
         message: this.messageText,

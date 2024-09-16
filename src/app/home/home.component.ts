@@ -1,7 +1,6 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { isForInitializer } from 'typescript';
 
 @Component({
   selector: 'app-home',
@@ -13,6 +12,9 @@ export class HomeComponent implements OnInit {
   @ViewChild('maincontent') maincontent!: ElementRef;
   @ViewChild('leftsidebar') leftsidebar!: ElementRef;
   @ViewChild('container') container!: ElementRef;
+
+  leftSidebarCollapsed = false;
+  rightSidebarCollapsed = false;
 
   constructor(
     private router: Router,
@@ -37,7 +39,6 @@ export class HomeComponent implements OnInit {
   @HostListener('window:resize')
   onResize() {
     this.adjustSidebarVisibility();
-    this.adjustGridLayout()
   }
 
   @HostListener('document:touchstart', ['$event'])
@@ -51,44 +52,52 @@ export class HomeComponent implements OnInit {
     this.handleSwipe();
   }
 
+  toggleLeftSidebar() {
+    this.leftSidebarCollapsed = !this.leftSidebarCollapsed;
+    this.leftsidebar.nativeElement.classList.toggle('collapsed', this.leftSidebarCollapsed);
+    this.updateMainContentWidth();
+  }
+
+  toggleRightSidebar() {
+    this.rightSidebarCollapsed = !this.rightSidebarCollapsed;
+    this.sidebar.nativeElement.classList.toggle('collapsed', this.rightSidebarCollapsed);
+    this.updateMainContentWidth();
+  }
+
   private adjustSidebarVisibility() {
     if (window.innerWidth >= 768) {
       this.sidebar.nativeElement.style.display = 'block';
+      this.leftsidebar.nativeElement.style.display = 'block';
     } else {
       this.sidebar.nativeElement.style.display = 'none';
+      this.leftsidebar.nativeElement.style.display = 'none';
     }
+    this.updateMainContentWidth();
+  }
+
+  private updateMainContentWidth() {
+    const leftWidth = this.leftSidebarCollapsed ? 0 : 70;
+    const rightWidth = this.rightSidebarCollapsed ? 0 : 240; // 15rem
+    this.maincontent.nativeElement.style.width = `calc(100% - ${leftWidth}px - ${rightWidth}px)`;
   }
 
   private handleSwipe() {
-    if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth-200 ) {
+    if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth - 200) {
       // Swipe left
+      this.rightSidebarCollapsed = false;
       this.sidebar.nativeElement.style.display = 'block';
-
-    } else if (this.touchstartX > window.outerWidth-200 ){
+      this.sidebar.nativeElement.classList.remove('collapsed');
+    } else if (this.touchstartX > window.outerWidth - 200) {
       // Swipe right
-      this.sidebar.nativeElement.style.display = 'none';
+      this.rightSidebarCollapsed = true;
+      this.sidebar.nativeElement.classList.add('collapsed');
     } else if (this.touchstartX < 100 && this.touchendX < this.touchstartX) {
-      this.leftsidebar.nativeElement.style.display = 'none';
+      this.leftSidebarCollapsed = true;
+      this.leftsidebar.nativeElement.classList.add('collapsed');
     } else if (this.touchstartX < 100 && this.touchendX > this.touchstartX) {
-      this.leftsidebar.nativeElement.style.display = 'block';
-      this.container.nativeElement.style.gridTemplateColumns ='70px 1fr 15rem';
+      this.leftSidebarCollapsed = false;
+      this.leftsidebar.nativeElement.classList.remove('collapsed');
     }
-
-    this.adjustGridLayout()
-
-  }
-
-  private adjustGridLayout() {
-    if (this.leftsidebar.nativeElement.style.display == 'none' && this.sidebar.nativeElement.style.display == 'none'){
-      this.container.nativeElement.style.gridTemplateColumns ='1fr';
-    } else if (this.leftsidebar.nativeElement.style.display == 'none' ){
-      this.container.nativeElement.style.gridTemplateColumns ='1fr 15rem';
-      if (this.sidebar.nativeElement.style.display == 'none'){
-      }
-    } else if (this.sidebar.nativeElement.style.display == 'none'){
-      this.container.nativeElement.style.gridTemplateColumns ='70px 1fr';
-    } else {
-      this.container.nativeElement.style.gridTemplateColumns ='70px 1fr 15rem';
-    }
+    this.updateMainContentWidth();
   }
 }
