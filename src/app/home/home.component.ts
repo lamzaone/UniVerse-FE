@@ -60,16 +60,16 @@ export class HomeComponent implements OnInit {
   }
 
   private handleSwipe() {
-    if (this.touchendX < this.touchstartX && this.touchstartX > window.innerWidth ) {
+    if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth-200 ) {
       // Swipe left
       this.sidebar.nativeElement.style.display = 'block';
 
-    } else if (this.touchstartX > window.outerWidth - 150){
+    } else if (this.touchstartX > window.outerWidth-200 ){
       // Swipe right
       this.sidebar.nativeElement.style.display = 'none';
-    } else if (this.touchstartX < window.innerWidth-70 && this.touchendX < this.touchstartX) {
+    } else if (this.touchstartX < 100 && this.touchendX < this.touchstartX) {
       this.leftsidebar.nativeElement.style.display = 'none';
-    } else if (this.touchstartX < window.innerWidth-70 && this.touchendX > this.touchstartX) {
+    } else if (this.touchstartX < 100 && this.touchendX > this.touchstartX) {
       this.leftsidebar.nativeElement.style.display = 'block';
       this.container.nativeElement.style.gridTemplateColumns ='70px 1fr 15rem';
     }
