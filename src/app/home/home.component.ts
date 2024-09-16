@@ -23,7 +23,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('HomeComponent INIT');
-    this.adjustSidebarVisibility();
+    // this.adjustSidebarVisibility();
   }
 
   logout() {
@@ -38,7 +38,7 @@ export class HomeComponent implements OnInit {
 
   @HostListener('window:resize')
   onResize() {
-    this.adjustSidebarVisibility();
+    // this.adjustSidebarVisibility();
   }
 
   @HostListener('document:touchstart', ['$event'])
@@ -64,16 +64,16 @@ export class HomeComponent implements OnInit {
     this.updateMainContentWidth();
   }
 
-  private adjustSidebarVisibility() {
-    if (window.innerWidth >= 768) {
-      this.sidebar.nativeElement.style.display = 'block';
-      this.leftsidebar.nativeElement.style.display = 'block';
-    } else {
-      this.sidebar.nativeElement.style.display = 'none';
-      this.leftsidebar.nativeElement.style.display = 'none';
-    }
-    this.updateMainContentWidth();
-  }
+  // private adjustSidebarVisibility() {
+  //   if (window.innerWidth >= 768) {
+  //     this.sidebar.nativeElement.style.display = 'block';
+  //     this.leftsidebar.nativeElement.style.display = 'block';
+  //   } else {
+  //     this.sidebar.nativeElement.style.display = 'none';
+  //     this.leftsidebar.nativeElement.style.display = 'none';
+  //   }
+  //   this.updateMainContentWidth();
+  // }
 
   private updateMainContentWidth() {
     const leftWidth = this.leftSidebarCollapsed ? 0 : 70;
