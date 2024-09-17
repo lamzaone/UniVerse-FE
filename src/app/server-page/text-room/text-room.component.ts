@@ -56,7 +56,9 @@ export class TextRoomComponent implements OnInit {
         }
       );
 
-      // Fetch user info for each message
+      // TODO: Edit to take all the user IDs and fetch them in one request
+      // fetch all IDs and send to API to get all user info (only save the ids once) in a []
+
       for (const message of response.data) {
         const user = await this.usersService.getUserInfo(message.user_id);
         message.user = user;
