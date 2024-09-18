@@ -9,12 +9,13 @@
 
 .server-info, .main-content {
   border-radius: 5px;
-  height: calc(100%); /* Set to auto for proper content fitting */
+  height: 100%; /* Set to auto for proper content fitting */
   overflow: hidden;
 }
 
-.server-info {
 
+.server-info {
+  height: 100%;
   transition: 0.3s all ease;
   width: 14rem;
   display:flex;
@@ -51,6 +52,10 @@
       left:0px;
     }
 
+  }
+
+  .rooms {
+    height: calc(100% - 10rem);
   }
 
   &-btn{

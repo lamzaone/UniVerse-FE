@@ -1,6 +1,7 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ServerPageComponent } from '../server-page/server-page.component';
 
 @Component({
   selector: 'app-home',
@@ -58,6 +59,8 @@ export class HomeComponent implements OnInit {
     // this.handleSwipe();
   }
 
+
+  // TODO: FIND A WAY TO MAKE THIS COLLAPSE WITH SIDE OF SERVER PAGE
   toggleLeftSidebar() {
     this.leftSidebarCollapsed = !this.leftSidebarCollapsed;
     this.leftsidebar.nativeElement.classList.toggle('collapsed', this.leftSidebarCollapsed);
@@ -74,13 +77,9 @@ export class HomeComponent implements OnInit {
     if (window.innerWidth >= 768) {
       this.rightSidebarCollapsed = false;
       this.rightSidebar.nativeElement.classList.remove('collapsed');
-      this.leftSidebarCollapsed = false;
-      this.leftsidebar.nativeElement.classList.remove('collapsed');
     } else {
       this.rightSidebarCollapsed = true;
       this.rightSidebar.nativeElement.classList.add('collapsed');
-      this.leftSidebarCollapsed = true;
-      this.leftsidebar.nativeElement.classList.add('collapsed');
     }
     this.updateMainContentWidth();
   }
@@ -90,26 +89,4 @@ export class HomeComponent implements OnInit {
     const rightWidth = this.rightSidebarCollapsed ? 0 : 240; // 15rem
     this.maincontent.nativeElement.style.width = `calc(100% - ${leftWidth}px - ${rightWidth}px)`;
   }
-
-  // private handleSwipe() {
-
-  //   if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth - 200) {
-  //     this.rightSidebarCollapsed = false;
-  //     this.rightSidebar.nativeElement.classList.remove('collapsed');
-
-  //   } else if (this.touchstartX > window.outerWidth - 200) {
-  //     this.rightSidebarCollapsed = true;
-  //     this.rightSidebar.nativeElement.classList.add('collapsed');
-
-  //   } else if (this.touchstartX < 100 && this.touchendX < this.touchstartX) {
-  //     this.leftSidebarCollapsed = true;
-  //     this.leftsidebar.nativeElement.classList.add('collapsed');
-
-  //   } else if (this.touchstartX < 100 && this.touchendX > this.touchstartX) {
-  //     this.leftSidebarCollapsed = false;
-  //     this.leftsidebar.nativeElement.classList.remove('collapsed');
-
-  //   }
-  //   this.updateMainContentWidth();
-  // }
 }

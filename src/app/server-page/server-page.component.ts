@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, Signal, ViewChild, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map, switchMap } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
@@ -86,10 +86,7 @@ export class ServerPageComponent {
 
   // serverinfoElement = this.serverinfo.nativeElement;
   toggleLeftSidebar(){
-    this.serverinfo.nativeElement.classList.toggle('collapsed');
-
-    if (this.serverinfo.nativeElement.classList.contains('collapsed')) {
-      this.maincontent.nativeElement.style.width = '100%';
-    }
+    let collapsed = this.serverinfo.nativeElement.classList.toggle('collapsed');
+    collapsed = true ? this.maincontent.nativeElement.style.width = '100%' : this.maincontent.nativeElement.style.width = 'calc(100% - 300px)';
   }
 }

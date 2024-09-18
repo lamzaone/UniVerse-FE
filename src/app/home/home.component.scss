@@ -81,9 +81,9 @@
 .left-sidebar.collapsed {
   width: 0;
 
-  & + .sidebar-toggle-btn.left {
-    left: 0;
-  }
+  // & + .sidebar-toggle-btn.left {
+  //   left: 0;
+  // }
 }
 
 .right-sidebar.collapsed {
