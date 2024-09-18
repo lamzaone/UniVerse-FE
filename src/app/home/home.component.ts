@@ -55,7 +55,7 @@ export class HomeComponent implements OnInit {
   @HostListener('document:touchend', ['$event'])
   onTouchEnd(event: TouchEvent) {
     this.touchendX = event.changedTouches[0].screenX;
-    this.handleSwipe();
+    // this.handleSwipe();
   }
 
   toggleLeftSidebar() {
@@ -91,25 +91,25 @@ export class HomeComponent implements OnInit {
     this.maincontent.nativeElement.style.width = `calc(100% - ${leftWidth}px - ${rightWidth}px)`;
   }
 
-  private handleSwipe() {
+  // private handleSwipe() {
 
-    if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth - 200) {
-      this.rightSidebarCollapsed = false;
-      this.rightSidebar.nativeElement.classList.remove('collapsed');
+  //   if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth - 200) {
+  //     this.rightSidebarCollapsed = false;
+  //     this.rightSidebar.nativeElement.classList.remove('collapsed');
 
-    } else if (this.touchstartX > window.outerWidth - 200) {
-      this.rightSidebarCollapsed = true;
-      this.rightSidebar.nativeElement.classList.add('collapsed');
+  //   } else if (this.touchstartX > window.outerWidth - 200) {
+  //     this.rightSidebarCollapsed = true;
+  //     this.rightSidebar.nativeElement.classList.add('collapsed');
 
-    } else if (this.touchstartX < 100 && this.touchendX < this.touchstartX) {
-      this.leftSidebarCollapsed = true;
-      this.leftsidebar.nativeElement.classList.add('collapsed');
+  //   } else if (this.touchstartX < 100 && this.touchendX < this.touchstartX) {
+  //     this.leftSidebarCollapsed = true;
+  //     this.leftsidebar.nativeElement.classList.add('collapsed');
 
-    } else if (this.touchstartX < 100 && this.touchendX > this.touchstartX) {
-      this.leftSidebarCollapsed = false;
-      this.leftsidebar.nativeElement.classList.remove('collapsed');
+  //   } else if (this.touchstartX < 100 && this.touchendX > this.touchstartX) {
+  //     this.leftSidebarCollapsed = false;
+  //     this.leftsidebar.nativeElement.classList.remove('collapsed');
 
-    }
-    this.updateMainContentWidth();
-  }
+  //   }
+  //   this.updateMainContentWidth();
+  // }
 }

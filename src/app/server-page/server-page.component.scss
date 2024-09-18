@@ -23,7 +23,9 @@
   grid-template-rows: 10rem auto;
 
   & .banner{
+    position: relative;
     width: 13.3rem;
+    height: 8rem;
     padding:5px;
     display:flex;
     justify-content: center;
@@ -31,6 +33,14 @@
     text-align: center;
     border-radius: 5px;
     background-color: rgb(23, 74, 151);
+
+    & .invite-code{
+      font-size: 15px;
+      position: absolute;
+      top: 100px;
+      line-height: 1.5;
+
+    }
   }
 
   &.collapsed{
@@ -40,8 +50,6 @@
     & + .server-info-btn{
       left:0px;
     }
-
-
 
   }
 
