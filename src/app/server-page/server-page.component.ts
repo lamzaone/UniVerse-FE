@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map, switchMap } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
 import { AuthService } from '../services/auth.service';
 import { SocketService } from '../services/socket.service';
 import { RoomListComponent } from "./room-list/room-list.component";
+import { View } from 'electron';
 
 interface Server {
   id: number;
@@ -23,6 +24,8 @@ interface Server {
 })
 export class ServerPageComponent {
 
+  @ViewChild('serverinfo') serverinfo!: ElementRef;
+  @ViewChild('maincontent') maincontent!: ElementRef;
   route_id: number | null = null;
   server = signal({} as Server);
 
@@ -78,5 +81,15 @@ export class ServerPageComponent {
 
   joinRoom(roomId: number) {
     this.socketService.joinTextRoom(roomId.toString());  // Connect to the room socket
+  }
+
+
+  // serverinfoElement = this.serverinfo.nativeElement;
+  toggleLeftSidebar(){
+    this.serverinfo.nativeElement.classList.toggle('collapsed');
+
+    if (this.serverinfo.nativeElement.classList.contains('collapsed')) {
+      this.maincontent.nativeElement.style.width = '100%';
+    }
   }
 }

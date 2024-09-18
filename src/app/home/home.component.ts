@@ -36,6 +36,8 @@ export class HomeComponent implements OnInit {
   private touchstartX = 0;
   private touchendX = 0;
 
+
+
   @HostListener('window:resize')
   onResize() {
     this.adjustSidebarVisibility();
@@ -46,6 +48,8 @@ export class HomeComponent implements OnInit {
     this.touchstartX = event.changedTouches[0].screenX;
   }
 
+
+  // TODO: FIX SWIPE GESTURE + REMAKE BUTTONS
 
 
   @HostListener('document:touchend', ['$event'])
