@@ -3,10 +3,15 @@
     <div>uniVerse</div>
     <app-left-sidebar></app-left-sidebar>
   </aside>
+
   <main class="main-content" #maincontent>
     <router-outlet></router-outlet>
   </main>
-  <aside class="sidebar right-sidebar" #sidebar>
-      <!-- Right sidebar content -->
+
+  <aside class="sidebar right-sidebar" #rightSidebar>
+    <!-- Right sidebar content -->
   </aside>
+  <button class="sidebar-toggle-btn right" (click)="toggleRightSidebar()">
+    <span class="toggle-icon">&#9654;</span>
+  </button>
 </div>

@@ -1,10 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, ElementRef, Signal, ViewChild, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map, switchMap } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
 import { AuthService } from '../services/auth.service';
 import { SocketService } from '../services/socket.service';
 import { RoomListComponent } from "./room-list/room-list.component";
+import { View } from 'electron';
+import { SharedServiceService } from '../services/shared-service.service';
 
 interface Server {
   id: number;
@@ -23,14 +25,20 @@ interface Server {
 })
 export class ServerPageComponent {
 
+  @ViewChild('serverinfo') serverinfo!: ElementRef;
+  @ViewChild('maincontent') maincontent!: ElementRef;
   route_id: number | null = null;
   server = signal({} as Server);
+  is_collapsed = this.sharedService.leftSidebar_isCollapsed;
+
+
 
   constructor(
     private route: ActivatedRoute,
     private serverService: ServersService,
     private authService: AuthService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private sharedService: SharedServiceService
   ) {
     // Listen to route changes and fetch server data
     this.route.params.pipe(
@@ -49,6 +57,10 @@ export class ServerPageComponent {
         console.error('Error fetching server:', error);  // Handle any errors
       }
     });
+
+    effect(() => {
+      this.serverinfo.nativeElement.classList.toggle('collapsed', this.sharedService.leftSidebar_isCollapsed());
+    })
   }
 
   listenForServerUpdates() {
@@ -78,5 +90,12 @@ export class ServerPageComponent {
 
   joinRoom(roomId: number) {
     this.socketService.joinTextRoom(roomId.toString());  // Connect to the room socket
+  }
+
+
+  // serverinfoElement = this.serverinfo.nativeElement;
+  toggleLeftSidebar(){
+    this.sharedService.toggleColapsed();
+    this.sharedService.leftSidebar_isCollapsed()? this.maincontent.nativeElement.style.width='100%': this.maincontent.nativeElement.style.width='calc(100% - 70px)'
   }
 }

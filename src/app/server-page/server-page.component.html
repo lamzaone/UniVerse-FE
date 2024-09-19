@@ -4,17 +4,24 @@
 
 
 <div class="container">
-  <aside class="server-info">
-    <div class="banner" style="display:flex;flex-direction: column;">
-      <h1>{{server().name}}</h1><p><b>invite: {{server().invite_code}}</b></p>
+  <div class="side-group">
+    <aside class="server-info" #serverinfo>
+      <div class="banner" style="display:flex;flex-direction: column;">
+        <h1>{{server().name}}</h1>
+        <p class="invite-code"><b>invite: {{server().invite_code}}</b></p>
 
-    </div>
-    <div class="rooms" (auxclick)="openMenu($event)">
-      <app-room-list></app-room-list>
-    </div>
+      </div>
+      <div class="rooms" (auxclick)="openMenu($event)">
+        <app-room-list></app-room-list>
+      </div>
+    </aside>
+    <button class="server-info-btn" (click)="toggleLeftSidebar()">
+      <span class="toggle-icon">&#9664;</span>
+    </button>
+  </div>
 
-  </aside>
-  <main class="main-content">
+
+  <main class="main-content" #maincontent>
     <router-outlet></router-outlet>
   </main>
 </div>

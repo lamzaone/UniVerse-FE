@@ -1,15 +1,12 @@
-:host {
-  color: var(--white);
-}
-
 .container {
   background-color: var(--grey);
   display: flex;
+  color: var(--white);
   height: 100%;
   gap: 7px;
   box-sizing: border-box;
+  position: relative;
 
-  // child elements
   .left-sidebar, .main-content, .right-sidebar {
     border-radius: 7px;
   }
@@ -24,57 +21,83 @@
   width: 70px;
   height: 100%;
   text-align: center;
-  overflow: scroll;
-  transition: width 0.3s ease;
-  position: relative;
-
-  // hide scrollbars
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.main-content {
-  width: calc(100% - 70px - 15rem);
-  background-color: var(--dark-grey);
   overflow: hidden;
   transition: width 0.3s ease;
 }
 
+.main-content {
+  width: calc( 100% - 70px - 15rem );
+  flex-grow: 1;
+  background-color: var(--dark-grey);
+  overflow: hidden;
+  transition: margin 0.3s ease;
+}
+
 .right-sidebar {
   width: 15rem;
-  background-color: red;
+  background-color: var(--dark-grey);
   transition: width 0.3s ease;
-  position: relative;
 }
 
 .sidebar-toggle-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 40px;
-  background-color: var(--white);
+  width: 1px;
+  height: 100px;
+  background-color: var(--dark-grey);
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 
   &.left {
-    right: -20px;
+    left: 73px;
+    border-radius: 0 10px 10px 0;
+    border: 1px solid var(--light-grey);
+    border-left: none;
   }
 
   &.right {
-    left: -20px;
+    right: calc(15rem + 3px);
+    border-radius: 10px 0 0 10px;
+    border: 1px solid var(--light-grey);
+    border-right: none;
+  }
+
+  .toggle-icon {
+    color: var(--light-grey);
+    font-size: 12px;
+  }
+
+  &:hover {
+    background-color: var(--light-grey);
   }
 }
 
-.sidebar.collapsed {
+.left-sidebar.collapsed {
   width: 0;
+
+  // & + .sidebar-toggle-btn.left {
+  //   left: 0;
+  // }
 }
 
-.main-content.collapsed-left {
-  width: calc(100% - 15rem);
+.right-sidebar.collapsed {
+  width: 0;
+
+  & + .sidebar-toggle-btn.right {
+    right: 0;
+  }
 }
 
-.main-content.collapsed-right {
-  width: calc(100% - 70px);
-}
+// .main-content.collapsed-left {
+//   margin-left: 20px;
+// }
+
+// .main-content.collapsed-right {
+//   margin-right: 20px;
+// }

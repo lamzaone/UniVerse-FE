@@ -1,6 +1,9 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnInit, ViewChild, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ServerPageComponent } from '../server-page/server-page.component';
+import { SharedServiceService } from '../services/shared-service.service';
+import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -8,18 +11,30 @@ import { AuthService } from '../services/auth.service';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  @ViewChild('sidebar') sidebar!: ElementRef;
+  @ViewChild('rightSidebar') rightSidebar!: ElementRef;
   @ViewChild('maincontent') maincontent!: ElementRef;
   @ViewChild('leftsidebar') leftsidebar!: ElementRef;
   @ViewChild('container') container!: ElementRef;
 
-  leftSidebarCollapsed = false;
   rightSidebarCollapsed = false;
+  leftSidebarCollapsed = false;
 
   constructor(
     private router: Router,
     private authService: AuthService,
-  ) { }
+    private sharedService: SharedServiceService
+  ) {
+    effect(() => {
+      // Listen for changes in the left sidebar collapsed state from the shared service and update the view
+      // LEFT SIDE BAR COLLAPSE
+      this.leftSidebarCollapsed = this.sharedService.leftSidebar_isCollapsed();
+      this.leftsidebar.nativeElement.classList.toggle('collapsed', this.leftSidebarCollapsed);
+      this.updateMainContentWidth();
+    })
+
+    // this.toggleRightSidebar();
+    // this.adjustSidebarVisibility();
+  }
 
   ngOnInit(): void {
     console.log('HomeComponent INIT');
@@ -46,31 +61,27 @@ export class HomeComponent implements OnInit {
     this.touchstartX = event.changedTouches[0].screenX;
   }
 
+
+  // TODO: FIX SWIPE GESTURE + REMAKE BUTTONS
   @HostListener('document:touchend', ['$event'])
   onTouchEnd(event: TouchEvent) {
     this.touchendX = event.changedTouches[0].screenX;
-    this.handleSwipe();
-  }
-
-  toggleLeftSidebar() {
-    this.leftSidebarCollapsed = !this.leftSidebarCollapsed;
-    this.leftsidebar.nativeElement.classList.toggle('collapsed', this.leftSidebarCollapsed);
-    this.updateMainContentWidth();
+    // this.handleSwipe();
   }
 
   toggleRightSidebar() {
     this.rightSidebarCollapsed = !this.rightSidebarCollapsed;
-    this.sidebar.nativeElement.classList.toggle('collapsed', this.rightSidebarCollapsed);
+    this.rightSidebar.nativeElement.classList.toggle('collapsed', this.rightSidebarCollapsed);
     this.updateMainContentWidth();
   }
 
   private adjustSidebarVisibility() {
     if (window.innerWidth >= 768) {
-      this.sidebar.nativeElement.style.display = 'block';
-      this.leftsidebar.nativeElement.style.display = 'block';
+      this.rightSidebarCollapsed = false;
+      this.rightSidebar.nativeElement.classList.remove('collapsed');
     } else {
-      this.sidebar.nativeElement.style.display = 'none';
-      this.leftsidebar.nativeElement.style.display = 'none';
+      this.rightSidebarCollapsed = true;
+      this.rightSidebar.nativeElement.classList.add('collapsed');
     }
     this.updateMainContentWidth();
   }
@@ -79,25 +90,5 @@ export class HomeComponent implements OnInit {
     const leftWidth = this.leftSidebarCollapsed ? 0 : 70;
     const rightWidth = this.rightSidebarCollapsed ? 0 : 240; // 15rem
     this.maincontent.nativeElement.style.width = `calc(100% - ${leftWidth}px - ${rightWidth}px)`;
-  }
-
-  private handleSwipe() {
-    if (this.touchendX < this.touchstartX && this.touchstartX > window.outerWidth - 200) {
-      // Swipe left
-      this.rightSidebarCollapsed = false;
-      this.sidebar.nativeElement.style.display = 'block';
-      this.sidebar.nativeElement.classList.remove('collapsed');
-    } else if (this.touchstartX > window.outerWidth - 200) {
-      // Swipe right
-      this.rightSidebarCollapsed = true;
-      this.sidebar.nativeElement.classList.add('collapsed');
-    } else if (this.touchstartX < 100 && this.touchendX < this.touchstartX) {
-      this.leftSidebarCollapsed = true;
-      this.leftsidebar.nativeElement.classList.add('collapsed');
-    } else if (this.touchstartX < 100 && this.touchendX > this.touchstartX) {
-      this.leftSidebarCollapsed = false;
-      this.leftsidebar.nativeElement.classList.remove('collapsed');
-    }
-    this.updateMainContentWidth();
   }
 }

@@ -23,6 +23,20 @@ export class UsersService {
     return this.userCache[userId] || null;
   }
 
+  getUsersInfo(userIds: string[]): Promise<UserInfo[]> {
+    return axios.post('https://coldra.in/api/users/info', { userIds:userIds }).then(response => {
+      const usersInfo = response.data;
+      for (const userInfo of usersInfo) {
+        this.userCache[userInfo.id] = userInfo; // Store user info in cache
+      }
+      return usersInfo;
+    }).catch(error => {
+      console.error('Failed to fetch users info', error);
+      throw error;
+    }
+    );
+  }
+
   // Method to get user info either from the cache or from the API
   getUserInfo(userId: string): Promise<UserInfo> {
     // Check if the user is already in the cache
