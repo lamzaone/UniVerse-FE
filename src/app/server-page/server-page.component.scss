@@ -8,6 +8,7 @@
 }
 
 .server-info, .main-content {
+  transition: 0.3s all ease;
   border-radius: 5px;
   height: 100%; /* Set to auto for proper content fitting */
   overflow: hidden;

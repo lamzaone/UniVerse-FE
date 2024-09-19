@@ -1,7 +1,9 @@
-import { Component, ElementRef, HostListener, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnInit, ViewChild, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ServerPageComponent } from '../server-page/server-page.component';
+import { SharedServiceService } from '../services/shared-service.service';
+import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -14,13 +16,25 @@ export class HomeComponent implements OnInit {
   @ViewChild('leftsidebar') leftsidebar!: ElementRef;
   @ViewChild('container') container!: ElementRef;
 
-  leftSidebarCollapsed = false;
   rightSidebarCollapsed = false;
+  leftSidebarCollapsed = false;
 
   constructor(
     private router: Router,
     private authService: AuthService,
-  ) { }
+    private sharedService: SharedServiceService
+  ) {
+    effect(() => {
+      // Listen for changes in the left sidebar collapsed state from the shared service and update the view
+      // LEFT SIDE BAR COLLAPSE
+      this.leftSidebarCollapsed = this.sharedService.leftSidebar_isCollapsed();
+      this.leftsidebar.nativeElement.classList.toggle('collapsed', this.leftSidebarCollapsed);
+      this.updateMainContentWidth();
+    })
+
+    // this.toggleRightSidebar();
+    // this.adjustSidebarVisibility();
+  }
 
   ngOnInit(): void {
     console.log('HomeComponent INIT');
@@ -37,8 +51,6 @@ export class HomeComponent implements OnInit {
   private touchstartX = 0;
   private touchendX = 0;
 
-
-
   @HostListener('window:resize')
   onResize() {
     this.adjustSidebarVisibility();
@@ -51,20 +63,10 @@ export class HomeComponent implements OnInit {
 
 
   // TODO: FIX SWIPE GESTURE + REMAKE BUTTONS
-
-
   @HostListener('document:touchend', ['$event'])
   onTouchEnd(event: TouchEvent) {
     this.touchendX = event.changedTouches[0].screenX;
     // this.handleSwipe();
-  }
-
-
-  // TODO: FIND A WAY TO MAKE THIS COLLAPSE WITH SIDE OF SERVER PAGE
-  toggleLeftSidebar() {
-    this.leftSidebarCollapsed = !this.leftSidebarCollapsed;
-    this.leftsidebar.nativeElement.classList.toggle('collapsed', this.leftSidebarCollapsed);
-    this.updateMainContentWidth();
   }
 
   toggleRightSidebar() {

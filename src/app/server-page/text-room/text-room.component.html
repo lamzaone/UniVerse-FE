@@ -1,13 +1,21 @@
 <div class="container">
   <div class="messages" #messagesContainer>
     <div class="message" *ngFor="let message of messages()">
-      <div class="user"><img class="avatar" [src]="message.user.picture">{{message.user.name}} </div>
-
-      <div class="text">{{message.message}}</div>
-
+      <div class="avatar">
+        <img [src]="message.user.picture">
+      </div>
+      <div class="msg">
+        <div class="msg-user">
+          <b>{{message.user.name}}</b> <!-- {{message.timestamp | date:'HH:mm EEE, dd MMM yyyy'}} -->
+        </div>
+        <div class="msg-text">
+          {{message.message}}
+        </div>
+      </div>
     </div>
     <div id="last-message"></div>
   </div>
+
   <div class="input">
     <textarea #messageInput [(ngModel)]="messageText"
               (keydown.enter)="sendMessage()"

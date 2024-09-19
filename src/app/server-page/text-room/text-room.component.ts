@@ -62,6 +62,9 @@ export class TextRoomComponent implements OnInit {
       for (const message of response.data) {
         const user = await this.usersService.getUserInfo(message.user_id);
         message.user = user;
+
+        // edit timestamp to readable format
+        message.timestamp = new Date(message.timestamp).toLocaleString();
       }
 
       // check if lastMessage is in view

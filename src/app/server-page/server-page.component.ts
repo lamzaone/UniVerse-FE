@@ -1,4 +1,4 @@
-import { Component, ElementRef, Signal, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, Signal, ViewChild, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map, switchMap } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
@@ -6,6 +6,7 @@ import { AuthService } from '../services/auth.service';
 import { SocketService } from '../services/socket.service';
 import { RoomListComponent } from "./room-list/room-list.component";
 import { View } from 'electron';
+import { SharedServiceService } from '../services/shared-service.service';
 
 interface Server {
   id: number;
@@ -28,12 +29,16 @@ export class ServerPageComponent {
   @ViewChild('maincontent') maincontent!: ElementRef;
   route_id: number | null = null;
   server = signal({} as Server);
+  is_collapsed = this.sharedService.leftSidebar_isCollapsed;
+
+
 
   constructor(
     private route: ActivatedRoute,
     private serverService: ServersService,
     private authService: AuthService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private sharedService: SharedServiceService
   ) {
     // Listen to route changes and fetch server data
     this.route.params.pipe(
@@ -52,6 +57,10 @@ export class ServerPageComponent {
         console.error('Error fetching server:', error);  // Handle any errors
       }
     });
+
+    effect(() => {
+      this.serverinfo.nativeElement.classList.toggle('collapsed', this.sharedService.leftSidebar_isCollapsed());
+    })
   }
 
   listenForServerUpdates() {
@@ -86,7 +95,7 @@ export class ServerPageComponent {
 
   // serverinfoElement = this.serverinfo.nativeElement;
   toggleLeftSidebar(){
-    let collapsed = this.serverinfo.nativeElement.classList.toggle('collapsed');
-    collapsed = true ? this.maincontent.nativeElement.style.width = '100%' : this.maincontent.nativeElement.style.width = 'calc(100% - 300px)';
+    this.sharedService.toggleColapsed();
+    this.sharedService.leftSidebar_isCollapsed()? this.maincontent.nativeElement.style.width='100%': this.maincontent.nativeElement.style.width='calc(100% - 70px)'
   }
 }
