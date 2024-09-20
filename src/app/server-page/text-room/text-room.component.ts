@@ -64,7 +64,13 @@ export class TextRoomComponent implements OnInit {
         message.user = user;
 
         // edit timestamp to readable format
-        message.timestamp = new Date(message.timestamp).toLocaleString();
+        const today = new Date();
+        if (new Date(message.timestamp).toDateString() === today.toDateString()) {
+          message.timestamp = 'Today at ' + (new Date(message.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
+        } else {
+          message.timestamp = new Date(message.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date(message.timestamp).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        // if message.timestamp is today, show time only and append 'Today'
       }
 
       // check if lastMessage is in view
