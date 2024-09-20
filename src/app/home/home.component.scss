@@ -43,26 +43,19 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 1px;
+  width: 10px;
   height: 100px;
-  background-color: var(--dark-grey);
+  background-color: var(--grey);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
   outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 
-  &.left {
-    left: 73px;
-    border-radius: 0 10px 10px 0;
-    border: 1px solid var(--light-grey);
-    border-left: none;
-  }
-
   &.right {
-    right: calc(15rem + 3px);
+    right: calc(15rem + 5px);
     border-radius: 10px 0 0 10px;
     border: 1px solid var(--light-grey);
     border-right: none;
@@ -74,7 +67,7 @@
   }
 
   &:hover {
-    background-color: var(--light-grey);
+    width: 9px;
   }
 }
 

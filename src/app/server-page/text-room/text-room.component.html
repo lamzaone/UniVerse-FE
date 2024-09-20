@@ -19,8 +19,9 @@
   <div class="input">
     <textarea #messageInput [(ngModel)]="messageText"
               (keydown.enter)="sendMessage()"
-              (input)="adjustHeight($event)">
+              (input)="adjustHeight($event)"
+              placeholder="Type a message...">
     </textarea>
-    <div class="private" (click)="sendMessage()">yeah</div>
+    <div class="private" (click)="sendMessage()">send</div>
   </div>
 </div>
