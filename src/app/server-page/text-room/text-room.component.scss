@@ -5,6 +5,8 @@
   height: calc(100% - 1rem);
 }
 
+
+// TODO: Fix message layout/sizing issues (uncentered)
 .messages {
   display:flex;
   flex-direction: column;
