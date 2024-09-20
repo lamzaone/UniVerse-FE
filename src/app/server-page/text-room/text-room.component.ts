@@ -129,7 +129,10 @@ export class TextRoomComponent implements OnInit {
 
   adjustHeight(event: Event) {
     const textarea = event.target as HTMLTextAreaElement;
-    textarea.style.height = 'auto';
+    const messages = document.getElementById('messages') as HTMLElement;
+
+    // TODO: style textarea
+    textarea.style.height = '1rem';
     textarea.style.height = `${textarea.scrollHeight}px`;
   }
 

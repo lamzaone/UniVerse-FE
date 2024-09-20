@@ -16,7 +16,7 @@ export class HomeComponent implements OnInit {
   @ViewChild('leftsidebar') leftsidebar!: ElementRef;
   @ViewChild('container') container!: ElementRef;
 
-  rightSidebarCollapsed = false;
+  rightSidebarCollapsed = true;
   leftSidebarCollapsed = false;
 
   constructor(
@@ -29,6 +29,14 @@ export class HomeComponent implements OnInit {
       // LEFT SIDE BAR COLLAPSE
       this.leftSidebarCollapsed = this.sharedService.leftSidebar_isCollapsed();
       this.leftsidebar.nativeElement.classList.toggle('collapsed', this.leftSidebarCollapsed);
+      this.updateMainContentWidth();
+    })
+
+    effect(()=>{
+      // Listen for changes in the right sidebar collapsed state from the shared service and update the view
+      // RIGHT SIDE BAR COLLAPSE
+      this.rightSidebarCollapsed = this.sharedService.rightSidebar_isCollapsed();
+      this.rightSidebar.nativeElement.classList.toggle('collapsed', this.rightSidebarCollapsed);
       this.updateMainContentWidth();
     })
 
@@ -70,18 +78,15 @@ export class HomeComponent implements OnInit {
   }
 
   toggleRightSidebar() {
-    this.rightSidebarCollapsed = !this.rightSidebarCollapsed;
-    this.rightSidebar.nativeElement.classList.toggle('collapsed', this.rightSidebarCollapsed);
+    this.sharedService.toggleColapsed_right();
     this.updateMainContentWidth();
   }
 
   private adjustSidebarVisibility() {
     if (window.innerWidth >= 768) {
-      this.rightSidebarCollapsed = false;
-      this.rightSidebar.nativeElement.classList.remove('collapsed');
+      this.sharedService.rightSidebar_isCollapsed.set(false);
     } else {
-      this.rightSidebarCollapsed = true;
-      this.rightSidebar.nativeElement.classList.add('collapsed');
+      this.sharedService.rightSidebar_isCollapsed.set(true);
     }
     this.updateMainContentWidth();
   }

@@ -8,10 +8,10 @@
     <router-outlet></router-outlet>
   </main>
 
-  <aside class="sidebar right-sidebar" #rightSidebar>
+  <aside class="sidebar right-sidebar collapsed" #rightSidebar>
     <!-- Right sidebar content -->
   </aside>
-  <button class="sidebar-toggle-btn right" (click)="toggleRightSidebar()">
-    <span class="toggle-icon">&#9654;</span>
-  </button>
+  <div class="sidebar-toggle-btn right" (click)="toggleRightSidebar()">
+    <span class="toggle-icon">⋮</span>
+  </div>
 </div>
