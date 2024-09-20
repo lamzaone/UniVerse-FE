@@ -46,6 +46,7 @@
   width: 10px;
   height: 100px;
   background-color: var(--grey);
+  background-color: var(--dark-grey);
   cursor: pointer;
   transition: all 0.1s ease;
   outline: none;
@@ -63,7 +64,8 @@
 
   .toggle-icon {
     color: var(--light-grey);
-    font-size: 12px;
+    font-weight: 700;
+    // font-size: 12px;
   }
 
   &:hover {
