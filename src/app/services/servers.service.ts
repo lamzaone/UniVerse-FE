@@ -6,7 +6,7 @@ import axios from 'axios';
   providedIn: 'root'
 })
 export class ServersService {
-  public currentRoom = signal<any>(null);  // Signal to hold current room data
+  // public currentRoom = signal<any>(null);  // Signal to hold current room data
   public servers = signal<any[]>([]); // Signal to hold server data
   user = this.authService.getUser();  // Fetch user from AuthService
 
@@ -18,9 +18,9 @@ export class ServersService {
     });
   }
 
-  async setCurrentRoom(room:{}) {
-    this.currentRoom.set(room);
-  }
+  // async setCurrentRoom(room:{}) {
+  //   this.currentRoom.set(room);
+  // }
 
   // Create a server and update servers signal
   async createServer(serverName: string, description: string) {
@@ -106,4 +106,25 @@ export class ServersService {
       throw error;
     }
   }
+
+
+
+  async getAccessLevel(serverId: number):Promise<number> {
+    try {
+      const response = await axios.post('https://coldra.in/api/server/access', {
+        token: this.authService.userData().token,
+        server_id: serverId
+      });
+
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        throw new Error('Error getting access level');
+      }
+    } catch (error) {
+      console.error('Error getting access level:', error);
+      throw error;
+    }
+  }
+
 }

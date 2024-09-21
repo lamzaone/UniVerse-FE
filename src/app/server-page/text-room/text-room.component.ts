@@ -42,7 +42,7 @@ export class TextRoomComponent implements OnInit {
     });
 
     // Initialize the room signal
-    this.room = this.serversService.currentRoom;
+    // this.room = this.serversService.currentRoom;
     // Fetch messages
   }
 
