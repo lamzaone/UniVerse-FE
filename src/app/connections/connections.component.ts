@@ -14,7 +14,7 @@ import { SocketService } from '../services/socket.service';
 export class ConnectionsComponent {
   userList = signal([] as any[]);
   currentServer = signal<any>(null);
-  onlineUsers:string[] = [];
+  onlineUsers= signal([] as any[]);
 
   constructor(
     private userService: UsersService,
@@ -32,25 +32,34 @@ export class ConnectionsComponent {
         }));
         this.userList.set(users);
         await this.userService.getOnlineUsers(Number(serverId)).then((users) => {
-          this.onlineUsers = users;
+          this.onlineUsers.set(users);
         });
         console.log(this.userList());
       }
     });
 
-    // listenToSocket();
+    this.listenToSocket();
   }
 
   listenToSocket() {
     this.socketService.onServerMessage((data: any) => {
-      if (data === 'users_updated') {
-        // this.updateUsers();
+      console.log(data);
+      const [userId, status] = data.split(': ');
+      if (status === 'online') {
+        this.onlineUsers.set([...this.onlineUsers(), Number(userId)]);
+      } else if (status === 'offline') {
+        this.onlineUsers.set(this.onlineUsers().filter((id) => id !== Number(userId)));
       }
+      console.log(this.onlineUsers());
     });
   }
 
 
   isOnline(userId: string): boolean {
-    return this.onlineUsers.includes(userId);
+    if (this.onlineUsers().includes(userId)) {
+      return true;
+    } else {
+      return false;
+    }
   };
 }
