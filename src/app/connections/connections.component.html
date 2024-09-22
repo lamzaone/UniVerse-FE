@@ -5,7 +5,11 @@
     </div>
     <div class = "user-info">
       <div class = "user-info-name">
-        {{user.name}}
+        <p>{{user.name}}</p>
+      </div>
+      <div *ngIf="isOnline(user.id)" class = "user-info-status">
+        <p>{{user.status}}</p>
+        <p>online</p>
       </div>
     </div>
   </div>

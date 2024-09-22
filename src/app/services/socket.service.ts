@@ -59,6 +59,7 @@ export class SocketService {
 
 
 
+
   joinServer(serverId: string): void {
     this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);
   }

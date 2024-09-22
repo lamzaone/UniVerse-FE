@@ -67,6 +67,7 @@
 
   .rightsidebar{
     position:relative;
+    overflow: hidden;
   }
 
   .toggle-icon {
@@ -86,6 +87,8 @@
 
 .right-sidebar.collapsed {
   width: 0;
+  position: relative;
+  right: -10px;
 
   & + .sidebar-toggle-btn.right {
     right: 0;

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, effect, signal } from '@angular/core';
 import { ServersService } from '../services/servers.service';
 import { UsersService } from '../services/users.service';
+import { SocketService } from '../services/socket.service';
 
 @Component({
   selector: 'app-connections',
@@ -13,10 +14,12 @@ import { UsersService } from '../services/users.service';
 export class ConnectionsComponent {
   userList = signal([] as any[]);
   currentServer = signal<any>(null);
+  onlineUsers:string[] = [];
 
   constructor(
     private userService: UsersService,
-    private serverService: ServersService
+    private serverService: ServersService,
+    private socketService: SocketService
   ) {
     effect(async () => {
       const serverId = this.serverService.currentServer()?.id;
@@ -28,8 +31,26 @@ export class ConnectionsComponent {
           return await this.userService.getUserInfo(userId);
         }));
         this.userList.set(users);
+        await this.userService.getOnlineUsers(Number(serverId)).then((users) => {
+          this.onlineUsers = users;
+        });
         console.log(this.userList());
       }
     });
+
+    // listenToSocket();
   }
+
+  listenToSocket() {
+    this.socketService.onServerMessage((data: any) => {
+      if (data === 'users_updated') {
+        // this.updateUsers();
+      }
+    });
+  }
+
+
+  isOnline(userId: string): boolean {
+    return this.onlineUsers.includes(userId);
+  };
 }
