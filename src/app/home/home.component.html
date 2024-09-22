@@ -7,11 +7,12 @@
   <main class="main-content" #maincontent>
     <router-outlet></router-outlet>
   </main>
-
-  <aside class="sidebar right-sidebar collapsed" #rightSidebar>
-    <!-- Right sidebar content -->
-  </aside>
-  <div class="sidebar-toggle-btn right" (click)="toggleRightSidebar()">
-    <span class="toggle-icon">⋮</span>
-  </div>
+  <div class="rightsidebar">
+    <div class="sidebar right-sidebar collapsed" #rightSidebar>
+      <!-- Right sidebar content -->
+    </div>
+    <div class="sidebar-toggle-btn right" (click)="toggleRightSidebar()">
+      <span class="toggle-icon">⋮</span>
+    </div>
+</div>
 </div>
