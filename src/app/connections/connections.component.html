@@ -1,0 +1,12 @@
+<div class="container">
+  <div class="user" *ngFor="let user of userList()">
+    <div class = "user-avatar">
+      <img [src]="user.picture" alt="user avatar">
+    </div>
+    <div class = "user-info">
+      <div class = "user-info-name">
+        {{user.name}}
+      </div>
+    </div>
+  </div>
+</div>

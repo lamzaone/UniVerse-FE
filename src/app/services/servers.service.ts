@@ -8,6 +8,7 @@ import axios from 'axios';
 export class ServersService {
   // public currentRoom = signal<any>(null);  // Signal to hold current room data
   public servers = signal<any[]>([]); // Signal to hold server data
+  public currentServer = signal<any>(null);
   user = this.authService.getUser();  // Fetch user from AuthService
 
   constructor(private authService: AuthService) {
@@ -21,6 +22,11 @@ export class ServersService {
   // async setCurrentRoom(room:{}) {
   //   this.currentRoom.set(room);
   // }
+
+  async setCurrentServer(server: any) {
+    this.currentServer.set(server);
+  }
+
 
   // Create a server and update servers signal
   async createServer(serverName: string, description: string) {
