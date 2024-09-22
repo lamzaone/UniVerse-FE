@@ -21,19 +21,28 @@ export class RoomListComponent {
   uncategorizedRooms: any[] = [];
   route_id: number | null = null;
 
-  constructor(private serversService: ServersService, private route: ActivatedRoute, private socketService: SocketService) {
+  roomAccessLevel:number = 0;
+
+  constructor(private serversService: ServersService,
+    private route: ActivatedRoute,
+    private socketService: SocketService,
+    ) {
     // Fetch categories and rooms based on the route parameter
     this.route.params.subscribe(params => {
       this.route_id = +params.id;
       this.fetchCategoriesAndRooms(this.route_id.toString());
+      this.serversService.getAccessLevel(this.route_id).then((res) => {
+        this.roomAccessLevel = res;
+        console.log(res);
+      });
     });
 
     this.listenToServerUpdates();
   }
 
-  selectRoom(room: {}) {
-    this.serversService.setCurrentRoom(room);
-  }
+  // selectRoom(room: {}) {
+  //   this.serversService.setCurrentRoom(room);
+  // }
 
 
   listenToServerUpdates() {

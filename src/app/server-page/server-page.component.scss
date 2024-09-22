@@ -69,15 +69,16 @@
     border-left: none;
     position:absolute;
     top: 50%;
-    left: calc(14rem + 69px + 1.4rem);
-    transform: translateX(14rem);
+    left: calc(14rem + 68px + 1.4rem);
+    // transform: translateX(14rem);
+    transition: all 0.3s ease;
     transform: translateY(-50%);
     height: 100px;
     width: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 3;
 
     &:hover{
       background-color: var(--grey);

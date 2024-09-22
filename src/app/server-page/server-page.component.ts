@@ -50,6 +50,7 @@ export class ServerPageComponent {
     ).subscribe({
       next: server => {
         this.server.set(server);  // Update the server details
+        this.serverService.setCurrentServer(server);
         this.socketService.joinServer(this.route_id!.toString());  // Connect to the server socket
         this.listenForServerUpdates();  // Start listening for server updates
       },

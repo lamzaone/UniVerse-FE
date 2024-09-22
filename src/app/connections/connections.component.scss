@@ -1,0 +1,33 @@
+.container{
+  width: 15rem;
+  background-color: var(--dark-grey);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  height: 100%;
+  position: relative;
+  color: var(--white);
+  box-sizing: border-box;
+  border-radius: 10px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  z-index: 4;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+}
+
+
+.user{
+  display:flex;
+  flex-direction: row;
+  gap: 10px;
+
+  &-avatar img{
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: var(--grey);
+  }
+}

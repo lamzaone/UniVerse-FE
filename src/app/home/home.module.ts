@@ -7,10 +7,11 @@ import { HomeRoutingModule } from './home-routing.module';
 import { HomeComponent } from './home.component';
 import { SharedModule } from '../shared/shared.module';
 import { LeftSidebarComponent } from "./left-sidebar/left-sidebar.component";
+import { ConnectionsComponent } from "../connections/connections.component";
 
 @NgModule({
   declarations: [HomeComponent],
-  imports: [CommonModule, SharedModule, HomeRoutingModule, LeftSidebarComponent]
+  imports: [CommonModule, SharedModule, HomeRoutingModule, LeftSidebarComponent, ConnectionsComponent]
 })
 export class HomeModule {
 

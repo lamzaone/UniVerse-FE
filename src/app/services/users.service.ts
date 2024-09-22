@@ -23,8 +23,8 @@ export class UsersService {
     return this.userCache[userId] || null;
   }
 
-  getUsersInfo(userIds: string[]): Promise<UserInfo[]> {
-    return axios.post('https://coldra.in/api/users/info', { userIds:userIds }).then(response => {
+  async getUsersInfo(userIds: string[]): Promise<UserInfo[]> {
+    return await axios.post('https://coldra.in/api/users/info', { userIds:userIds }).then(response => {
       const usersInfo = response.data;
       for (const userInfo of usersInfo) {
         this.userCache[userInfo.id] = userInfo; // Store user info in cache
@@ -38,7 +38,7 @@ export class UsersService {
   }
 
   // Method to get user info either from the cache or from the API
-  getUserInfo(userId: string): Promise<UserInfo> {
+  async getUserInfo(userId: string): Promise<UserInfo> {
     // Check if the user is already in the cache
     const cachedUser = this.getUserFromCache(userId);
     if (cachedUser) {
@@ -46,7 +46,7 @@ export class UsersService {
     }
 
     // If the user is not in the cache, fetch from the API
-    return axios.get(`https://coldra.in/api/user/${userId}`).then(response => {
+    return await axios.get(`https://coldra.in/api/user/${userId}`).then(response => {
       const userInfo = response.data;
       this.userCache[userId] = userInfo; // Store user info in cache
       return userInfo;
@@ -65,4 +65,27 @@ export class UsersService {
   clearAllCache(): void {
     this.userCache = {};
   }
+
+  async getOnlineUsers(server_id: number = 0) : Promise<string[]> {
+
+    return await axios.get(`https://coldra.in/api/server/${server_id}/online`).then(response => {
+      return response.data;
+    }).catch(error => {
+      console.error('Failed to fetch online users', error);
+      throw error;
+    });
+  }
+
+  async getAllUsers(server_id: number = 0) : Promise<string[]> {
+
+    return await axios.get(`https://coldra.in/api/server/${server_id}/users`).then(response => {
+      return response.data;
+    }
+    ).catch(error => {
+      console.error('Failed to fetch all users', error);
+      throw error;
+    });
+  }
+
+
 }
