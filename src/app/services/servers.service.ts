@@ -19,6 +19,9 @@ export class ServersService {
     });
   }
 
+
+  // TODO: Add a signal to hold the current server data
+
   // async setCurrentRoom(room:{}) {
   //   this.currentRoom.set(room);
   // }

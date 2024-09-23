@@ -6,7 +6,7 @@
 }
 
 
-// TODO: Fix message layout/sizing issues (uncentered)
+// TODO: FIX MESSAGE FORMATTING PROBLEM
 .messages {
   display:flex;
   flex-direction: column;
@@ -33,17 +33,15 @@
   }
 }
 
-// FIXME: fix message layout issues on long messages
-// also messages add random new line
+
 .message{
-  top:1rem;
   gap: 0.5rem;
   display: flex;
   flex-direction: row;
   background-color: var(--dark-grey);
 
 
-  padding: 10px 10px 0 10px;
+  padding: 10px 10px 10px 10px;
   border-radius: 10px;
 
   & .avatar img{
@@ -57,32 +55,34 @@
 .msg{
   display: flex;
   flex-direction: column;
-
+  position: relative;
+  width: calc(100% - 4rem);
   &-user{
     display:flex;
     flex-direction: row;
     gap: 0.5rem;
     position:relative;
-    top: -1rem;
 
     &-name{
+      margin: 0;
       color: var(--white);
       font-size: 1rem;
     }
 
     &-time{
+      margin: 0;
       color: var(--white);
-      font-size: 0.9rem;
-      opacity: 80%;
+      font-size: 0.8rem;
+      margin-top: 0.1rem;
+      opacity: 70%;
     }
   }
 
   &-text{
-    position: relative;
-    top: -1.6rem;
+    margin-top: 0.3rem;
     color: var(--white);
     font-size: 1rem;
-    max-width: 95%;
+    max-width: 100%;
     word-wrap: break-word;
     white-space: normal;
   }
