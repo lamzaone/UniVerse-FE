@@ -1,11 +1,13 @@
 .container{
   width: 15rem;
-  background-color: var(--dark-grey);
+  // background-color: var(--dark-grey);
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 2rem;
   height: 100%;
-  position: relative;
+  width: 100%;
+  background-color: var(--grey);
+  outline: var(--light-grey) solid 1px;
   color: var(--white);
   box-sizing: border-box;
   border-radius: 10px;
@@ -18,16 +20,76 @@
   }
 }
 
-
-.user{
-  display:flex;
-  flex-direction: row;
+.status-online{
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 
-  &-avatar img{
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background-color: var(--grey);
+  & h2{
+    margin: 2px;
   }
 }
+.status-offline{
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+
+  & h2{
+    margin: 2px;
+  }
+  & .user{
+    opacity: 70%;
+  }
+}
+
+.user{
+  width: 13.7rem;
+  background-color: var(--dark-grey);
+  border-radius: 7px;
+  display:flex;
+  align-items: center;
+  flex-direction: row;
+  height: 4rem;
+  padding: 0px 7px;
+  gap: 10px;
+
+  &-avatar {
+    display: flex;
+    position: relative;
+
+    & img{
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-left: 0.3rem;
+    border-radius: 50%;
+    background-color: var(--grey);
+    }
+
+    & .status-dot{
+      display: flex;
+      position: absolute;
+      bottom:-0.1rem;
+      right: -0.1rem;
+      background-color: var(--green);
+      width: 0.6rem;
+      height: 0.6rem;
+      border: 2px solid var(--dark-grey);
+      border-radius: 50%;
+    }
+
+  }
+
+  &-info{
+    position: relative;
+    line-height: 0.1rem;
+    top: -0.1rem;
+
+    &-status{
+      font-size: 0.8rem;
+    }
+  }
+}
+

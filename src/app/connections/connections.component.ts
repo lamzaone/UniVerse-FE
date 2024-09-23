@@ -9,12 +9,12 @@ import { SocketService } from '../services/socket.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './connections.component.html',
-  styleUrls: ['./connections.component.scss'] // Fixed from styleUrl to styleUrls
+  styleUrls: ['./connections.component.scss']
 })
 export class ConnectionsComponent {
   userList = signal([] as any[]);
-  currentServer = signal<any>(null);
-  onlineUsers= signal([] as any[]);
+  onlineUsers = signal([] as any[]);
+  offlineUsers = signal([] as any[]);
 
   constructor(
     private userService: UsersService,
@@ -27,13 +27,18 @@ export class ConnectionsComponent {
         console.log("server id is " + serverId);
         // Get all users in the server
         const userIds = await this.userService.getAllUsers(Number(serverId));
+        const onlineUserIds = await this.userService.getOnlineUsers(Number(serverId));
         const users = await Promise.all(userIds.map(async (userId: any) => {
-          return await this.userService.getUserInfo(userId);
+          const userInfo = await this.userService.getUserInfo(userId);
+          if(userInfo.name.split(' ').length >= 3){
+            userInfo.name = userInfo.name.split(' ')[0] + ' ' + userInfo.name.split(' ')[1];
+          }
+          return { ...userInfo, isOnline: onlineUserIds.includes(userId) };
         }));
         this.userList.set(users);
-        await this.userService.getOnlineUsers(Number(serverId)).then((users) => {
-          this.onlineUsers.set(users);
-        });
+        this.updateUserStatus();
+        console.log(onlineUserIds);
+        console.log(this.onlineUsers());
         console.log(this.userList());
       }
     });
@@ -45,21 +50,22 @@ export class ConnectionsComponent {
     this.socketService.onServerMessage((data: any) => {
       console.log(data);
       const [userId, status] = data.split(': ');
-      if (status === 'online') {
-        this.onlineUsers.set([...this.onlineUsers(), Number(userId)]);
-      } else if (status === 'offline') {
-        this.onlineUsers.set(this.onlineUsers().filter((id) => id !== Number(userId)));
-      }
-      console.log(this.onlineUsers());
+      this.userList.update((list) => {
+        return list.map(user => {
+          if (user.id === Number(userId)) {
+            user.isOnline = status === 'online';
+          }
+          return user;
+        });
+      });
+      this.updateUserStatus();
+      console.log(this.userList());
     });
   }
 
-
-  isOnline(userId: string): boolean {
-    if (this.onlineUsers().includes(userId)) {
-      return true;
-    } else {
-      return false;
-    }
-  };
+  updateUserStatus() {
+    const users = this.userList();
+    this.onlineUsers.set(users.filter(user => user.isOnline));
+    this.offlineUsers.set(users.filter(user => !user.isOnline));
+  }
 }
