@@ -1,11 +1,12 @@
 .container{
   width: 15rem;
   // background-color: var(--dark-grey);
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2rem;
   height: 100%;
-  width: 100%;
+  width: 15rem;
   background-color: var(--grey);
   outline: var(--light-grey) solid 1px;
   color: var(--white);
@@ -13,7 +14,7 @@
   border-radius: 10px;
   overflow-y: scroll;
   overflow-x: hidden;
-  z-index: 4;
+  z-index: 5;
 
   &::-webkit-scrollbar {
     width: 5px;
@@ -46,15 +47,20 @@
 }
 
 .user{
-  width: 13.7rem;
+  width: 96%;
   background-color: var(--dark-grey);
-  border-radius: 7px;
+  border-radius: 10px;
   display:flex;
   align-items: center;
   flex-direction: row;
   height: 4rem;
   padding: 0px 7px;
   gap: 10px;
+  transition: 0.1s all ease-in-out;
+
+  &:hover{
+    transform: scale(1.02);
+  }
 
   &-avatar {
     display: flex;
