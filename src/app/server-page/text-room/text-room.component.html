@@ -1,23 +1,23 @@
 <div class="container">
   <div class="messages" #messagesContainer>
-    <div class="message" *ngFor="let message of messages()">
+    <div class="message" *ngFor="let messageGroup of messages()">
+      <!-- Display the user info for the message group -->
       <div class="avatar">
-        <img [src]="message.user.picture">
+        <img [src]="messageGroup[0].user.picture">
       </div>
       <div class="msg">
-
         <div class="msg-user">
           <p class="msg-user-name">
-            <b>{{message.user.name}}</b>
+            <b>{{messageGroup[0].user.name}}</b>
           </p>
 
           <p class="msg-user-time">
-            {{message.timestamp}}
+            {{messageGroup[0].timestamp}}
           </p>
         </div>
-
-        <div class="msg-text">
-          {{message.message}}
+        <!-- Render each message in the group -->
+        <div class="msg-text" *ngFor="let message of messageGroup">
+          <p class="msg-text-message">{{message.message}}</p>
         </div>
 
       </div>

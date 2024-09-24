@@ -31,6 +31,8 @@ export class RoomListComponent {
     this.route.params.subscribe(params => {
       this.route_id = +params.id;
       this.fetchCategoriesAndRooms(this.route_id.toString());
+
+      // TODO: rework getAccessLevel to be stored in the currentServer signal
       this.serversService.getAccessLevel(this.route_id).then((res) => {
         this.roomAccessLevel = res;
         console.log(res);

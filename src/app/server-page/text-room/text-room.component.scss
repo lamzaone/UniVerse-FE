@@ -79,12 +79,18 @@
   }
 
   &-text{
-    margin-top: 0.3rem;
-    color: var(--white);
-    font-size: 1rem;
-    max-width: 100%;
-    word-wrap: break-word;
-    white-space: normal;
+    display:flex;
+    grid-gap: 1rem;
+
+    &-message{
+      margin: 0.4rem 0 0 0;
+      color: var(--white);
+      font-size: 1rem;
+      max-width: 100%;
+      word-wrap: break-word;
+      white-space: normal;
+
+    }
   }
 }
 
