@@ -29,7 +29,7 @@ export class ConnectionsComponent {
 
     // Wait for changes in the currentServer signal and fetch users on server change
     effect(async () => {
-      const serverId = this.serverService.currentServer()!.id;
+      const serverId = this.serverService.currentServer()?.id;
       if (serverId) {
         console.log("server id is " + serverId);
         // Get all users in the server
