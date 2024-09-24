@@ -17,7 +17,10 @@
         </div>
         <!-- Render each message in the group -->
         <div class="msg-text" *ngFor="let message of messageGroup">
-          <p class="msg-text-message">{{message.message}}</p>
+          <div class="msg-text-container">
+            <p class="msg-text-message">{{message.message}}</p>
+            <p *ngIf="!(message === messageGroup[0])" class="msg-text-time">{{message.timestamp}}</p>
+          </div>
         </div>
 
       </div>

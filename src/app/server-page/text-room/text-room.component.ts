@@ -80,7 +80,7 @@ export class TextRoomComponent implements OnInit {
 
         if (nextMessage) {  // If there's a next message after the current one
           const nextMessageTime = new Date(nextMessage.timestamp).getTime();
-          const isWithinTimeLimit = nextMessageTime - messageTime < 60000;     // Check if the next message was sent within 1 minutes
+          const isWithinTimeLimit = nextMessageTime - messageTime < 180000;     // Check if the next message was sent within 1 minutes
 
           if (nextMessage.user_id === message.user_id && isWithinTimeLimit) {
             if (messageGroup.length === 0) { // If the group is empty, push the current message

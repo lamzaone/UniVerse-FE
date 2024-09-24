@@ -6,7 +6,7 @@
       [cdkDropListData]="category.rooms"
       [cdkDropListConnectedTo]="connectedLists()"
       (cdkDropListDropped)="drop($event, category.id)">
-  <div class="category">
+  <div class="category" *ngIf="category.rooms.length > 0 || category.name!='Uncategorized'">
     <h3>{{ category.name }}</h3>
   </div>
     <div class="rooms">

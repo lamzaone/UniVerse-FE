@@ -82,15 +82,39 @@
     display:flex;
     grid-gap: 1rem;
 
+    &-container{
+      width: 100%;
+      display: flex;
+      position: relative;
+    }
     &-message{
       margin: 0.4rem 0 0 0;
       color: var(--white);
       font-size: 1rem;
-      max-width: 100%;
+      width: calc(100% - 6.5rem);
       word-wrap: break-word;
       white-space: normal;
 
+      &:hover{
+        &+.msg-text-time{
+          opacity: 100%;
+        }
+      }
+
     }
+    &-time{
+      transition: 0.1s all ease-in-out;
+      display: flex;
+      opacity: 0%;
+      right: 0;
+      top: -0.5rem;
+      position: absolute;
+      color: #707070;
+      font-size: 0.7rem;
+      margin:0;
+      margin-top: 0.1rem;
+    }
+
   }
 }
 
