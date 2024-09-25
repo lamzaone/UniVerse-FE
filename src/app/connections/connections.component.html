@@ -1,14 +1,54 @@
 <div class="container">
-  <div class="user" *ngFor="let user of userList()">
-    <div class="user-avatar">
-      <img [src]="user.picture" alt="user avatar">
-    </div>
-    <div class="user-info">
-      <div class="user-info-name">
-        <p>{{user.name}}</p>
+  <div class="current-user">
+    <div class="user">
+      <div class="user-avatar">
+        <img [src]="currentUser().picture" alt="user avatar">
+        <!-- TODO: make status dot reflect status -->
+        <div class = "status-dot"></div>
       </div>
-      <div class="user-info-status">
-        <p>{{isOnline(user.id) ? 'Online' : 'Offline'}}</p>
+      <div class="user-info">
+        <div class="user-info-name">
+          <p>{{currentUser().name}}</p>
+        </div>
+        <div class="user-info-status">
+          <p>Online</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-online" *ngIf="onlineUsers().length > 0">
+    <h2>Online</h2>
+    <div class="user" *ngFor="let user of onlineUsers()">
+      <div class="user-avatar">
+        <img [src]="user.picture" alt="user avatar">
+        <div class = "status-dot"></div>
+      </div>
+      <div class="user-info">
+        <div class="user-info-name">
+          <p>{{user.name}}</p>
+        </div>
+        <div class="user-info-status">
+          <p>Online</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-offline" *ngIf="offlineUsers().length > 0">
+    <h2>Offline</h2>
+    <div class="user" *ngFor="let user of offlineUsers()">
+      <div class="user-avatar">
+        <img [src]="user.picture" alt="user avatar">
+        <div class = "status-dot" [ngStyle]="{'background-color': '#606060'}"></div>
+      </div>
+      <div class="user-info">
+        <div class="user-info-name">
+          <p>{{user.name}}</p>
+        </div>
+        <!-- <div class="user-info-status">
+          <p>Offline</p>
+        </div> -->
       </div>
     </div>
   </div>

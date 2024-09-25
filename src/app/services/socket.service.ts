@@ -42,6 +42,8 @@ export class SocketService {
     }
   }
 
+
+
   onServerMessage(callback: (data: any) => void) {
     if (!this.listeners['server']) this.listeners['server'] = [];
     this.listeners['server'].push(callback);
@@ -57,15 +59,35 @@ export class SocketService {
     this.listeners['main'].push(callback);
   }
 
-
-
-
   joinServer(serverId: string): void {
-    this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);
+    // Check if the main socket connection is opened, if not, re-open it
+    if (this.sockets['main']){
+      if (this.sockets['main']!.readyState > 1){
+        this.sockets['main']!.close();
+        this.connectToSocket('main', `wss://coldra.in/api/ws/main/${this.userId}`);
+        this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);
+      }
+      this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);
+    }else{
+      this.connectToSocket('server', `wss://coldra.in/api/ws/server/${serverId}/${this.userId}`);
+    }
+
+
+
   }
 
   joinTextRoom(roomId: string): void {
-    this.connectToSocket('textRoom', `wss://coldra.in/api/ws/textroom/${roomId}/${this.userId}`);
+    if (this.sockets['main']){
+      if (this.sockets['main']!.readyState > 2){
+        this.sockets['main']!.close();
+        this.connectToSocket('main', `wss://coldra.in/api/ws/main/${this.userId}`);
+        this.connectToSocket('textRoom', `wss://coldra.in/api/ws/textroom/${roomId}/${this.userId}`);
+      }
+      this.connectToSocket('textRoom', `wss://coldra.in/api/ws/textroom/${roomId}/${this.userId}`);
+    }else{
+      this.connectToSocket('textRoom', `wss://coldra.in/api/ws/textroom/${roomId}/${this.userId}`);
+    }
+
   }
 
   sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'textRoom' = 'textRoom'): void {

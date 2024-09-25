@@ -38,7 +38,7 @@
   display: flex;
   height: 100%;
   width: 15rem;
-  background-color: var(--dark-grey);
+  // background-color: var(--dark-grey);
   transition: width 0.3s ease;
 }
 
@@ -49,14 +49,14 @@
   transform: translateY(-50%);
   width: 10px;
   height: 100px;
-  background-color: var(--dark-grey);
+  background-color: var(--grey);
   cursor: pointer;
   transition: all 0.3s ease;
   outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3;
+  z-index: 5;
 
   &.right {
     right: calc(15rem + 7px);

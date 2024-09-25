@@ -17,7 +17,7 @@ const routes: Routes = [
       {
         path: '',
         // redirectTo: 'dashboard',
-        redirectTo: '/server/1/text/18',
+        redirectTo: '/server/1/text/25',
         pathMatch: 'full'
       },
       {

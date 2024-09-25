@@ -94,6 +94,8 @@ export class HomeComponent implements OnInit {
   private updateMainContentWidth() {
     const leftWidth = this.leftSidebarCollapsed ? 0 : 70;
     const rightWidth = this.rightSidebarCollapsed ? 0 : 240; // 15rem
-    this.maincontent.nativeElement.style.width = `calc(100% - ${leftWidth}px - ${rightWidth}px)`;
+    try{
+      this.maincontent.nativeElement.style.width = `calc(100% - ${leftWidth}px - ${rightWidth}px)`;
+    }catch(e){}
   }
 }

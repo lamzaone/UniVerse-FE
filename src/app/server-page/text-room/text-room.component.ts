@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { UsersService } from '../../services/users.service';
 import { FormsModule, NgModel } from '@angular/forms';
+import { skip } from 'node:test';
 
 @Component({
   selector: 'app-text-room',
@@ -43,7 +44,6 @@ export class TextRoomComponent implements OnInit {
 
     // Initialize the room signal
     // this.room = this.serversService.currentRoom;
-    // Fetch messages
   }
 
   async fetchMessages() {
@@ -56,39 +56,72 @@ export class TextRoomComponent implements OnInit {
         }
       );
 
-      // TODO: Edit to take all the user IDs and fetch them in one request
-      // fetch all IDs and send to API to get all user info (only save the ids once) in a []
+      const groupedMessages = []; // Array of message groups
+      let messageGroup = [];      // Current group of messages
 
-      for (const message of response.data) {
+      for (let i = 0; i < response.data.length; i++) {
+        const message = response.data[i];
         const user = await this.usersService.getUserInfo(message.user_id);
-        message.user = user;
-
-        // TODO: Append messages sent within 10 minutes from eachoter (from the same user)
+        message.user = user;      // Add user info to the message for picture etc.
 
 
-        // Format the timestamp
+        // If there's a next message, check if it's from the same user and within 2 minutes
+        const nextMessage = response.data[i + 1];
+        const messageTime = new Date(message.timestamp).getTime();
+
+        // Format the timestamp to be more readable
         const today = new Date();
         if (new Date(message.timestamp).toDateString() === today.toDateString()) {
+          // If the message was sent today, only show the time
           message.timestamp = 'Today at ' + (new Date(message.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
-        } else {
+        } else { // If the message was sent on a different day, show the date and time
           message.timestamp = new Date(message.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date(message.timestamp).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric' });
         }
 
+        if (nextMessage) {  // If there's a next message after the current one
+          const nextMessageTime = new Date(nextMessage.timestamp).getTime();
+          const isWithinTimeLimit = nextMessageTime - messageTime < 180000;     // Check if the next message was sent within 1 minutes
+
+          if (nextMessage.user_id === message.user_id && isWithinTimeLimit) {
+            if (messageGroup.length === 0) { // If the group is empty, push the current message
+              messageGroup.push(message);
+            }
+            messageGroup.push(nextMessage);  // Push the next message to the group
+            } else {
+            // If the group has multiple messages, push it to the groupedMessages array
+            if (messageGroup.length > 0) {
+              groupedMessages.push(messageGroup);
+              messageGroup = [];
+            } else {
+              // Push individual message (not part of a group)
+              groupedMessages.push([message]);
+            }
+          }
+        } else {
+          // Last message (no next message to compare), push it either as a group or single message
+          if (messageGroup.length > 0) {
+            groupedMessages.push(messageGroup);
+            messageGroup = [];
+          } else {
+            groupedMessages.push([message]);
+          }
+        }
       }
 
-      // check if lastMessage is in view
+      // Update the messages signal with grouped messages
+      this.messages.set(groupedMessages);
+
+      // Scroll to the last message if necessary
       const lastMessage = document.getElementById('last-message');
       const isLastMessageInView = lastMessage ? lastMessage.getBoundingClientRect().top <= window.innerHeight : false;
 
-      this.messages.set(response.data);
-
       if (isLastMessageInView) this.scrollToLast();
-      // scroll to ngModel "last-message" to show the latest message
 
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
   }
+
 
 
   listenForMessages() {
