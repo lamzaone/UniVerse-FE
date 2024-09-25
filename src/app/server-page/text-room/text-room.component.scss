@@ -93,7 +93,7 @@
       font-size: 1rem;
       width: calc(100% - 6.5rem);
       word-wrap: break-word;
-      white-space: normal;
+      white-space: pre-wrap;
 
       &:hover{
         &+.msg-text-time{

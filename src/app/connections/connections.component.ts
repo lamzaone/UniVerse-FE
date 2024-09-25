@@ -84,11 +84,10 @@ export class ConnectionsComponent {
   }
 
   updateUserStatus() {
-    const users = this.userList();      // Get the current user list (after being updated or just fetched)
-    this.onlineUsers.set(
-      users.filter(user => user.isOnline)
-      .filter(user => user.id !== this.currentUser().id)  // Exclude current user
-      );
-    this.offlineUsers.set(users.filter(user => !user.isOnline));
+  const users = this.userList(); // Get the current user list (after being updated or just fetched)
+  this.onlineUsers.set(users.filter(user => user.isOnline)
+    .filter(user => user.id !== this.currentUser().id)); // Exclude current user;
+  this.offlineUsers.set(users.filter(user => !user.isOnline)
+    .filter(user => user.id !== this.currentUser().id)); // Exclude current user;
   }
 }
