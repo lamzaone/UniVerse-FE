@@ -23,6 +23,8 @@ export class TextRoomComponent implements OnInit {
   messages = signal<any>(null);
   messageText = '';
 
+
+  // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
     private socketService: SocketService,
     private route: ActivatedRoute,
