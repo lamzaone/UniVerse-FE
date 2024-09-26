@@ -54,6 +54,7 @@ export class ServersService {
 
   // Fetch servers for the user and update servers signal
   async fetchServers() {
+    if (!this.authService.isLoggedIn()) return;
     try {
       const response = await axios.get('https://coldra.in/api/server/user/' + this.user.id);
       if (response.status === 200) {
@@ -68,21 +69,23 @@ export class ServersService {
 
   // Join a server and update servers signal
   async joinServer(serverCode: string) {
-    try {
-      const response = await axios.post('https://coldra.in/api/server/join', {
-        invite_code: serverCode,
-        user_id: this.user.id
-      });
+    if (this.authService.isLoggedIn()) {
+      try {
+        const response = await axios.post('https://coldra.in/api/server/join', {
+          invite_code: serverCode,
+          user_id: this.user.id
+        });
 
-      if (response.status === 200) {
-        this.fetchServers();  // Refresh server list
-        return response.data;
-      } else {
-        throw new Error('Joining server failed');
+        if (response.status === 200) {
+          this.fetchServers();  // Refresh server list
+          return response.data;
+        } else {
+          throw new Error('Joining server failed');
+        }
+      } catch (error) {
+        console.error('Error joining server with code:', serverCode);
+        throw error;
       }
-    } catch (error) {
-      console.error('Error joining server with code:', serverCode);
-      throw error;
     }
   }
 
@@ -121,7 +124,7 @@ export class ServersService {
   async getAccessLevel(serverId: number):Promise<number> {
     try {
       const response = await axios.post('https://coldra.in/api/server/access', {
-        token: this.authService.userData().token,
+        token: this.authService.getUser().token,
         server_id: serverId
       });
 

@@ -54,7 +54,7 @@ export class TextRoomComponent implements OnInit {
         'https://coldra.in/api/messages',
         {
           room_id: this.route_id,
-          user_token: this.authService.userData().token
+          user_token: this.authService.getUser().token
         }
       );
 
