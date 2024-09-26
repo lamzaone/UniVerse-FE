@@ -21,7 +21,10 @@ export class RoomListComponent {
   uncategorizedRooms: any[] = [];
   route_id: number | null = null;
 
-  roomAccessLevel:number = 0;
+  serverAccessLevel:number = 0;
+  isRoom: any;
+  isCategory: any;
+  clickedRoomId:any;
 
   constructor(private serversService: ServersService,
     private route: ActivatedRoute,
@@ -34,7 +37,7 @@ export class RoomListComponent {
 
       // TODO: rework getAccessLevel to be stored in the currentServer signal
       this.serversService.getAccessLevel(this.route_id).then((res) => {
-        this.roomAccessLevel = res;
+        this.serverAccessLevel = res;
         console.log(res);
       });
     });
@@ -108,22 +111,35 @@ export class RoomListComponent {
   }
 
 
-
+//////////////////////////////////////////////////////
+//////////////////// Context Menu ////////////////////
+//////////////////////////////////////////////////////
 
   createCategory(): void {
     console.log('Create a category');
     this.showContextMenu = false;
     // Implement logic to create a new category here
   }
-
   createRoom(): void {
     console.log('Create a new room');
     this.showContextMenu = false;
     // Implement logic to create a new room here
   }
+  async deleteRoom(room_id: Number): Promise<void> {
+    console.log('Deleted room', room_id);
+    console.log(await axios.put('https://coldra.in/api/server/' + this.route_id + '/room/' + room_id + '/delete'));
+    this.showContextMenu = false;
+  }
 
   onRightClick(event: MouseEvent): void {
     event.preventDefault();
+    this.isRoom = (event.target instanceof HTMLElement && event.target.classList.contains('room'));
+    if (this.isRoom) {
+      // get the Room id from the component routerLink
+      this.clickedRoomId = (event.target as HTMLElement).getAttribute('room-id');
+    }
+    this.isCategory = (event.target instanceof HTMLElement && event.target.classList.contains('category'));
+
     this.contextMenuPosition = { x: event.clientX, y: event.clientY };
     this.showContextMenu = true;
   }

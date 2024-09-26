@@ -26,6 +26,7 @@ const routes: Routes = [
         canActivate: [AuthGuard],
       },
       {
+        // TODO: TEST IF PEOPLE THAT ARE NOT PART OF THE SERVER CAN ACCESS LINK LEADING TO STUFF IN THE SERVER
         path: 'server/:id',
         component: ServerPageComponent,
         canActivate: [AuthGuard],
