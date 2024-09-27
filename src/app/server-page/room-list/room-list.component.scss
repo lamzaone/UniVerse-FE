@@ -1,8 +1,12 @@
 .custom-context-menu {
   position: absolute;
-  background-color: var(--light-grey);
-  border: 1px solid var(--dark-grey);
+  background-color: #191919da;
+  opacity: 100%;
+  overflow: hidden;
+  border: 1px solid var(--light-grey);
+  border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
   z-index: 1000;
   width: 300px;
   padding: 0;
@@ -18,7 +22,7 @@
       padding: 8px 12px;
       cursor: pointer;
       &:hover {
-        background-color: var(--grey);
+        background-color: var(--light-grey);
       }
     }
   }

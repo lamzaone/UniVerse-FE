@@ -1,6 +1,6 @@
 <div class="container">
   <div class="messages" #messagesContainer>
-    @if(messages().length > 0){
+    @if(messages()?.length > 0){
       <div class="message" *ngFor="let messageGroup of messages()">
         <!-- Display the user info for the message group -->
         <div class="avatar">
@@ -29,10 +29,11 @@
       <div id="last-message"></div>
     }
     @else {
+      <!-- PLACEHOLDER IF NO MESSAGES ARE TO BE SHOWN -->
       <div class="message">
         <div class = "msg">
           <div class="msg-text">
-            <p class="msg-text-message">No messages to see here... yet!</p>
+            <p class="msg-text-message" style="text-align: center;">No messages to see here... yet!</p>
           </div>
         </div>
       </div>

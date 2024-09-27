@@ -25,7 +25,7 @@ export class RoomListComponent {
   isRoom: any;
   isCategory: any;
   clickedRoomId:any;
-
+  clickedCategoryId: any;
   constructor(private serversService: ServersService,
     private route: ActivatedRoute,
     private socketService: SocketService,
@@ -131,14 +131,22 @@ export class RoomListComponent {
     this.showContextMenu = false;
   }
 
+  async deleteCategory(category_id: Number): Promise<void> {
+    console.log('Deleted category', category_id);
+    // console.log(await axios.put('https://coldra.in/api/server/' + this.route_id + '/category/' + category_id + '/delete'));
+    this.showContextMenu = false;
+  }
+
   onRightClick(event: MouseEvent): void {
     event.preventDefault();
     this.isRoom = (event.target instanceof HTMLElement && event.target.classList.contains('room'));
     if (this.isRoom) {
-      // get the Room id from the component routerLink
       this.clickedRoomId = (event.target as HTMLElement).getAttribute('room-id');
     }
     this.isCategory = (event.target instanceof HTMLElement && event.target.classList.contains('category'));
+    if (this.isCategory) {
+      this.clickedCategoryId = (event.target as HTMLElement).getAttribute('category-id');
+    }
 
     this.contextMenuPosition = { x: event.clientX, y: event.clientY };
     this.showContextMenu = true;

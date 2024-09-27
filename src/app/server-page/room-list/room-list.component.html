@@ -46,6 +46,9 @@
         @if(isRoom) {
           <li (click)="deleteRoom(this.clickedRoomId)">Delete room</li>
         }
+        <!-- @if(isCategory){
+          <li (click)="deleteCategory(this.clickedCategoryId)">Delete category</li>
+        } -->
       }
       @else {
         <li>Placeholder non-admin user</li>
