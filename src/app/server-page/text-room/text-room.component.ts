@@ -23,6 +23,8 @@ export class TextRoomComponent implements OnInit {
   messages = signal<any>(null);
   messageText = '';
 
+  paramz:any;
+  private previousRouteId: number | null = null; // Store the previous route_id
 
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
@@ -39,7 +41,7 @@ export class TextRoomComponent implements OnInit {
 
   ngOnInit(): void {
     // Initialize the route_id and join the text room
-    this.route.params.subscribe(params => {
+    this.paramz=this.route.params.subscribe(params => {
       this.route_id = +params['room_id'];
       console.log("Room id: "+this.route_id)
       this.socketService.joinTextRoom(this.route_id!.toString());
@@ -53,6 +55,11 @@ export class TextRoomComponent implements OnInit {
   // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
   // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
   async fetchMessages() {
+    if (this.previousRouteId === this.route_id) {
+      return; // Prevent fetch if it's the same room
+    }
+
+    this.previousRouteId = this.route_id; // Update the previous route_id
     try {
       this.serversService.fetchMessages(this.route_id!);
       const response = await this.serversService.fetchMessages(this.route_id!);
@@ -120,13 +127,8 @@ export class TextRoomComponent implements OnInit {
       if (isLastMessageInView) this.scrollToLast();
 
     } catch (error) {
-
-      // OPEN POPUP WITH MESSAGE
       this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
-      this.serversService.currentServer.set(null);
-
-      // this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
-      console.error('Error fetching messages:', error);
+      return;
     }
   }
 
