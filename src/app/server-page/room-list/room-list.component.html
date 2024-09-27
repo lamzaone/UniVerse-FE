@@ -24,6 +24,7 @@
         </div>
       }
       @else{
+        <!-- PLACEHOLDER IF NO MESSAGES ARE TO BE SHOWN -->
         <div class="room"
           *ngFor="let room of category.rooms"
             [ngClass]="room.type"
@@ -46,9 +47,6 @@
         @if(isRoom) {
           <li (click)="deleteRoom(this.clickedRoomId)">Delete room</li>
         }
-        <!-- @if(isCategory){
-          <li (click)="deleteCategory(this.clickedCategoryId)">Delete category</li>
-        } -->
       }
       @else {
         <li>Placeholder non-admin user</li>
@@ -62,3 +60,11 @@
     </ul>
   </div>
 </div>
+
+@if(showCreateCategory){
+  <app-create-category (close)="toggleCreateCategory()"></app-create-category>
+}
+@if(showCreateRoom){
+  <app-create-room (close)="toggleCreateRoom()"></app-create-room>
+}
+

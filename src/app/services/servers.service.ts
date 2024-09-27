@@ -52,6 +52,22 @@ export class ServersService {
     }
   }
 
+  async createCategory(serverId: number, categoryName: string, categoryDescription: string) {
+    try {
+      const response = await axios.post('https://coldra.in/api/server/' + serverId + '/category/create', {
+        category_name: categoryName,
+      });
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        throw new Error('Category creation failed');
+      }
+    } catch (error) {
+      console.error('Category creation error:', error);
+      throw error;
+    }
+  }
+
   // Fetch servers for the user and update servers signal
   async fetchServers() {
     if (!this.authService.isLoggedIn()) return;
