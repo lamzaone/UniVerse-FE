@@ -1,5 +1,5 @@
 import { SocketService } from '../../services/socket.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
@@ -30,7 +30,8 @@ export class TextRoomComponent implements OnInit {
     private route: ActivatedRoute,
     private serversService: ServersService,
     private authService: AuthService,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private router: Router
   ) {
 
     this.listenForMessages();
@@ -40,6 +41,7 @@ export class TextRoomComponent implements OnInit {
     // Initialize the route_id and join the text room
     this.route.params.subscribe(params => {
       this.route_id = +params['room_id'];
+      console.log("Room id: "+this.route_id)
       this.socketService.joinTextRoom(this.route_id!.toString());
       this.fetchMessages();
     });
@@ -48,15 +50,13 @@ export class TextRoomComponent implements OnInit {
     // this.room = this.serversService.currentRoom;
   }
 
+  // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
+  // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
   async fetchMessages() {
     try {
-      const response = await axios.post(
-        'https://coldra.in/api/messages',
-        {
-          room_id: this.route_id,
-          user_token: this.authService.getUser().token
-        }
-      );
+      this.serversService.fetchMessages(this.route_id!);
+      const response = await this.serversService.fetchMessages(this.route_id!);
+
 
       const groupedMessages = []; // Array of message groups
       let messageGroup = [];      // Current group of messages
@@ -120,6 +120,12 @@ export class TextRoomComponent implements OnInit {
       if (isLastMessageInView) this.scrollToLast();
 
     } catch (error) {
+
+      // OPEN POPUP WITH MESSAGE
+      this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
+      this.serversService.currentServer.set(null);
+
+      // this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
       console.error('Error fetching messages:', error);
     }
   }

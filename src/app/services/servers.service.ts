@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 import axios from 'axios';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,7 @@ export class ServersService {
   public currentServer = signal<any>(null);
   user = this.authService.getUser();  // Fetch user from AuthService
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private router: Router) {
     this.fetchServers();  // Fetch initial servers
 
     this.servers().forEach((server) => {
@@ -51,6 +52,7 @@ export class ServersService {
       throw error;
     }
   }
+
 
   async createCategory(serverId: number, categoryName: string, categoryDescription: string) {
     try {
@@ -99,6 +101,17 @@ export class ServersService {
     }
   }
 
+  async fetchMessages(route_id:number){
+    const response = await axios.post(
+      'https://coldra.in/api/messages',
+      {
+        room_id: route_id,
+        user_token: this.authService.getUser().token
+      }
+    );
+    return response;
+  }
+
   // Join a server and update servers signal
   async joinServer(serverCode: string) {
     if (this.authService.isLoggedIn()) {
@@ -129,8 +142,10 @@ export class ServersService {
         return response.data;
       } else {
         console.error('Error getting server with id:', serverId);
+        this.router.navigate(['dashboard']);
       }
     } catch (error) {
+      this.router.navigate(['dashboard']);
       console.error('Error fetching server:', error);
       throw error;
     }
