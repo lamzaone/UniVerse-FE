@@ -68,6 +68,22 @@ export class ServersService {
     }
   }
 
+  async createRoom(serverId: number, roomName: string, roomType: string, categoryId: number|null ) {
+    try {
+      if (categoryId === null) categoryId = 0;
+      const response = await axios.post('https://coldra.in/api/server/' + serverId + '/room/create?room_name='+roomName+'&room_type='+roomType+'&category_id='+categoryId);
+      // server_id: int, room_name: str, room_type: str, db: db_dependency, category_id:
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        throw new Error('Room creation failed');
+      }
+    } catch (error) {
+      console.error('Room creation error:', error);
+      throw error;
+    }
+  }
+
   // Fetch servers for the user and update servers signal
   async fetchServers() {
     if (!this.authService.isLoggedIn()) return;
