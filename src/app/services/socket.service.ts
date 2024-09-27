@@ -10,8 +10,10 @@ export class SocketService {
   private sockets: { [key: string]: WebSocket | null } = {};
 
   constructor(private authService: AuthService) {
-    this.userId = this.authService.getUser().id;
-    this.connectToSocket('main', `wss://coldra.in/api/ws/main/${this.userId}`);
+    if (this.authService.isLoggedIn()) {
+      this.userId = this.authService.getUser().id;
+      this.connectToSocket('main', `wss://coldra.in/api/ws/main/${this.userId}`);
+    }
   }
 
   private connectToSocket(key: string, url: string): void {

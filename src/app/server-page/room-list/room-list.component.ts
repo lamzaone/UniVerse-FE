@@ -1,4 +1,4 @@
-import { Component, HostListener, computed, signal } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ServersService } from '../../services/servers.service';
@@ -6,22 +6,31 @@ import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SocketService } from '../../services/socket.service';
 import axios from 'axios';
+import { CreateCategoryComponent } from './create-category/create-category.component';
+import { CreateRoomComponent } from './create-room/create-room.component';
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, DragDropModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive, DragDropModule, CreateCategoryComponent, CreateRoomComponent],
   templateUrl: './room-list.component.html',
   styleUrls: ['./room-list.component.scss']
 })
 export class RoomListComponent {
   categories = signal<any[]>([]); // Signal to hold categories and rooms
+  @Input() close = new EventEmitter<void>(); // EventEmitter to close the component from parent
+
 
   showContextMenu = false;
+  showCreateCategory = false;
+  showCreateRoom = false;
   contextMenuPosition = { x: 0, y: 0 };
   uncategorizedRooms: any[] = [];
   route_id: number | null = null;
 
-  roomAccessLevel:number = 0;
+  serverAccessLevel:number = 0;
+  isRoom: any;
+  isCategory: any;
+  clickedRoomId:any;
 
   constructor(private serversService: ServersService,
     private route: ActivatedRoute,
@@ -34,7 +43,7 @@ export class RoomListComponent {
 
       // TODO: rework getAccessLevel to be stored in the currentServer signal
       this.serversService.getAccessLevel(this.route_id).then((res) => {
-        this.roomAccessLevel = res;
+        this.serverAccessLevel = res;
         console.log(res);
       });
     });
@@ -108,22 +117,36 @@ export class RoomListComponent {
   }
 
 
-
+//////////////////////////////////////////////////////
+//////////////////// Context Menu ////////////////////
+//////////////////////////////////////////////////////
 
   createCategory(): void {
     console.log('Create a category');
     this.showContextMenu = false;
+    this.toggleCreateCategory();
     // Implement logic to create a new category here
   }
-
   createRoom(): void {
     console.log('Create a new room');
     this.showContextMenu = false;
-    // Implement logic to create a new room here
+    this.toggleCreateRoom();
+  }
+  async deleteRoom(room_id: Number): Promise<void> {
+    console.log('Deleted room', room_id);
+    console.log(await axios.put('https://coldra.in/api/server/' + this.route_id + '/room/' + room_id + '/delete'));
+    this.showContextMenu = false;
   }
 
   onRightClick(event: MouseEvent): void {
     event.preventDefault();
+    this.isRoom = (event.target instanceof HTMLElement && event.target.classList.contains('room'));
+    if (this.isRoom) {
+      // get the Room id from the component routerLink
+      this.clickedRoomId = (event.target as HTMLElement).getAttribute('room-id');
+    }
+    this.isCategory = (event.target instanceof HTMLElement && event.target.classList.contains('category'));
+
     this.contextMenuPosition = { x: event.clientX, y: event.clientY };
     this.showContextMenu = true;
   }
@@ -138,4 +161,15 @@ export class RoomListComponent {
     this.showContextMenu = false;
   }
 
+  toggleCreateCategory() {
+    this.showCreateCategory = !this.showCreateCategory;
+  }
+
+  toggleCreateRoom() {
+    this.showCreateRoom = !this.showCreateRoom;
+  }
+
 }
+
+
+

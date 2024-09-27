@@ -10,8 +10,9 @@
     <h3>{{ category.name }}</h3>
   </div>
     <div class="rooms">
-      @if(roomAccessLevel > 0){
+      @if(serverAccessLevel > 0){
         <div class="room"
+        [attr.room-id]="room.id"
         *ngFor="let room of category.rooms"
         cdkDrag
         [ngClass]="room.type"
@@ -23,6 +24,7 @@
         </div>
       }
       @else{
+        <!-- PLACEHOLDER IF NO MESSAGES ARE TO BE SHOWN -->
         <div class="room"
           *ngFor="let room of category.rooms"
             [ngClass]="room.type"
@@ -39,8 +41,30 @@
   <!-- Context Menu -->
   <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
     <ul>
-      <li (click)="createCategory()">Create a category</li>
-      <li (click)="createRoom()">Create a new room</li>
+      @if(serverAccessLevel > 0){
+        <li (click)="createCategory()">Create a category</li>
+        <li (click)="createRoom()">Create a new room</li>
+        @if(isRoom) {
+          <li (click)="deleteRoom(this.clickedRoomId)">Delete room</li>
+        }
+      }
+      @else {
+        <li>Placeholder non-admin user</li>
+        @if(isRoom) {
+          <li>Placeholder non-admin user for room stuff</li>
+        }
+        @if(isCategory){
+          <li>Placeholder non-admin user for category stuff</li>
+        }
+      }
     </ul>
   </div>
 </div>
+
+@if(showCreateCategory){
+  <app-create-category (close)="toggleCreateCategory()"></app-create-category>
+}
+@if(showCreateRoom){
+  <app-create-room (close)="toggleCreateRoom()"></app-create-room>
+}
+

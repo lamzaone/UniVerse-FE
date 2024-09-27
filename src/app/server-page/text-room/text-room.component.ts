@@ -23,6 +23,8 @@ export class TextRoomComponent implements OnInit {
   messages = signal<any>(null);
   messageText = '';
 
+
+  // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
     private socketService: SocketService,
     private route: ActivatedRoute,
@@ -52,7 +54,7 @@ export class TextRoomComponent implements OnInit {
         'https://coldra.in/api/messages',
         {
           room_id: this.route_id,
-          user_token: this.authService.userData().token
+          user_token: this.authService.getUser().token
         }
       );
 

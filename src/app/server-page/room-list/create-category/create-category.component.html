@@ -1,0 +1,21 @@
+<div class="background">
+  <div class="container">
+    <div class="header">
+      <h1>Create Category</h1>
+    </div>
+    <div class="form">
+      <div class="form-group">
+        <label for="categoryName">Category name</label>
+        <input type="text" class="form-control" id="categoryName" [(ngModel)]="categoryName">
+      </div>
+      <!-- <div class="form-group">
+        <label for="categoryDescription">Category Description</label>
+        <input class="form-control" id="categoryDescription" [(ngModel)]="categoryDescription">
+      </div> -->
+    </div>
+    <div>
+      <button (click)="createCategory()">Create</button>
+      <button (click)="close_page()">Close</button>
+    </div>
+  </div>
+</div>

@@ -25,7 +25,7 @@ export class ConnectionsComponent {
     private socketService: SocketService,
     private authService: AuthService
   ) {
-    this.currentUser.set(this.authService.userData());
+    this.currentUser.set(this.authService.getUser());  // Set the current user
 
     // Wait for changes in the currentServer signal and fetch users on server change
     effect(async () => {

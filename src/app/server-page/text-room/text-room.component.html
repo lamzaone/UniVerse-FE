@@ -1,31 +1,43 @@
 <div class="container">
   <div class="messages" #messagesContainer>
-    <div class="message" *ngFor="let messageGroup of messages()">
-      <!-- Display the user info for the message group -->
-      <div class="avatar">
-        <img [src]="messageGroup[0].user.picture">
-      </div>
-      <div class="msg">
-        <div class="msg-user">
-          <p class="msg-user-name">
-            <b>{{messageGroup[0].user.name}}</b>
-          </p>
-
-          <p class="msg-user-time">
-            {{messageGroup[0].timestamp}}
-          </p>
+    @if(messages()?.length > 0){
+      <div class="message" *ngFor="let messageGroup of messages()">
+        <!-- Display the user info for the message group -->
+        <div class="avatar">
+          <img [src]="messageGroup[0].user.picture">
         </div>
-        <!-- Render each message in the group -->
-        <div class="msg-text" *ngFor="let message of messageGroup">
-          <div class="msg-text-container">
-            <p class="msg-text-message">{{message.message}}</p>
-            <p *ngIf="!(message === messageGroup[0])" class="msg-text-time">{{message.timestamp}}</p>
+        <div class="msg">
+          <div class="msg-user">
+            <p class="msg-user-name">
+              <b>{{messageGroup[0].user.name}}</b>
+            </p>
+
+            <p class="msg-user-time">
+              {{messageGroup[0].timestamp}}
+            </p>
+          </div>
+          <!-- Render each message in the group -->
+          <div class="msg-text" *ngFor="let message of messageGroup">
+            <div class="msg-text-container">
+              <p class="msg-text-message">{{message.message}}</p>
+              <p *ngIf="!(message === messageGroup[0])" class="msg-text-time">{{message.timestamp}}</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div id="last-message"></div>
+    }
+    @else {
+      <!-- PLACEHOLDER IF NO MESSAGES ARE TO BE SHOWN -->
+      <div class="message">
+        <div class = "msg">
+          <div class="msg-text">
+            <p class="msg-text-message" style="text-align: center;">No messages to see here... yet!</p>
           </div>
         </div>
-
       </div>
-    </div>
-    <div id="last-message"></div>
+    }
   </div>
 
   <div class="input">
