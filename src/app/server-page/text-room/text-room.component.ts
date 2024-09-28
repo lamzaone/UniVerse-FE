@@ -119,7 +119,7 @@ export class TextRoomComponent implements OnInit {
 
       // Update the messages signal with grouped messages
       this.messages.set(groupedMessages);
-
+      this.previousRouteId = 0;
       // Scroll to the last message if necessary
       const lastMessage = document.getElementById('last-message');
       const isLastMessageInView = lastMessage ? lastMessage.getBoundingClientRect().top <= window.innerHeight : false;
