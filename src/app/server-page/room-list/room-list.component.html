@@ -6,7 +6,10 @@
       [cdkDropListData]="category.rooms"
       [cdkDropListConnectedTo]="connectedLists()"
       (cdkDropListDropped)="drop($event, category.id)">
-  <div class="category" *ngIf="category.rooms.length > 0 || category.name!='Uncategorized'">
+  <div class="category"
+      *ngIf="category.rooms.length > 0 || category.name!='Uncategorized'"
+      [attr.category-id]="category.id"
+      [attr.categoryLength]="category.rooms.length">
     <h3>{{ category.name }}</h3>
   </div>
     <div class="rooms">
@@ -46,6 +49,12 @@
         <li (click)="createRoom()">Create a new room</li>
         @if(isRoom) {
           <li (click)="deleteRoom(this.clickedRoomId)">Delete room</li>
+        }
+        @if(isCategory && clickedCategoryLength==0){
+          <li (click)="deleteCategory(this.clickedCategoryId)">Delete category</li>
+        }
+        @else if (isCategory) {
+          <li style="opacity:40%;">Delete category (must be empty)</li>
         }
       }
       @else {
