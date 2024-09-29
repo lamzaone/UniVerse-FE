@@ -10,7 +10,7 @@
       *ngIf="category.rooms.length > 0 || category.name!='Uncategorized'"
       [attr.category-id]="category.id"
       [attr.categoryLength]="category.rooms.length">
-    <h3>{{ category.name }}</h3>
+    {{ category.name }}
   </div>
     <div class="rooms">
       @if(serverAccessLevel > 0){
