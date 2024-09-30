@@ -1,5 +1,5 @@
 import { SocketService } from '../../services/socket.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
@@ -23,6 +23,8 @@ export class TextRoomComponent implements OnInit {
   messages = signal<any>(null);
   messageText = '';
 
+  paramz:any;
+  private previousRouteId: number | null = null; // Store the previous route_id
 
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
@@ -30,7 +32,8 @@ export class TextRoomComponent implements OnInit {
     private route: ActivatedRoute,
     private serversService: ServersService,
     private authService: AuthService,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private router: Router
   ) {
 
     this.listenForMessages();
@@ -38,8 +41,9 @@ export class TextRoomComponent implements OnInit {
 
   ngOnInit(): void {
     // Initialize the route_id and join the text room
-    this.route.params.subscribe(params => {
+    this.paramz=this.route.params.subscribe(params => {
       this.route_id = +params['room_id'];
+      console.log("Room id: "+this.route_id)
       this.socketService.joinTextRoom(this.route_id!.toString());
       this.fetchMessages();
     });
@@ -48,15 +52,18 @@ export class TextRoomComponent implements OnInit {
     // this.room = this.serversService.currentRoom;
   }
 
+  // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
+  // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
   async fetchMessages() {
+    if (this.previousRouteId === this.route_id) {
+      return; // Prevent fetch if it's the same room
+    }
+
+    this.previousRouteId = this.route_id; // Update the previous route_id
     try {
-      const response = await axios.post(
-        'https://coldra.in/api/messages',
-        {
-          room_id: this.route_id,
-          user_token: this.authService.getUser().token
-        }
-      );
+      this.serversService.fetchMessages(this.route_id!);
+      const response = await this.serversService.fetchMessages(this.route_id!);
+
 
       const groupedMessages = []; // Array of message groups
       let messageGroup = [];      // Current group of messages
@@ -112,7 +119,7 @@ export class TextRoomComponent implements OnInit {
 
       // Update the messages signal with grouped messages
       this.messages.set(groupedMessages);
-
+      this.previousRouteId = 0;
       // Scroll to the last message if necessary
       const lastMessage = document.getElementById('last-message');
       const isLastMessageInView = lastMessage ? lastMessage.getBoundingClientRect().top <= window.innerHeight : false;
@@ -120,7 +127,8 @@ export class TextRoomComponent implements OnInit {
       if (isLastMessageInView) this.scrollToLast();
 
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
+      return;
     }
   }
 

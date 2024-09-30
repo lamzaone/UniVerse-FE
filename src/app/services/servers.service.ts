@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 import axios from 'axios';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,7 @@ export class ServersService {
   public currentServer = signal<any>(null);
   user = this.authService.getUser();  // Fetch user from AuthService
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private router: Router) {
     this.fetchServers();  // Fetch initial servers
 
     this.servers().forEach((server) => {
@@ -52,6 +53,7 @@ export class ServersService {
     }
   }
 
+
   async createCategory(serverId: number, categoryName: string, categoryDescription: string) {
     try {
       const response = await axios.post('https://coldra.in/api/server/' + serverId + '/category/create', {
@@ -64,6 +66,22 @@ export class ServersService {
       }
     } catch (error) {
       console.error('Category creation error:', error);
+      throw error;
+    }
+  }
+
+  async createRoom(serverId: number, roomName: string, roomType: string, categoryId: number|null ) {
+    try {
+      if (categoryId === null) categoryId = 0;
+      const response = await axios.post('https://coldra.in/api/server/' + serverId + '/room/create?room_name='+roomName+'&room_type='+roomType+'&category_id='+categoryId);
+      // server_id: int, room_name: str, room_type: str, db: db_dependency, category_id:
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        throw new Error('Room creation failed');
+      }
+    } catch (error) {
+      console.error('Room creation error:', error);
       throw error;
     }
   }
@@ -81,6 +99,17 @@ export class ServersService {
     } catch (error) {
       console.error('Error fetching servers:', error);
     }
+  }
+
+  async fetchMessages(route_id:number){
+    const response = await axios.post(
+      'https://coldra.in/api/messages',
+      {
+        room_id: route_id,
+        user_token: this.authService.getUser().token
+      }
+    );
+    return response;
   }
 
   // Join a server and update servers signal
@@ -113,8 +142,10 @@ export class ServersService {
         return response.data;
       } else {
         console.error('Error getting server with id:', serverId);
+        this.router.navigate(['dashboard']);
       }
     } catch (error) {
+      this.router.navigate(['dashboard']);
       console.error('Error fetching server:', error);
       throw error;
     }

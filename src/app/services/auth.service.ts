@@ -16,6 +16,7 @@ export class AuthService {
       this.ipcRenderer = window.require('electron').ipcRenderer;
       this.ipcRenderer.on('google-oauth-success', (event: any, data: any) => {
         this.setUser(data);
+        localStorage.setItem('user_data', JSON.stringify(data));
         localStorage.setItem('jwt_token', data.token); // Store JWT token
         localStorage.setItem('refresh_token', data.refresh_token); // Store refresh token
         this.router.navigate(['/']); // Navigate to the main application

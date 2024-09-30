@@ -56,13 +56,14 @@
 }
 
 .category{
-
   position:relative;
   background-color: var(--dark-grey);
   display: flex;
   border-radius:7px;
   justify-content: center;
   align-items: center;
+  // font-size: 1.1rem;
+  // font-weight: 700;
   height: 2rem;
   width: 13rem;
   text-align: center;

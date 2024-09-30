@@ -17,6 +17,8 @@ function createWindow(): BrowserWindow {
     height: size.height,
     minHeight: 600,
     minWidth: 800,
+    thickFrame: false,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
       allowRunningInsecureContent: serve,

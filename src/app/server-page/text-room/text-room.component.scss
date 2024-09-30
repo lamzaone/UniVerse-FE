@@ -44,6 +44,7 @@
   border-radius: 10px;
 
   & .avatar img{
+    object-fit: cover;
     border-radius: 100px;
     width: 2.5rem;
     height: 2.5rem;
