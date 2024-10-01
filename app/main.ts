@@ -13,11 +13,10 @@ function createWindow(): BrowserWindow {
   win = new BrowserWindow({
     x: 0,
     y: 0,
-    width: size.width,
-    height: size.height,
+    width: size.width/2,
+    height: size.height/2,
     minHeight: 600,
     minWidth: 800,
-    thickFrame: false,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
