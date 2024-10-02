@@ -8,7 +8,7 @@
       </div>
       <div class="user-info">
         <div class="user-info-name">
-          <p>{{currentUser().name}}</p>
+          <p>{{simplyfyName(currentUser().name)}}</p>
         </div>
         <div class="user-info-status">
           <p>Online</p>
@@ -18,7 +18,7 @@
   </div>
 
   <div class="status-online" *ngIf="onlineUsers().length > 0">
-    <h2>Online</h2>
+    <h4>Online - {{onlineUsers().length}}</h4>
     <div class="user" *ngFor="let user of onlineUsers()">
       <div class="user-avatar">
         <img [src]="user.picture" alt="user avatar">
@@ -36,7 +36,7 @@
   </div>
 
   <div class="status-offline" *ngIf="offlineUsers().length > 0">
-    <h2>Offline</h2>
+    <h4>Offline - {{offlineUsers().length}}</h4>
     <div class="user" *ngFor="let user of offlineUsers()">
       <div class="user-avatar">
         <img [src]="user.picture" alt="user avatar">

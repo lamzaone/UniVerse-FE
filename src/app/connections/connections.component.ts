@@ -27,7 +27,7 @@ export class ConnectionsComponent {
   ) {
     this.currentUser.set(this.authService.getUser());  // Set the current user
 
-    // Wait for changes in the currentServer signal and fetch users on server change
+    // Wait for changes in the currentServer signal (on server change) and fetch users on server change
     effect(async () => {
       const serverId = this.serverService.currentServer()?.id;
       if (serverId) {
@@ -42,7 +42,7 @@ export class ConnectionsComponent {
           const userInfo = await this.userService.getUserInfo(userId);
           if(userInfo.name.split(' ').length >= 3){
             // if the user has more than 2 names, combine the first and last
-            userInfo.name = userInfo.name.split(' ')[0] + ' ' + userInfo.name.split(' ')[userInfo.name.split(' ').length - 1];
+              userInfo.name = this.simplyfyName(userInfo.name);
           }
           // Add isOnline property to the user
           return { ...userInfo, isOnline: onlineUserIds.includes(userId) };
@@ -50,44 +50,81 @@ export class ConnectionsComponent {
         this.userList.set(users);
 
         // Call the function to update online and offline user lists
-        this.updateUserStatus();
+        this.updateUseruserEvent();
       }
     });
 
     this.listenToSocket();  // Listen for new Connections coming on/off-line
   }
 
+
+
   listenToSocket() {
     this.socketService.onServerMessage((data: any) => {
-      const [userId, status] = data.split(': ');      // Split the data coming as 'userId: status'
-      this.userList.update((list) => {                // Update the userList signal with the new user status (based on current value)
-        return list.map(user => {
-          if (user.id === Number(userId)) {               // if the user id matches the userId from the data
-            user.isOnline = status === 'online';          // update the isOnline property
-          }
-          return user;
-        });
-      });
+      try{
+        const [userId, userEvent] = data.split(': ');      // Split the data coming as 'userId: userEvent'
+
+        // handle user join
+        if (userEvent === 'joined'){
+          void this.userService.getUserInfo(String(userId)).then((userInfo: any) => {
+            if (userInfo.name.split(' ').length >= 3) {
+              // if the user has more than 2 names, combine the first and last
+              userInfo.name = this.simplyfyName(userInfo.name);
+            }
+            // Update the userList signal
+            this.userList.update((list) => {
+              return [...list, { ...userInfo, isOnline: true }];
+            });
+
+            this.updateUseruserEvent();
+          });
+
+
+        }
+
+         // handle user online status
+        if (userEvent === 'online' || userEvent === 'offline') {  // Check if the userEvent is online or offline
+          this.userList.update((list) => {                // Update the userList signal with the new user userEvent (based on current value)
+            return list.map(user => {
+              if (user.id === Number(userId)) {               // if the user id matches the userId from the data
+                user.isOnline = userEvent === 'online';          // update the isOnline property
+              }
+              return user;
+            });
+          });
+
+          this.updateUseruserEvent();
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+
+
       // if (this.userList().map(user => user.id).includes(Number(userId))) {
       //   this.userList.set(this.userList().map(user => {
       //     if (user.id === Number(userId)) {
-      //       user.isOnline = status === 'online';
+      //       user.isOnline = userEvent === 'online';
       //     }
       //     return user;
       //   }));
       // }
 
       // Call the function to update online and offline user lists
-      this.updateUserStatus();
+      this.updateUseruserEvent();
       console.log(this.userList());
     });
   }
 
-  updateUserStatus() {
+  updateUseruserEvent() {
   const users = this.userList(); // Get the current user list (after being updated or just fetched)
   this.onlineUsers.set(users.filter(user => user.isOnline)
     .filter(user => user.id !== this.currentUser().id)); // Exclude current user;
   this.offlineUsers.set(users.filter(user => !user.isOnline)
     .filter(user => user.id !== this.currentUser().id)); // Exclude current user;
+  }
+
+  simplyfyName(name: string) {
+    return name.split(' ')[0] + ' ' + name.split(' ')[name.split(' ').length - 1];
   }
 }

@@ -1,18 +1,17 @@
 <div class="overlay" (click)="cancel()">
   <div class="container">
-
     <div class="flexbox">
       <div class="add-server" (click)="$event.stopPropagation()">
-        Create a class!<br><br>
+        <label>Create a class!</label>
         <input type="text" placeholder="Class name" [(ngModel)]="serverName">
         <input type="text" placeholder="Description" [(ngModel)]="description">
         <div class="add-button" (click)="addServer()">Create</div>
       </div>
       <div class="divider"></div>
       <div class="join-server" (click)="$event.stopPropagation()">
-        Join a class!<br><br><br>
+        <label>Join a class!</label>
         <input type="text" placeholder="Class code" [(ngModel)]="serverCode">
-        <div class="add-button" (click)="joinServer()">Join</div>
+        <div class="add-button" id="join" (click)="joinServer()">Join</div>
       </div>
     </div>
     <div class="cancel-button" (click)="cancel()">Cancel</div>

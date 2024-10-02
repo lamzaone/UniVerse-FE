@@ -1,14 +1,13 @@
 .container{
-  width: 15rem;
   // background-color: var(--dark-grey);
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 2rem;
   height: 100%;
-  width: 15rem;
+  width: fit-content;
   background-color: var(--grey);
-  outline: var(--light-grey) solid 1px;
+  // outline: var(--light-grey) solid 1px;
   color: var(--white);
   box-sizing: border-box;
   border-radius: 10px;
@@ -27,7 +26,7 @@
   flex-direction: column;
   gap: 10px;
 
-  & h2{
+  & h4{
     margin: 2px;
   }
 }
@@ -38,7 +37,7 @@
   gap: 7px;
 
 
-  & h2{
+  & h4{
     margin: 2px;
   }
   & .user{
@@ -47,7 +46,7 @@
 }
 
 .user{
-  width: 96%;
+  width: 14rem;
   background-color: var(--dark-grey);
   border-radius: 10px;
   display:flex;
