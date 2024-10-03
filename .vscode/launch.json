@@ -9,7 +9,7 @@
             "type": "chrome",
             "request": "attach",
             "port": 9876,
-            "url": "https://coldra.in",
+            "url": "http://127.0.0.1.nip.io:4200",
             "sourceMaps": true,
             "timeout": 10000,
             "trace": "verbose",

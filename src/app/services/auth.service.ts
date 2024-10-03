@@ -44,7 +44,7 @@ export class AuthService {
     if (token) {
       try {
         // Validate the token with the backend
-        const response = await axios.post('https://coldra.in/api/auth/validate', { token });
+        const response = await axios.post('http://127.0.0.1.nip.io:8000/api/auth/validate', { token });
 
         // If the token is valid, update the user information
         this.setUser(response.data);
@@ -58,7 +58,7 @@ export class AuthService {
         if (refreshToken) {
           try {
             // Attempt to refresh the token
-            const refreshResponse = await axios.post('https://coldra.in/api/auth/refresh', { token: refreshToken });
+            const refreshResponse = await axios.post('http://127.0.0.1.nip.io:8000/api/auth/refresh', { token: refreshToken });
 
             // If successful, update the user information and store the new tokens
             this.setUser(refreshResponse.data);
@@ -120,7 +120,7 @@ export class AuthService {
 
   private getGoogleOAuthUrl(): string {
     const clientId = '167769953872-b5rnqtgjtuhvl09g45oid5r9r0lui2d6.apps.googleusercontent.com';
-    const redirectUri = encodeURIComponent('https://coldra.in/auth/callback');
+    const redirectUri = encodeURIComponent('http://127.0.0.1.nip.io:4200/auth/callback');
     const scope = encodeURIComponent('openid email profile'); // Correct scopes
     const responseType = 'token id_token';
     return `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;

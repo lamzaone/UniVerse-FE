@@ -24,10 +24,12 @@ export class UsersService {
   }
 
   async getUsersInfo(userIds: string[]): Promise<UserInfo[]> {
-    return await axios.post('https://coldra.in/api/users/info', { userIds:userIds }).then(response => {
+    return await axios.post('http://127.0.0.1.nip.io:8000/api/users/info', { userIds:userIds }).then(response => {
       const usersInfo = response.data;
       for (const userInfo of usersInfo) {
         this.userCache[userInfo.id] = userInfo; // Store user info in cache
+        console.log(userInfo.picture);
+
       }
       return usersInfo;
     }).catch(error => {
@@ -46,7 +48,7 @@ export class UsersService {
     }
 
     // If the user is not in the cache, fetch from the API
-    return await axios.get(`https://coldra.in/api/user/${userId}`).then(response => {
+    return await axios.get(`http://127.0.0.1.nip.io:8000/api/user/${userId}`).then(response => {
       const userInfo = response.data;
       this.userCache[userId] = userInfo; // Store user info in cache
       return userInfo;
@@ -68,7 +70,7 @@ export class UsersService {
 
   async getOnlineUsers(server_id: number = 0) : Promise<string[]> {
 
-    return await axios.get(`https://coldra.in/api/server/${server_id}/online`).then(response => {
+    return await axios.get(`http://127.0.0.1.nip.io:8000/api/server/${server_id}/online`).then(response => {
       return response.data;
     }).catch(error => {
       console.error('Failed to fetch online users', error);
@@ -78,7 +80,7 @@ export class UsersService {
 
   async getAllUsers(server_id: number = 0) : Promise<string[]> {
 
-    return await axios.get(`https://coldra.in/api/server/${server_id}/users`).then(response => {
+    return await axios.get(`http://127.0.0.1.nip.io:8000/api/server/${server_id}/users`).then(response => {
       return response.data;
     }
     ).catch(error => {
