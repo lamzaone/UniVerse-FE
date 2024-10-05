@@ -44,7 +44,7 @@
 .container {
   display:flex;
   flex-direction: column;
-  background-color: var(--light-grey);
+  background-color: var(--dark-grey);
   justify-content: center;
   align-items: center;
 
@@ -66,6 +66,7 @@
   height:90%;
   display:grid;
   grid-template-columns: auto 2px auto;
+  padding: 2rem;
 
   grid-gap: 30px;
 
@@ -92,7 +93,7 @@
   min-width: 2px;
   justify-self: center;
   align-self: center;;
-  background-color: var(--grey);
+  background-color: var(--light-grey);
 }
 
 
@@ -105,14 +106,14 @@
   margin-top: 10px;
   width: 100px;
   height: 20px;
-  background-color: green;
+  background-color: var(--light-grey);
   color: white;  /* Optional: Makes text color contrast with background */
   border: none;  /* Optional: Removes default button border */
   border-radius: 5px;  /* Optional: Adds rounded corners */
   cursor: pointer;  /* Optional: Adds a pointer cursor on hover */
 
   &.cancel-button {
-    background-color: red;
+    background-color: var(--light-grey);
     position:relative;
   }
 
@@ -120,4 +121,9 @@
 #join{
   position:relative;
   top: 3.1rem;
+}
+
+label{
+  position:relative;
+  top: -1.5rem;
 }
