@@ -74,6 +74,6 @@
   <app-create-category (close)="toggleCreateCategory()"></app-create-category>
 }
 @if(showCreateRoom){
-  <app-create-room (close)="toggleCreateRoom()"></app-create-room>
+  <app-create-room [categoryId]="clickedCategoryId ? clickedCategoryId : null" (close)="toggleCreateRoom()"></app-create-room>
 }
 

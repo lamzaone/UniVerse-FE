@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ServersService } from '../../../services/servers.service';
 import { FormsModule } from '@angular/forms';
 import { NONE_TYPE } from '@angular/compiler';
@@ -12,9 +12,10 @@ import { NONE_TYPE } from '@angular/compiler';
 })
 export class CreateRoomComponent {
   @Output() close = new EventEmitter<void>();
-roomTypeOptions = ["Text", "Voice"];
-roomType = "text";
-roomName="";
+  @Input() categoryId: number|null = null;
+  roomTypeOptions = ["Text", "Voice"];
+  roomType = "text";
+  roomName="";
 
   constructor (
     private serverService:ServersService
@@ -24,9 +25,9 @@ roomName="";
     this.close.emit();
   }
 
-  createRoom(categoryId: number|null = null){
+  createRoom(){
     console.log("Create Room");
-    this.serverService.createRoom(this.serverService.currentServer().id, this.roomName, this.roomType, null);
+    this.serverService.createRoom(this.serverService.currentServer().id, this.roomName, this.roomType, this.categoryId);
     this.close_page();
   }
 }
