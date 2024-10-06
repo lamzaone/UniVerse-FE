@@ -19,7 +19,7 @@
         *ngFor="let room of category.rooms"
         cdkDrag
         [ngClass]="room.type"
-        [routerLink]="['text', room.id]"
+        [routerLink]="[room.type, room.id]"
         routerLinkActive="router-link-active">
         <ng-template cdkDragPreview><div class="preview">{{room.name}}</div></ng-template>
         <ng-template cdkDragPlaceholder><div class="placeholder"></div></ng-template>
