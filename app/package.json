@@ -5,7 +5,7 @@
     "name": "Denis-Cristian Stanciu",
     "email": "cristian.stanciu0500@gmail.com"
   },
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "main.js",
   "private": true,
   "dependencies": {

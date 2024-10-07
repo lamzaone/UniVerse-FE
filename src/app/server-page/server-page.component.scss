@@ -30,6 +30,7 @@
     height: 8rem;
     padding:5px;
     display:flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -37,11 +38,16 @@
     background-color: rgb(23, 74, 151);
 
     & .invite-code{
-      font-size: 15px;
+      font-size: 0.8rem;
       position: absolute;
       top: 100px;
       line-height: 1.5;
 
+    }
+
+    & h1{
+      font-size: 1.3rem;
+      color: var(--white);
     }
   }
 
