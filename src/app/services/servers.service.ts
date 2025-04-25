@@ -23,9 +23,6 @@ export class ServersService {
 
   // TODO: Add a signal to hold the current server data
 
-  // async setCurrentRoom(room:{}) {
-  //   this.currentRoom.set(room);
-  // }
 
   async setCurrentServer(server: any) {
     this.currentServer.set(server);
@@ -135,6 +132,7 @@ export class ServersService {
   }
 
   // Fetch a specific server
+  // TODO: switch userID to user token for security reasons
   async getServer(serverId: number, userId: number) {
     try {
       const response = await axios.post('http://127.0.0.1.nip.io:8000/api/server', { server_id: serverId, user_id: userId });

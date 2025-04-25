@@ -137,6 +137,11 @@ export class TextRoomComponent implements OnInit {
   listenForMessages() {
     this.socketService.onTextRoomMessage((data: any) => {
       console.log("Received message from socket:", data);
+      if (data === 'room_deleted') {
+        this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
+        return;
+        // TODO: check if this works
+      }
       this.fetchMessages();
     });
 
