@@ -27,7 +27,7 @@ export class CallbackComponent implements OnInit {
         console.log('Access Token:', accessToken);
 
         try {
-            const response = await axios.post('http://127.0.0.1.nip.io:8000/api/auth/google', { id_token: idToken, access_token: accessToken });
+            const response = await axios.post('http://lamzaone.go.ro:8000/api/auth/google', { id_token: idToken, access_token: accessToken });
             console.log('Server Response:', response.data);
             this.authService.setUser(response.data);
             localStorage.setItem('jwt_token', response.data.token);

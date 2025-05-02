@@ -1,4 +1,10 @@
 <div class="container" (contextmenu)="onRightClick($event)">
+
+  <!-- No rooms -->
+  @if(categories().length == 1 && categories()[0].rooms.length == 0){
+    <p class="no-rooms">No rooms found!</p>
+  }
+
   <!-- Room Categories -->
   <div *ngFor="let category of categories(); let i = index"
       cdkDropList
@@ -27,20 +33,20 @@
         </div>
       }
       @else{
-        <!-- PLACEHOLDER IF NO MESSAGES ARE TO BE SHOWN -->
+        <!-- FOR NON ADMIN USERS -->
         <div class="room"
           *ngFor="let room of category.rooms"
             [ngClass]="room.type"
-            [routerLink]="['text', room.id]"
+            [routerLink]="[room.type, room.id]"
             routerLinkActive="router-link-active">
-        <ng-template cdkDragPreview><div class="preview">{{room.name}}</div></ng-template>
-        <ng-template cdkDragPlaceholder><div class="placeholder"></div></ng-template>
         {{ room.name }}
       </div>
     }
-
     </div>
   </div>
+
+
+
   <!-- Context Menu -->
   <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
     <ul>

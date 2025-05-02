@@ -6,7 +6,7 @@
 <div class="container">
   <div class="side-group">
     <aside class="server-info" #serverinfo>
-      <div class="banner">
+      <div class="banner" routerLink="/server/{{server().id}}/dashboard">
         <h1>{{server().name}}</h1>
         <p class="invite-code"><b>invite: {{server().invite_code}}</b></p>
 

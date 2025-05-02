@@ -137,6 +137,11 @@ export class TextRoomComponent implements OnInit {
   listenForMessages() {
     this.socketService.onTextRoomMessage((data: any) => {
       console.log("Received message from socket:", data);
+      if (data === 'room_deleted') {
+        this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
+        return;
+        // TODO: check if this works
+      }
       this.fetchMessages();
     });
 
@@ -146,7 +151,7 @@ export class TextRoomComponent implements OnInit {
 
     if (this.messageText.trim() == '') return;
     try {
-      const response = await axios.post('http://127.0.0.1.nip.io:8000/api/message', {
+      const response = await axios.post('http://lamzaone.go.ro:8000/api/message', {
         message: this.messageText,
         room_id: this.route_id,
         is_private: isPrivate,

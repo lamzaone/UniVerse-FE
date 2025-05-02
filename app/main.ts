@@ -30,7 +30,7 @@ function createWindow(): BrowserWindow {
     debug();
 
     require('electron-reloader')(module);
-    win.loadURL('http://127.0.0.1.nip.io:4200');
+    win.loadURL('http://lamzaone.go.ro:4200');
   } else {
     let pathIndex = './index.html';
 
@@ -79,7 +79,7 @@ ipcMain.on('google-oauth-login', async (event) => {
   });
 
   const clientId = '167769953872-b5rnqtgjtuhvl09g45oid5r9r0lui2d6.apps.googleusercontent.com';
-  const redirectUri = encodeURIComponent('http://127.0.0.1.nip.io:4200/auth/callback');
+  const redirectUri = encodeURIComponent('http://lamzaone.go.ro:4200/auth/callback');
   const scope = encodeURIComponent('openid email profile');
   const responseType = 'token id_token';
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
@@ -87,7 +87,7 @@ ipcMain.on('google-oauth-login', async (event) => {
   authWindow.loadURL(googleAuthUrl);
 
   authWindow.webContents.on('will-redirect', async (event, url) => {
-    if (url.startsWith('http://127.0.0.1.nip.io:4200/auth/callback')) {
+    if (url.startsWith('http://lamzaone.go.ro:4200/auth/callback')) {
       const idTokenMatch = url.match(/id_token=([^&]*)/);
       const accessTokenMatch = url.match(/access_token=([^&]*)/);
       console.log('ID Token:', idTokenMatch);
@@ -97,7 +97,7 @@ ipcMain.on('google-oauth-login', async (event) => {
         const access_token = accessTokenMatch[1];
 
         try {
-          const response = await axios.post('http://127.0.0.1.nip.io:8000/api/auth/google', {
+          const response = await axios.post('http://lamzaone.go.ro:8000/api/auth/google', {
             id_token: id_token,
             access_token: access_token,
           });
