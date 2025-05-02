@@ -25,7 +25,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>  new Transl
 
 
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
-const config: SocketIoConfig = { url: 'http://127.0.0.1.nip.io:8000/api/ws', options: {} };  // Adjust URL as necessary
+const config: SocketIoConfig = { url: 'http://lamzaone.go.ro:8000/api/ws', options: {} };  // Adjust URL as necessary
 
 @NgModule({
   declarations: [AppComponent],

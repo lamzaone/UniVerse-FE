@@ -12,7 +12,7 @@ export class SocketService {
   constructor(private authService: AuthService) {
     if (this.authService.isLoggedIn()) {
       this.userId = this.authService.getUser().id;
-      this.connectToSocket('main', `ws://127.0.0.1.nip.io:8000/api/ws/main/${this.userId}`);
+      this.connectToSocket('main', `ws://lamzaone.go.ro:8000/api/ws/main/${this.userId}`);
     }
   }
 
@@ -66,12 +66,12 @@ export class SocketService {
     if (this.sockets['main']){
       if (this.sockets['main']!.readyState > 1){
         this.sockets['main']!.close();
-        this.connectToSocket('main', `ws://127.0.0.1.nip.io:8000/api/ws/main/${this.userId}`);
-        this.connectToSocket('server', `ws://127.0.0.1.nip.io:8000/api/ws/server/${serverId}/${this.userId}`);
+        this.connectToSocket('main', `ws://lamzaone.go.ro:8000/api/ws/main/${this.userId}`);
+        this.connectToSocket('server', `ws://lamzaone.go.ro:8000/api/ws/server/${serverId}/${this.userId}`);
       }
-      this.connectToSocket('server', `ws://127.0.0.1.nip.io:8000/api/ws/server/${serverId}/${this.userId}`);
+      this.connectToSocket('server', `ws://lamzaone.go.ro:8000/api/ws/server/${serverId}/${this.userId}`);
     }else{
-      this.connectToSocket('server', `ws://127.0.0.1.nip.io:8000/api/ws/server/${serverId}/${this.userId}`);
+      this.connectToSocket('server', `ws://lamzaone.go.ro:8000/api/ws/server/${serverId}/${this.userId}`);
     }
 
 
@@ -82,12 +82,12 @@ export class SocketService {
     if (this.sockets['main']){
       if (this.sockets['main']!.readyState > 2){
         this.sockets['main']!.close();
-        this.connectToSocket('main', `ws://127.0.0.1.nip.io:8000/api/ws/main/${this.userId}`);
-        this.connectToSocket('textRoom', `ws://127.0.0.1.nip.io:8000/api/ws/textroom/${roomId}/${this.userId}`);
+        this.connectToSocket('main', `ws://lamzaone.go.ro:8000/api/ws/main/${this.userId}`);
+        this.connectToSocket('textRoom', `ws://lamzaone.go.ro:8000/api/ws/textroom/${roomId}/${this.userId}`);
       }
-      this.connectToSocket('textRoom', `ws://127.0.0.1.nip.io:8000/api/ws/textroom/${roomId}/${this.userId}`);
+      this.connectToSocket('textRoom', `ws://lamzaone.go.ro:8000/api/ws/textroom/${roomId}/${this.userId}`);
     }else{
-      this.connectToSocket('textRoom', `ws://127.0.0.1.nip.io:8000/api/ws/textroom/${roomId}/${this.userId}`);
+      this.connectToSocket('textRoom', `ws://lamzaone.go.ro:8000/api/ws/textroom/${roomId}/${this.userId}`);
     }
 
   }

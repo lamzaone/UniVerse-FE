@@ -32,7 +32,7 @@ export class ServersService {
   // Create a server and update servers signal
   async createServer(serverName: string, description: string) {
     try {
-      const response = await axios.post('http://127.0.0.1.nip.io:8000/api/server/create', {
+      const response = await axios.post('http://lamzaone.go.ro:8000/api/server/create', {
         name: serverName,
         description: description,
         owner_id: this.user.id
@@ -53,7 +53,7 @@ export class ServersService {
 
   async createCategory(serverId: number, categoryName: string, categoryDescription: string) {
     try {
-      const response = await axios.post('http://127.0.0.1.nip.io:8000/api/server/' + serverId + '/category/create', {
+      const response = await axios.post('http://lamzaone.go.ro:8000/api/server/' + serverId + '/category/create', {
         category_name: categoryName,
       });
       if (response.status === 200) {
@@ -70,7 +70,7 @@ export class ServersService {
   async createRoom(serverId: number, roomName: string, roomType: string, categoryId: number|null ) {
     try {
       if (categoryId === null) categoryId = 0;
-      const response = await axios.post('http://127.0.0.1.nip.io:8000/api/server/' + serverId + '/room/create?room_name='+roomName+'&room_type='+roomType+'&category_id='+categoryId);
+      const response = await axios.post('http://lamzaone.go.ro:8000/api/server/' + serverId + '/room/create?room_name='+roomName+'&room_type='+roomType+'&category_id='+categoryId);
       // server_id: int, room_name: str, room_type: str, db: db_dependency, category_id:
       if (response.status === 200) {
         return response.data;
@@ -87,7 +87,7 @@ export class ServersService {
   async fetchServers() {
     if (!this.authService.isLoggedIn()) return;
     try {
-      const response = await axios.get('http://127.0.0.1.nip.io:8000/api/server/user/' + this.user.id);
+      const response = await axios.get('http://lamzaone.go.ro:8000/api/server/user/' + this.user.id);
       if (response.status === 200) {
         this.servers.set(response.data);  // Update the servers signal
       } else {
@@ -100,7 +100,7 @@ export class ServersService {
 
   async fetchMessages(route_id:number){
     const response = await axios.post(
-      'http://127.0.0.1.nip.io:8000/api/messages',
+      'http://lamzaone.go.ro:8000/api/messages',
       {
         room_id: route_id,
         user_token: this.authService.getUser().token
@@ -113,7 +113,7 @@ export class ServersService {
   async joinServer(serverCode: string) {
     if (this.authService.isLoggedIn()) {
       try {
-        const response = await axios.post('http://127.0.0.1.nip.io:8000/api/server/join', {
+        const response = await axios.post('http://lamzaone.go.ro:8000/api/server/join', {
           invite_code: serverCode,
           user_id: this.user.id
         });
@@ -135,7 +135,7 @@ export class ServersService {
   // TODO: switch userID to user token for security reasons
   async getServer(serverId: number, userId: number) {
     try {
-      const response = await axios.post('http://127.0.0.1.nip.io:8000/api/server', { server_id: serverId, user_id: userId });
+      const response = await axios.post('http://lamzaone.go.ro:8000/api/server', { server_id: serverId, user_id: userId });
       if (response.status === 200) {
         return response.data;
       } else {
@@ -152,7 +152,7 @@ export class ServersService {
   // Fetch categories and rooms for a server
   async fetchCategoriesAndRooms(serverId: number) {
     try {
-      const response = await axios.get('http://127.0.0.1.nip.io:8000/api/server/' + serverId + '/categories');
+      const response = await axios.get('http://lamzaone.go.ro:8000/api/server/' + serverId + '/categories');
       if (response.status === 200) {
         return response.data;
       } else {
@@ -168,7 +168,7 @@ export class ServersService {
 
   async getAccessLevel(serverId: number):Promise<number> {
     try {
-      const response = await axios.post('http://127.0.0.1.nip.io:8000/api/server/access', {
+      const response = await axios.post('http://lamzaone.go.ro:8000/api/server/access', {
         token: this.authService.getUser().token,
         server_id: serverId
       });
