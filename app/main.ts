@@ -50,6 +50,9 @@ function createWindow(): BrowserWindow {
 }
 
 try {
+  // ADDED THIS BECAUSE IT DESTROYS THE APP FOR SOME REASON, ON AMD GPUs WITH THE LATEST DRIVERS
+  app.disableHardwareAcceleration();
+
   app.on('ready', () => setTimeout(createWindow, 400));
 
   app.on('window-all-closed', () => {
