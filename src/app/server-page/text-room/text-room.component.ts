@@ -39,17 +39,27 @@ export class TextRoomComponent implements OnInit {
     this.listenForMessages();
   }
 
+  // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
   ngOnInit(): void {
     // Initialize the route_id and join the text room
-    this.paramz=this.route.params.subscribe(params => {
-      this.route_id = +params['room_id'];
-      console.log("Room id: "+this.route_id)
-      this.socketService.joinTextRoom(this.route_id!.toString());
-      this.fetchMessages();
+    this.paramz = this.route.params.subscribe(params => {
+      const newRouteId = +params['room_id'];
+      if (this.route_id !== newRouteId) {
+        this.route_id = newRouteId;
+        console.log("Room id: " + this.route_id);
+        this.socketService.joinTextRoom(this.route_id.toString());
+        this.fetchMessages();
+      }
     });
 
     // Initialize the room signal
     // this.room = this.serversService.currentRoom;
+  }
+
+  ngOnDestroy(): void {
+    // Called once, before the instance is destroyed.
+    // Add 'implements OnDestroy' to the class.
+    this.paramz.unsubscribe(); // Unsubscribe from the route params to prevent memory leaks
   }
 
   // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
