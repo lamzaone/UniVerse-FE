@@ -28,3 +28,18 @@ html, body {
 
 }
 
+markdown {
+  p {
+    margin: 0 !important;
+    padding: 0;
+  }
+
+  ul, ol {
+    margin: 0;
+    padding-left: 1rem;
+  }
+
+  li {
+    margin: 0.25rem 0;
+  }
+}
