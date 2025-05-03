@@ -41,11 +41,14 @@
   </div>
 
   <div class="input">
-    <textarea #messageInput [(ngModel)]="messageText"
-              (keydown.enter)="sendMessage()"
-              (input)="adjustHeight($event)"
-              placeholder="Type a message...">
-    </textarea>
+    <md-editor
+  name="Content"
+  [(ngModel)]="messageText"
+  [height]="'200px'"
+  [options]="editorOptions"
+  required
+  maxlength="500"
+></md-editor>
 
     <div class="private" (click)="sendMessage()">send</div>
   </div>

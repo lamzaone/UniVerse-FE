@@ -7,13 +7,13 @@ import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { UsersService } from '../../services/users.service';
 import { FormsModule, NgModel } from '@angular/forms';
-import { MarkdownComponent } from 'ngx-markdown';
-import { provideMarkdown } from 'ngx-markdown';
+import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
+import { LMarkdownEditorModule } from 'ngx-markdown-editor';
 
 @Component({
   selector: 'app-text-room',
   standalone: true,
-  imports: [CommonModule, FormsModule, MarkdownComponent],
+  imports: [CommonModule, FormsModule, MarkdownComponent, LMarkdownEditorModule],
   templateUrl: './text-room.component.html',
   styleUrls: ['./text-room.component.scss'],
   providers: [provideMarkdown()]
@@ -40,6 +40,12 @@ export class TextRoomComponent implements OnInit {
 
     this.listenForMessages();
   }
+
+  editorOptions = {
+    hideIcons: ['FullScreen'],
+    showPreviewPanel: false,
+
+  };
 
   // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
   ngOnInit(): void {
