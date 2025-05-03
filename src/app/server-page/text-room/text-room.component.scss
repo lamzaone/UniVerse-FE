@@ -52,6 +52,7 @@
 
 }
 
+
 .msg{
   display: flex;
   flex-direction: column;
@@ -118,6 +119,8 @@
   }
 }
 
+
+
 .input{
   background-color: var(--dark-grey);
   border-radius: 10px;
@@ -182,4 +185,15 @@
   margin-top:10px;
   height:1px;
   display: flex;
+}
+
+
+markdown{
+  & p{
+    padding: 0;
+    margin: 0;
+    gap:0
+  }
+  padding: 0;
+  margin: 0;
 }

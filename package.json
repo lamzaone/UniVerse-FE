@@ -59,6 +59,7 @@
     "axios": "1.7.5",
     "gapi": "0.0.3",
     "gapi-client": "0.0.3",
+    "ngx-markdown": "^19.1.1",
     "rxjs": "7.8.1",
     "tslib": "2.6.2",
     "zone.js": "0.14.4"

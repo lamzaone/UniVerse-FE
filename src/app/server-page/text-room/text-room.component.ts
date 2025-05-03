@@ -7,14 +7,16 @@ import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { UsersService } from '../../services/users.service';
 import { FormsModule, NgModel } from '@angular/forms';
-import { skip } from 'node:test';
+import { MarkdownComponent } from 'ngx-markdown';
+import { provideMarkdown } from 'ngx-markdown';
 
 @Component({
   selector: 'app-text-room',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MarkdownComponent],
   templateUrl: './text-room.component.html',
-  styleUrls: ['./text-room.component.scss']
+  styleUrls: ['./text-room.component.scss'],
+  providers: [provideMarkdown()]
 })
 export class TextRoomComponent implements OnInit {
   @ViewChild('messageInput') messageInput!: ElementRef<HTMLTextAreaElement>;

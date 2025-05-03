@@ -19,7 +19,7 @@
           <!-- Render each message in the group -->
           <div class="msg-text" *ngFor="let message of messageGroup">
             <div class="msg-text-container">
-              <p class="msg-text-message">{{message.message}}</p>
+              <markdown class="msg-text-message">{{message.message}}</markdown>
               <p *ngIf="!(message === messageGroup[0])" class="msg-text-time">{{message.timestamp}}</p>
             </div>
           </div>
@@ -46,6 +46,7 @@
               (input)="adjustHeight($event)"
               placeholder="Type a message...">
     </textarea>
+
     <div class="private" (click)="sendMessage()">send</div>
   </div>
 </div>
