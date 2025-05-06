@@ -150,7 +150,9 @@ export class TextRoomComponent implements OnInit {
     }
   }
 
-
+  getFileName(url: string): string {
+    return url.split('/').pop() || url;
+  }
 
   listenForMessages() {
     this.socketService.onTextRoomMessage((data: any) => {
@@ -165,30 +167,72 @@ export class TextRoomComponent implements OnInit {
 
   }
 
-  async sendMessage(isPrivate: boolean = false): Promise<void> {
+  selectedFiles: any[] = [];
 
-    if (this.messageText.trim() == '') return;
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.selectedFiles = Array.from(input.files).map(file => {
+        const reader = new FileReader();
+        const preview = { name: file.name, type: file.type, file: file, preview: '' };
+        reader.onload = (e: any) => {
+          preview.preview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        return preview;
+      });
+    }
+  }
+
+  async sendMessage(isPrivate: boolean = false): Promise<void> {
+    if (this.messageText.trim() === '' && this.selectedFiles.length === 0) return;
+
+    const formData = new FormData();
+    formData.append('message', this.messageText);
+    formData.append('room_id', this.route_id!.toString());
+    formData.append('is_private', isPrivate.toString());
+    formData.append('user_token', this.authService.userData().token);
+    formData.append('reply_to', '0');
+
+    for (let i = 0; i < this.selectedFiles.length; i++) {
+      formData.append('attachments', this.selectedFiles[i].file);
+    }
+
     try {
-      const response = await axios.post('http://lamzaone.go.ro:8000/api/message', {
-        message: this.messageText,
-        room_id: this.route_id,
-        is_private: isPrivate,
-        user_token: this.authService.userData().token,
-        reply_to: 0
+      const response = await axios.post('http://lamzaone.go.ro:8000/api/message', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
       this.messageText = '';
-
-      if (this.messageInput) {
-        const textarea = this.messageInput.nativeElement;
-        textarea.style.height = 'auto';
-      }
-
+      this.selectedFiles = [];
       this.scrollToLast();
     } catch (error) {
       console.error('Error sending message:', error);
     }
   }
+
+  getFileType(fileUrl: string): 'image' | 'video' | 'file' {
+    const extension = fileUrl.split('.').pop()?.toLowerCase();
+    if (!extension) return 'file';
+
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    const videoExtensions = ['mp4', 'webm', 'ogg'];
+
+    if (imageExtensions.includes(extension)) return 'image';
+    if (videoExtensions.includes(extension)) return 'video';
+    return 'file';
+  }
+
+  isImage(fileUrl: string): boolean {
+    return this.getFileType(fileUrl) === 'image';
+  }
+
+  isVideo(fileUrl: string): boolean {
+    return this.getFileType(fileUrl) === 'video';
+  }
+
 
   scrollToLast(){
     const lastMessage = document.getElementById('last-message');
