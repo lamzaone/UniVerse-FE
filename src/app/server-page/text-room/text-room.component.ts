@@ -42,11 +42,16 @@ export class TextRoomComponent implements OnInit {
   }
 
   editorOptions = {
-    hideIcons: ['FullScreen'],
-    showPreviewPanel: false,
-
+    autofocus: true, // Auto-focus the editor
+    showPreviewPanel: false, // Show the preview panel
+    showToolbar: true, // Show the toolbar with buttons like bold, italic, etc.
+    toolbarPosition: 'top', // Position of the toolbar (top/bottom)
+    showSaveButton: false, // Option to hide the save button
+    height: '300px', // Set editor height
+    theme: 'dark', // Theme can be light or dark depending on the library
+    syntaxHighlighting: true, // Enable syntax highlighting in code blocks
+    enableAdvancedFeatures: true // Enable or disable advanced features like tables, strikethrough, etc.
   };
-
   // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
   ngOnInit(): void {
     // Initialize the route_id and join the text room

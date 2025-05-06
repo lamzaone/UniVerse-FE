@@ -43,3 +43,104 @@ markdown {
     margin: 0.25rem 0;
   }
 }
+
+md-editor {
+  // background-color: red;
+  & .md-editor-container{
+    // background-color: yellow;
+    // padding: 10px;
+    // border-radius: 10px;
+
+    & .md-layout {
+      // background-color: blue;
+      padding: 10px;
+      border-radius: 10px;
+
+      // & .edit-container{
+      //   & .ace_text-input{
+      //     background-color: var(--dark-grey) !important;
+      //     color: var(--white) !important;
+      //     font-size: 1rem !important;
+      //     padding: 10px !important;
+      //     border-radius: 10px !important;
+      //   }
+      //   & .ace_gutter{
+      //     background-color: var(--dark-grey) !important;
+      //     color: var(--white) !important;
+      //     font-size: 1rem !important;
+      //     padding: 10px !important;
+      //     border-radius: 10px !important;
+      //   }
+      // }
+
+      & .tool-bar {
+        background-color: var(--grey) !important;
+        display: flex;
+        flex-direction: row;
+
+        & .btn-group{
+          // background-color: purple !important;
+          padding: 10px;
+          border-radius: 10px;
+          display: flex;
+          flex-direction: row;
+
+          & .btn{
+            background-color: #444444 !important;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: row;
+          }
+        }
+      }
+
+    }
+
+  }
+
+}
+
+.ace_content{
+  background-color: var(--grey) !important;
+  color: var(--white) !important;
+}
+
+.md-footer{
+  background-color: var(--grey) !important;
+  color: var(--white) !important;
+  font-size: 1rem !important;
+  padding: 10px !important;
+  border-radius: 10px !important;
+}
+
+.ace-editor{
+  background-color: var(--grey) !important;
+  color: var(--white) !important;
+  font-size: 1rem !important;
+  padding: 10px !important;
+  border-radius: 10px !important;
+}
+
+.ace_gutter{
+  background-color: var(--grey) !important;
+  // color: var(--white) !important;
+  font-size: 1rem !important;
+  padding: 10px !important;
+  border-radius: 10px !important;
+  &-cell{
+    background-color: var(--grey) !important;
+    color: var(--white) !important;
+    font-size: 1rem !important;
+    padding: 10px !important;
+    border-radius: 10px !important;
+  }
+}
+
+.editor-panel{
+  background-color: var(--grey) !important;
+  color: var(--white) !important;
+  font-size: 1rem !important;
+  padding: 10px !important;
+  border-radius: 10px !important;
+}

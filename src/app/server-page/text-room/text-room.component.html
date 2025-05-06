@@ -3,7 +3,7 @@
     <div *ngIf="messages()?.length > 0; else noMessages">
       <div class="message" *ngFor="let messageGroup of messages()">
         <div class="avatar">
-          <img [src]="messageGroup[0].user.picture">
+          <img [src]="messageGroup[0].user.picture" />
         </div>
         <div class="msg">
           <div class="msg-user">
@@ -23,6 +23,7 @@
                   </a>
                 </div>
               </div>
+
               <p *ngIf="message !== messageGroup[0]" class="msg-text-time">{{message.timestamp}}</p>
             </div>
           </div>
@@ -42,16 +43,7 @@
   </div>
 
   <div class="input">
-    <md-editor
-      name="Content"
-      [(ngModel)]="messageText"
-      [height]="'200px'"
-      [options]="editorOptions"
-      required
-      maxlength="500"
-    ></md-editor>
-
-    <input type="file" multiple (change)="onFileSelected($event)" hidden #fileInput />
+    <!-- File Previews Section -->
     <div class="attachments-preview" *ngIf="selectedFiles.length > 0">
       <div class="attachment" *ngFor="let file of selectedFiles">
         <img *ngIf="file.type.startsWith('image/')" [src]="file.preview" class="attachment-img" />
@@ -59,9 +51,21 @@
       </div>
     </div>
 
+    <!-- MD Editor Section -->
+    <md-editor
+      name="Content"
+      [(ngModel)]="messageText"
+      [height]="'200px'"
+      [options]="editorOptions"
+      required
+      maxlength="500"
+      (keydown.enter)="handleEnter($event)"
+    ></md-editor>
+
+    <input type="file" multiple (change)="onFileSelected($event)" hidden #fileInput />
     <div class="actions">
-      <button type="button" (click)="fileInput.click()">📎</button>
-      <button type="button" class="private" (click)="sendMessage()">send</button>
+      <button type="button" class="send" (click)="fileInput.click()">📎</button>
+      <button type="button" class="send" (click)="sendMessage()">send</button>
     </div>
   </div>
 </div>
