@@ -10,7 +10,7 @@
             <p class="msg-user-name"><b>{{messageGroup[0].user.name}}</b></p>
             <p class="msg-user-time">{{messageGroup[0].timestamp}}</p>
           </div>
-
+          <!-- TODO: FIX RANDOM NEWLINE INBETWEEN MESSAGES -->
           <div class="msg-text" *ngFor="let message of messageGroup">
             <div class="msg-text-container">
               <markdown class="msg-text-message" [data]="message.message"></markdown>
@@ -19,7 +19,8 @@
                   <img *ngIf="isImage(url)" [src]="url" class="attachment-img" />
                   <video *ngIf="isVideo(url)" controls [src]="url" class="attachment-video"></video>
                   <a *ngIf="!isImage(url) && !isVideo(url)" [href]="url" target="_blank" class="attachment-file">
-                    📄 {{ getFileName(url) }}
+                    <p class="">📄</p>
+                    <p>{{ getFileName(url) }}</p>
                   </a>
                 </div>
               </div>
@@ -41,7 +42,7 @@
       </div>
     </ng-template>
   </div>
-
+  <!-- TODO: FIX ATTACHMENTS PREVIEWS LAYOUT -->
   <div class="input">
     <!-- File Previews Section -->
     <div class="attachments-preview" *ngIf="selectedFiles.length > 0">
