@@ -264,12 +264,14 @@ export class TextRoomComponent implements OnInit {
   }
 
   // handle enter to sendMessage()
-  handleEnter(event: KeyboardEvent) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
+  handleEnter(event: Event) {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key === 'Enter' && !keyboardEvent.shiftKey) {
+      keyboardEvent.preventDefault();
       this.sendMessage();
     }
   }
+
 
 
 }
