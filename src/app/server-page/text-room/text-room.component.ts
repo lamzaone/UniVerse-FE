@@ -158,7 +158,9 @@ export class TextRoomComponent implements OnInit {
   }
 
   getFileName(url: string): string {
-    return url.split('/').pop() || url;
+    let name = url.split('/').pop() || url;
+    name = name.split('_').slice(1).join('_'); // Remove the first part of the name (before the first underscore)
+    return name;
   }
 
   listenForMessages() {
