@@ -19,7 +19,7 @@
                   <img *ngIf="isImage(url)" [src]="url" class="attachment-img" />
                   <video *ngIf="isVideo(url)" controls [src]="url" class="attachment-video"></video>
                   <a *ngIf="!isImage(url) && !isVideo(url)" [href]="url" target="_blank" class="attachment-file">
-                    <p class="">📄</p>
+                    <p class="attachment-file-icon">📄</p>
                     <p>{{ getFileName(url) }}</p>
                   </a>
                 </div>
@@ -42,31 +42,36 @@
       </div>
     </ng-template>
   </div>
-  <!-- TODO: FIX ATTACHMENTS PREVIEWS LAYOUT -->
   <div class="input">
     <!-- File Previews Section -->
     <div class="attachments-preview" *ngIf="selectedFiles.length > 0">
       <div class="attachment" *ngFor="let file of selectedFiles">
-        <img *ngIf="file.type.startsWith('image/')" [src]="file.preview" class="attachment-img" />
-        <p *ngIf="!file.type.startsWith('image/')">📎 {{file.name}}</p>
+        <img alt="Preview" *ngIf="file.type.startsWith('image/')" [src]="file.preview" class="attachment-img" />
+        <div class="attachment-file">
+          <p class="attachment-file-icon" *ngIf="!file.type.startsWith('image/')">📎</p>
+          <p *ngIf="!file.type.startsWith('image/')">{{file.name}}</p>
+        </div>
       </div>
     </div>
 
     <!-- MD Editor Section -->
-    <md-editor
-      name="Content"
-      [(ngModel)]="messageText"
-      [height]="'200px'"
-      [options]="editorOptions"
-      required
-      maxlength="500"
-      (keydown.enter)="handleEnter($event)"
-    ></md-editor>
+    <div class="input-container">
+      <md-editor
+        name="Content"
+        [(ngModel)]="messageText"
+        [height]="'200px'"
+        [options]="editorOptions"
+        required
+        maxlength="500"
+        (keydown.enter)="handleEnter($event)"
+      ></md-editor>
 
-    <input type="file" multiple (change)="onFileSelected($event)" hidden #fileInput />
-    <div class="actions">
-      <button type="button" class="send" (click)="fileInput.click()">📎</button>
-      <button type="button" class="send" (click)="sendMessage()">send</button>
+
+      <div class="actions">
+        <button type="button" class="send" (click)="fileInput.click()">📎</button>
+        <button type="button" class="send" (click)="sendMessage()">send</button>
+      </div>
     </div>
+    <input type="file" multiple (change)="onFileSelected($event)" hidden #fileInput />
   </div>
 </div>

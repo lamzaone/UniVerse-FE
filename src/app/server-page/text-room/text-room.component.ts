@@ -149,6 +149,8 @@ export class TextRoomComponent implements OnInit {
 
       if (isLastMessageInView) this.scrollToLast();
 
+      // this.scrollToLast();
+
     } catch (error) {
       this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
       return;
