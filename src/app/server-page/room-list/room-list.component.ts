@@ -190,6 +190,16 @@ export class RoomListComponent {
     this.showCreateRoom = !this.showCreateRoom;
   }
 
+  getRoomIcon(type: string): string {
+    switch (type) {
+      case 'text':
+        return '#';
+      case 'audio':
+        return '🔊';
+      default:
+        return ' ';
+    }
+  }
 }
 
 

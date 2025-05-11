@@ -34,6 +34,7 @@
   width: 13rem;
 }
 
+
 .container{
   height: 100%;
   display:flex;
@@ -84,7 +85,7 @@
 }
 
 .room{
-  width:12.5rem;
+  width:13rem;
   border-radius: 5px;
   margin: 0.1rem 0;
 
@@ -99,11 +100,15 @@
     // margin-left: 2px;
   }
 
-
-  &.text{
+  & p{
+    margin: 0;
+    padding: 0;
     color: var(--white);
     padding: 5px;
     border-bottom: 1px solid var(--dark-grey);
+    // font-size: 0.8rem;
+    // font-weight: 500;
+    // color: var(--white);
   }
 
   &:last-child{
