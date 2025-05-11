@@ -7,6 +7,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { ServerPageComponent } from '../server-page/server-page.component';
 import { TextRoomComponent } from '../server-page/text-room/text-room.component';
 import { ServerDashboardComponent } from '../server-page/server-dashboard/server-dashboard.component';
+import { AudioVideoRoomComponent } from '../server-page/audio-video-room/audio-video-room.component';
 
 const routes: Routes = [
   {
@@ -44,6 +45,11 @@ const routes: Routes = [
           {
             path: 'text/:room_id',
             component: TextRoomComponent,
+            canActivate: [AuthGuard],
+          },
+          {
+            path: 'audio/:room_id',
+            component: AudioVideoRoomComponent,
             canActivate: [AuthGuard],
           }
         ]

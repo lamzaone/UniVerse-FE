@@ -2,6 +2,7 @@ import { AuthService } from './../../services/auth.service';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import axios from 'axios';
+import api from '../../services/api.service';
 
 @Component({
   selector: 'app-callback',
@@ -27,7 +28,7 @@ export class CallbackComponent implements OnInit {
         console.log('Access Token:', accessToken);
 
         try {
-            const response = await axios.post('http://lamzaone.go.ro:8000/api/auth/google', { id_token: idToken, access_token: accessToken });
+            const response = await api.post('http://lamzaone.go.ro:8000/api/auth/google', { id_token: idToken, access_token: accessToken });
             console.log('Server Response:', response.data);
             this.authService.setUser(response.data);
             localStorage.setItem('jwt_token', response.data.token);

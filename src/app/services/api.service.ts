@@ -8,7 +8,7 @@ const api = axios.create({
 // Add interceptor to attach token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // or use a proper AuthService
+    const token = localStorage.getItem('jwt_token'); // or use a proper AuthService
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

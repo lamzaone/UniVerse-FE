@@ -92,7 +92,21 @@ export class SocketService {
 
   }
 
-  sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'textRoom' = 'textRoom'): void {
+  joinAudioRoom(roomId: string): void {
+    if (this.sockets['main']){
+      if (this.sockets['main']!.readyState > 2){
+        this.sockets['main']!.close();
+        this.connectToSocket('main', `ws://lamzaone.go.ro:8000/api/ws/main/${this.userId}`);
+        this.connectToSocket('audioRoom', `ws://lamzaone.go.ro:8000/api/ws/audiovideo/${roomId}/${this.userId}`);
+      }
+      this.connectToSocket('audioRoom', `ws://lamzaone.go.ro:8000/api/ws/audiovideo/${roomId}/${this.userId}`);
+    }else{
+      this.connectToSocket('audioRoom', `ws://lamzaone.go.ro:8000/api/ws/audiovideo/${roomId}/${this.userId}`);
+    }
+
+  }
+
+  sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'audioRoom' | 'textRoom' = 'textRoom'): void {
     const socket = this.sockets[context];
     if (socket) {
       socket.send(JSON.stringify({ userId: this.userId, message, private: privateMsg }));

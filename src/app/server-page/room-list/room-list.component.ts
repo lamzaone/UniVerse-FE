@@ -8,6 +8,7 @@ import { SocketService } from '../../services/socket.service';
 import axios from 'axios';
 import { CreateCategoryComponent } from './create-category/create-category.component';
 import { CreateRoomComponent } from './create-room/create-room.component';
+import api from '../../services/api.service';
 @Component({
   selector: 'app-room-list',
   standalone: true,
@@ -113,7 +114,7 @@ export class RoomListComponent {
   // Function for reordering rooms within the same category
   async reorderRoom(room_id: number, position: number, category: number | null) {
     // console.log('Reordering room with ID', room_id, 'to position', position);
-    await axios.post('http://lamzaone.go.ro:8000/api/room/' + room_id + '/reorder', {
+    await api.post('http://lamzaone.go.ro:8000/api/room/' + room_id + '/reorder', {
       room_id,
       position,
       category
@@ -138,7 +139,7 @@ export class RoomListComponent {
   }
   async deleteRoom(room_id: Number): Promise<void> {
     console.log('Deleted room', room_id);
-    console.log(await axios.put('http://lamzaone.go.ro:8000/api/server/' + this.route_id + '/room/' + room_id + '/delete'));
+    console.log(await api.put('http://lamzaone.go.ro:8000/api/server/' + this.route_id + '/room/' + room_id + '/delete'));
     // navigate to the server page after deletion
     this.router.navigate(['server', this.route_id, 'dashboard']);
     this.showContextMenu = false;
@@ -146,7 +147,7 @@ export class RoomListComponent {
 
   async deleteCategory(category_id: Number): Promise<void> {
     console.log('Deleted category', category_id);
-    console.log(await axios.put('http://lamzaone.go.ro:8000/api/server/' + this.route_id + '/category/' + category_id + '/delete'));
+    console.log(await api.put('http://lamzaone.go.ro:8000/api/server/' + this.route_id + '/category/' + category_id + '/delete'));
     this.showContextMenu = false;
   }
 
