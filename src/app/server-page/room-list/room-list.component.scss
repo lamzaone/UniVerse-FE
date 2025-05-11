@@ -34,6 +34,9 @@
   width: 13rem;
 }
 
+.text{
+  color: red;
+}
 
 .container{
   height: 100%;
@@ -85,13 +88,16 @@
 }
 
 .room{
-  width:13rem;
+  width:12.5rem;
   border-radius: 5px;
   margin: 0.1rem 0;
 
   transition: 0.2s ease-in-out all;
 
 
+  color: var(--white);
+  padding: 5px;
+  border-bottom: 1px solid var(--dark-grey);
   &:hover{
 
     transition: 0.2s ease-in-out all;
@@ -100,16 +106,9 @@
     // margin-left: 2px;
   }
 
-  & p{
-    margin: 0;
-    padding: 0;
-    color: var(--white);
-    padding: 5px;
-    border-bottom: 1px solid var(--dark-grey);
-    // font-size: 0.8rem;
-    // font-weight: 500;
-    // color: var(--white);
-  }
+
+  // &.text{
+  // }
 
   &:last-child{
     border-bottom: none;
