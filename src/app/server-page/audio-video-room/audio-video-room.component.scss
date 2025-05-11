@@ -1,6 +1,6 @@
 .users-list{
   width: 100% !important;
-  height: calc(98% - 4.5rem) !important;
+  height: calc(98% - 5rem) !important;
   background-color: black;
   display: flex;
   flex-wrap: wrap;
@@ -24,19 +24,29 @@
   display: flex;
   gap: 1rem;
   justify-content: center;
-  background-color: red;
-  height: 4.5rem;
+  background-color: var(--grey);
+  border-radius: 10px;
+  height: 4rem;
+  margin-top: 0.5rem;
   width: 100%;
 }
 
 .button{
-  background-color: blue;
+  background-color: var(--light-grey);
+  border: 2px solid blue;
   width: 3rem;
   height: 3rem;
   display: flex;
   border-radius: 100px;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+
+  &:hover{
+    transform: scale(1.05);
+
+  }
 }
 
 

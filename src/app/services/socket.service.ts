@@ -61,6 +61,11 @@ export class SocketService {
     this.listeners['main'].push(callback);
   }
 
+  onAudioRoomMessage(callback: (data: any) => void) {
+    if (!this.listeners['audioRoom']) this.listeners['audioRoom'] = [];
+    this.listeners['audioRoom'].push(callback);
+  }
+
   joinServer(serverId: string): void {
     // Check if the main socket connection is opened, if not, re-open it
     if (this.sockets['main']){
@@ -92,7 +97,7 @@ export class SocketService {
 
   }
 
-  joinAudioRoom(roomId: string): void {
+  joinAudioRoom(roomId: string): WebSocket | null {
     if (this.sockets['main']){
       if (this.sockets['main']!.readyState > 2){
         this.sockets['main']!.close();
@@ -103,7 +108,7 @@ export class SocketService {
     }else{
       this.connectToSocket('audioRoom', `ws://lamzaone.go.ro:8000/api/ws/audiovideo/${roomId}/${this.userId}`);
     }
-
+    return this.sockets['audioRoom'];
   }
 
   sendMessage(message: string, privateMsg: boolean = false, context: 'server' | 'audioRoom' | 'textRoom' = 'textRoom'): void {
