@@ -1,0 +1,49 @@
+.users-list{
+  width: 100% !important;
+  height: calc(98% - 4.5rem) !important;
+  background-color: black;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user{
+  background-color: rgb(39, 39, 39);
+  width: 16rem;
+  height: 9rem;
+  display: flex;
+  border-radius: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.buttons{
+  padding-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  background-color: red;
+  height: 4.5rem;
+  width: 100%;
+}
+
+.button{
+  background-color: blue;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  border-radius: 100px;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.container{
+  display: flex;
+  flex-direction: column;
+  // justify-content: center;
+  // align-items: center;
+  // height: 100vh;
+}
