@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
-
+import api from '../src/app/services/api.service';
 let win: BrowserWindow | null = null;
 const args = process.argv.slice(1),
   serve = args.some(val => val === '--serve');
@@ -99,7 +99,7 @@ ipcMain.on('google-oauth-login', async (event) => {
         const access_token = accessTokenMatch[1];
 
         try {
-          const response = await axios.post('http://lamzaone.go.ro:8000/api/auth/google', {
+          const response = await api.post('http://lamzaone.go.ro:8000/api/auth/google', {
             id_token: id_token,
             access_token: access_token,
           });

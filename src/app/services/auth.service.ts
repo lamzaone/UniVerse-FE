@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import axios from 'axios';
+import  api  from './api.service';
 import { json } from 'stream/consumers';
 
 @Injectable({
@@ -44,7 +45,7 @@ export class AuthService {
     if (token) {
       try {
         // Validate the token with the backend
-        const response = await axios.post('http://lamzaone.go.ro:8000/api/auth/validate', { token });
+        const response = await api.post('http://lamzaone.go.ro:8000/api/auth/validate', { token });
 
         // If the token is valid, update the user information
         this.setUser(response.data);
@@ -58,7 +59,7 @@ export class AuthService {
         if (refreshToken) {
           try {
             // Attempt to refresh the token
-            const refreshResponse = await axios.post('http://lamzaone.go.ro:8000/api/auth/refresh', { token: refreshToken });
+            const refreshResponse = await api.post('http://lamzaone.go.ro:8000/api/auth/refresh', { token: refreshToken });
 
             // If successful, update the user information and store the new tokens
             this.setUser(refreshResponse.data);

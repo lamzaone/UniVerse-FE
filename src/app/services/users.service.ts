@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import axios from 'axios';
-
+import api from './api.service';
 interface UserInfo {
   id: string;
   name: string;
@@ -24,7 +24,7 @@ export class UsersService {
   }
 
   async getUsersInfo(userIds: string[]): Promise<UserInfo[]> {
-    return await axios.post('http://lamzaone.go.ro:8000/api/users/info', { userIds:userIds }).then(response => {
+    return await api.post('http://lamzaone.go.ro:8000/api/users/info', { userIds:userIds }).then(response => {
       const usersInfo = response.data;
       for (const userInfo of usersInfo) {
         this.userCache[userInfo.id] = userInfo; // Store user info in cache
@@ -48,7 +48,7 @@ export class UsersService {
     }
 
     // If the user is not in the cache, fetch from the API
-    return await axios.get(`http://lamzaone.go.ro:8000/api/user/${userId}`).then(response => {
+    return await api.get(`http://lamzaone.go.ro:8000/api/user/${userId}`).then(response => {
       const userInfo = response.data;
       this.userCache[userId] = userInfo; // Store user info in cache
       return userInfo;
@@ -70,7 +70,7 @@ export class UsersService {
 
   async getOnlineUsers(server_id: number = 0) : Promise<string[]> {
 
-    return await axios.get(`http://lamzaone.go.ro:8000/api/server/${server_id}/online`).then(response => {
+    return await api.get(`http://lamzaone.go.ro:8000/api/server/${server_id}/online`).then(response => {
       return response.data;
     }).catch(error => {
       console.error('Failed to fetch online users', error);
@@ -80,7 +80,7 @@ export class UsersService {
 
   async getAllUsers(server_id: number = 0) : Promise<string[]> {
 
-    return await axios.get(`http://lamzaone.go.ro:8000/api/server/${server_id}/users`).then(response => {
+    return await api.get(`http://lamzaone.go.ro:8000/api/server/${server_id}/users`).then(response => {
       return response.data;
     }
     ).catch(error => {

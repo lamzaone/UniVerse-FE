@@ -9,6 +9,7 @@ import { UsersService } from '../../services/users.service';
 import { FormsModule, NgModel } from '@angular/forms';
 import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
 import { LMarkdownEditorModule } from 'ngx-markdown-editor';
+import api from '../../services/api.service';
 
 @Component({
   selector: 'app-text-room',
@@ -208,7 +209,7 @@ export class TextRoomComponent implements OnInit {
     }
 
     try {
-      const response = await axios.post('http://lamzaone.go.ro:8000/api/message', formData, {
+      const response = await api.post('http://lamzaone.go.ro:8000/api/message', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
