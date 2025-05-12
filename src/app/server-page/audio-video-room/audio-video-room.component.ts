@@ -7,6 +7,7 @@ import { UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import api from '../../services/api.service';
+
 @Component({
   selector: 'app-audio-video-room',
   standalone: true,
@@ -26,9 +27,10 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   localStream!: MediaStream;
 
   peers: Map<number, RTCPeerConnection> = new Map();
-  signalingSocket!: WebSocket;
 
   users: any[] = [];
+  voiceUserIds: Set<number> = new Set();
+
   connected = false;
 
   isScreenSharing = false;
@@ -40,13 +42,13 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private socketService: SocketService
-  ) {
-    this.users.push(this.authService.getUser());
-  }
+  ) {}
 
   async ngOnInit() {
     this.roomId = 3;
     await this.fetchInitialUsers();
+    this.initSocketListeners();
+    this.socketService.joinAudioRoom(this.roomId);
   }
 
   ngOnDestroy() {
@@ -54,26 +56,95 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   async fetchInitialUsers() {
-    // TODO: FIX THIS
+    this.users = [];
     try {
       const res = await api.get(`http://lamzaone.go.ro:8000/api/room/${this.roomId}/users`);
       const userIds: string[] = res.data['userIds'];
-      console.log(userIds);
-      this.users = await this.userService.getUsersInfo([...userIds]);
+      const users = await Promise.all(
+        userIds.map(async (userId: string) => {
+          const user = await this.userService.getUserInfo(userId);
+          return user;
+        })
+      );
+      this.users = users;
     } catch (error) {
       console.error('Failed to fetch users', error);
     }
   }
 
+  initSocketListeners() {
+    this.socketService.onAudioRoomMessage(async (msg: any) => {
+      const { type, user_id, from, data } = msg;
+
+      if (type === 'user-joined') {
+        const newUser = await this.userService.getUserInfo(user_id.toString());
+        if (!this.users.find(u => u.id === newUser.id)) {
+          this.users.push(newUser);
+        }
+
+        // Only if we're connected (i.e. in voice), treat them as a voice participant
+        if (this.connected && user_id !== this.userId) {
+          this.voiceUserIds.add(user_id);
+
+          const pc = this.createPeerConnection(user_id);
+          this.peers.set(user_id, pc);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          this.sendMessage({ type: 'offer', target: user_id, data: offer });
+        }
+        return;
+      }
+
+      if (type === 'user-left') {
+        this.voiceUserIds.delete(user_id);
+        this.users = this.users.filter(u => u.id !== user_id);
+        this.removeRemoteUser(user_id);
+        return;
+      }
+
+      if (from === this.userId) return;
+
+      let pc = this.peers.get(from);
+      if (!pc) {
+        pc = this.createPeerConnection(from);
+        this.peers.set(from, pc);
+      }
+
+      switch (type) {
+        case 'offer':
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          this.sendMessage({ type: 'answer', target: from, data: answer });
+          break;
+        case 'answer':
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          break;
+        case 'candidate':
+          await pc.addIceCandidate(new RTCIceCandidate(data));
+          break;
+      }
+    });
+  }
+
   async joinVoiceRoom() {
     if (this.connected) return;
     this.connected = true;
+    this.voiceUserIds.add(this.userId);  // Add self to voice chat list
 
     try {
       this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mergeStreams();
-      this.initWebSocket();
-      // this.socketService.sendMessage('join/leave',false, 'audioRoom')
+
+      for (const user of this.users) {
+        if (user.id !== this.userId) {
+          const pc = this.createPeerConnection(user.id);
+          this.peers.set(user.id, pc);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          this.sendMessage({ type: 'offer', target: user.id, data: offer });
+        }
+      }
     } catch (err) {
       alert("Failed to access microphone.");
       this.connected = false;
@@ -155,7 +226,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   replaceAllTracks() {
     for (const [userId, pc] of this.peers.entries()) {
       const senders = pc.getSenders();
-
       this.localStream.getTracks().forEach(track => {
         const sender = senders.find(s => s.track?.kind === track.kind);
         if (sender) {
@@ -167,63 +237,10 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
   }
 
-  initWebSocket() {
-    // TODO: FIX THIS TO USE THE SOCKET SERVICE
-    // this.signalingSocket = new WebSocket(`ws://lamzaone.go.ro:8000/api/ws/audiovideo/${this.roomId}/${this.userId}`);
-    this.signalingSocket = this.socketService.joinAudioRoom(this.roomId)!;
-
-
-    this.signalingSocket.onmessage = async (event) => {
-      const data = JSON.parse(event.data);
-      const fromUser = data.from;
-
-      if (fromUser === this.userId) return;
-
-      let peer = this.peers.get(fromUser);
-      if (!peer) {
-        peer = this.createPeerConnection(fromUser);
-        this.peers.set(fromUser, peer);
-      }
-
-      if (data.type === 'offer') {
-        await peer.setRemoteDescription(new RTCSessionDescription(data.data));
-        const answer = await peer.createAnswer();
-        await peer.setLocalDescription(answer);
-        this.sendMessage({ type: 'answer', target: fromUser, data: answer });
-      }
-
-      if (data.type === 'answer') {
-        await peer.setRemoteDescription(new RTCSessionDescription(data.data));
-      }
-
-      if (data.type === 'candidate') {
-        await peer.addIceCandidate(new RTCIceCandidate(data.data));
-      }
-
-      if (data.type === 'user-left') {
-        this.removeRemoteUser(data.user_id);
-      }
-    };
-
-    this.signalingSocket.onopen = () => {
-      this.users.forEach(user => {
-        if (user.id !== this.userId) {
-          const pc = this.createPeerConnection(user.id);
-          this.peers.set(user.id, pc);
-
-          pc.createOffer().then(offer => {
-            pc.setLocalDescription(offer);
-            this.sendMessage({ type: 'offer', target: user.id, data: offer });
-          });
-        }
-      });
-    };
-  }
-
   createPeerConnection(remoteUserId: number): RTCPeerConnection {
     const pc = new RTCPeerConnection();
 
-    this.localStream.getTracks().forEach(track => {
+    this.localStream?.getTracks().forEach(track => {
       pc.addTrack(track, this.localStream);
     });
 
@@ -253,7 +270,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   sendMessage(message: any) {
-    this.socketService.sendMessage(message,false, 'audioRoom');
+    this.socketService.sendMessage(JSON.stringify(message), false, 'audioRoom');
   }
 
   removeRemoteUser(userId: number) {
@@ -266,8 +283,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
   leave() {
     this.sendMessage({ type: 'user-left', user_id: this.userId });
-
-    this.signalingSocket?.close();
+    this.socketService.disconnectAll();
 
     [this.audioStream, this.cameraStream, this.screenStream, this.localStream].forEach(stream => {
       stream?.getTracks().forEach(track => track.stop());
@@ -275,6 +291,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
     this.peers.forEach(pc => pc.close());
     this.peers.clear();
+
+    this.voiceUserIds.clear();
     this.connected = false;
   }
 }
