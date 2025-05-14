@@ -99,7 +99,7 @@ ipcMain.on('google-oauth-login', async (event) => {
         const access_token = accessTokenMatch[1];
 
         try {
-          const response = await api.post('http://lamzaone.go.ro:8000/api/auth/google', {
+          const response = await axios.post('http://lamzaone.go.ro:8000/api/auth/google', {
             id_token: id_token,
             access_token: access_token,
           });
