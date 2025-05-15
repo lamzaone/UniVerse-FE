@@ -21,13 +21,13 @@ import api from '../../services/api.service';
 })
 export class TextRoomComponent implements OnInit {
   @ViewChild('messageInput') messageInput!: ElementRef<HTMLTextAreaElement>;
-  route_id: number | null = null;
+  // room().id: number | null = null;
   room = signal<any>(null);
   messages = signal<any>(null);
   messageText = '';
 
   paramz:any;
-  private previousRouteId: number | null = null; // Store the previous route_id
+  private previousRouteId: number | null = null; // Store the previous room().id
 
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
@@ -53,17 +53,18 @@ export class TextRoomComponent implements OnInit {
     syntaxHighlighting: true, // Enable syntax highlighting in code blocks
     enableAdvancedFeatures: true // Enable or disable advanced features like tables, strikethrough, etc.
   };
-  // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
   ngOnInit(): void {
-    // Initialize the route_id and join the text room
+    // Initialize the room().id and join the text room
     this.paramz = this.route.params.subscribe(params => {
       const newRouteId = +params['room_id'];
-      if (this.route_id !== newRouteId) {
-        this.route_id = newRouteId;
-        console.log("Room id: " + this.route_id);
-        this.socketService.joinTextRoom(this.route_id.toString());
-        this.fetchMessages();
-      }
+      api.get('http://lamzaone.go.ro:8000/api/server/'+this.serversService.currentServer().id+'/room/' + newRouteId).then((response) => {
+        this.serversService.setCurrentRoom(response.data);
+        this.room = this.serversService.currentRoom;
+        this.fetchMessages(); // Fetch messages for the current room
+      }).catch((error) => {
+        console.error('Error fetching room:', error);
+        this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
+      });
     });
 
     // Initialize the room signal
@@ -79,14 +80,12 @@ export class TextRoomComponent implements OnInit {
   // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
   // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
   async fetchMessages() {
-    if (this.previousRouteId === this.route_id) {
-      return; // Prevent fetch if it's the same room
-    }
 
-    this.previousRouteId = this.route_id; // Update the previous route_id
+
+    this.previousRouteId = this.room().id; // Update the previous room().id
     try {
-      this.serversService.fetchMessages(this.route_id!);
-      const response = await this.serversService.fetchMessages(this.route_id!);
+      this.serversService.fetchMessages(this.room().id!);
+      const response = await this.serversService.fetchMessages(this.room().id!);
 
 
       const groupedMessages = []; // Array of message groups
@@ -199,7 +198,7 @@ export class TextRoomComponent implements OnInit {
 
     const formData = new FormData();
     formData.append('message', this.messageText);
-    formData.append('room_id', this.route_id!.toString());
+    formData.append('room_id', this.room().id!.toString());
     formData.append('is_private', isPrivate.toString());
     formData.append('user_token', this.authService.userData().token);
     formData.append('reply_to', '0');

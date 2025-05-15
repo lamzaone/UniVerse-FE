@@ -11,6 +11,7 @@ export class ServersService {
   // public currentRoom = signal<any>(null);  // Signal to hold current room data
   public servers = signal<any[]>([]); // Signal to hold server data
   public currentServer = signal<any>(null);
+  public currentRoom = signal<any>(null);
   user = this.authService.getUser();  // Fetch user from AuthService
 
   constructor(private authService: AuthService, private router: Router) {
@@ -27,6 +28,9 @@ export class ServersService {
 
   async setCurrentServer(server: any) {
     this.currentServer.set(server);
+  }
+  async setCurrentRoom(room: any) {
+    this.currentRoom.set(room);
   }
 
 
