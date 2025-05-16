@@ -235,6 +235,27 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     this.peerConnections.set(userId, pc);
     this.pendingCandidates.set(userId, []);
 
+    pc.onconnectionstatechange = () => {
+      console.log(`[Connection] State changed for user ${userId}: ${pc.connectionState}`);
+      if (pc.connectionState === 'failed') {
+        console.log(`[Connection] Attempting to restart ICE for user ${userId}`);
+        pc.restartIce();
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[ICE] Connection state for user ${userId}: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+        console.log(`[ICE] Attempting to reconnect to user ${userId}`);
+        setTimeout(() => {
+          if (pc.iceConnectionState !== 'connected') {
+            this.closePeerConnection(userId);
+            this.createPeerConnection(userId);
+          }
+        }, 2000);
+      }
+    };
+
     console.log(`[PeerConnection] Adding local tracks to connection for user: ${userId}`);
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => {
@@ -335,6 +356,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     console.log(`[Offer] Handling offer from user ${userId}`);
     await this.createPeerConnection(userId);
     const pc = this.peerConnections.get(userId)!;
+
+
 
     try {
       console.log(`[Offer] Setting remote description for user ${userId}`);
