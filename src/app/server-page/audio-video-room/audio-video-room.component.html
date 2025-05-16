@@ -4,8 +4,7 @@
       <div class="user"  *ngIf="voiceUserIds.has(user.id)">
         <img [src]="user.picture" alt="User Avatar">
         <p>{{ user.name }}</p>
-        <video *ngIf="user.videoStream" autoplay muted #video></video>
-        <video *ngIf="user.screenStream" autoplay #screen></video>
+        <video #localVideo autoplay></video>
       </div>
     </div>
   </div>
@@ -14,7 +13,7 @@
     <div class="button mute">🎙️</div>
     <div class="button screenshare" (click)="toggleScreenShare()">📺</div>
     <div class="button camera" (click)="toggleCamera()">📷</div>
-    <div class="button leave" (click)="leave()">🚪</div>
+    <div class="button leave" (click)="leaveCall()">🚪</div>
     <div class="button join" (click)="joinVoiceRoom()">🎤</div>
   </div>
 </div>

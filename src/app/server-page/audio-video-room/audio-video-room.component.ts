@@ -2,7 +2,6 @@ import {
   Component, ElementRef, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
@@ -13,46 +12,40 @@ import api from '../../services/api.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './audio-video-room.component.html',
-  styleUrl: './audio-video-room.component.scss'
+  styleUrls: ['./audio-video-room.component.scss']
 })
 export class AudioVideoRoomComponent implements OnInit, OnDestroy {
-  @ViewChild('localVideo') localVideoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('localVideo', { static: false }) localVideoRef!: ElementRef<HTMLVideoElement>;
 
-  roomId: any;
+  roomId: number = 14; // TODO: replace with route param
   userId = this.authService.getUser().id;
-
-  audioStream!: MediaStream;
-  cameraStream!: MediaStream;
-  screenStream!: MediaStream;
-  localStream!: MediaStream;
-
-  peers: Map<number, RTCPeerConnection> = new Map();
 
   users: any[] = [];
   voiceUserIds: Set<number> = new Set();
 
-  connected = false;
+  audioStream?: MediaStream;
+  cameraStream?: MediaStream;
+  screenStream?: MediaStream;
 
+  isInCall = false;
   isScreenSharing = false;
   isCameraEnabled = false;
-  isMicEnabled = true;
+  isMicMuted = false;
 
   constructor(
     private userService: UsersService,
     private authService: AuthService,
-    private router: Router,
     private socketService: SocketService
   ) {}
 
   async ngOnInit() {
-    this.roomId = 3;
     await this.fetchInitialUsers();
-    this.initSocketListeners();
-    this.socketService.joinAudioRoom(this.roomId);
+    this.setupSocketListeners();
+    this.socketService.joinAudioRoom(this.roomId.toString());
   }
 
   ngOnDestroy() {
-    this.leave();
+    this.leaveCall();
   }
 
   async fetchInitialUsers() {
@@ -63,6 +56,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       const users = await Promise.all(
         userIds.map(async (userId: string) => {
           const user = await this.userService.getUserInfo(userId);
+          this.voiceUserIds.add(parseInt(user.id));
           return user;
         })
       );
@@ -72,227 +66,128 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
   }
 
-  initSocketListeners() {
-    this.socketService.onAudioRoomMessage(async (msg: any) => {
-      const { type, user_id, from, data } = msg;
-
-      if (type === 'user-joined') {
-        const newUser = await this.userService.getUserInfo(user_id.toString());
-        if (!this.users.find(u => u.id === newUser.id)) {
-          this.users.push(newUser);
+  setupSocketListeners() {
+    this.socketService.onAudioRoomMessage((message: string) => {
+      console.log('Socket message:', message);
+      if (['user_joined_call', 'user_left_call'].includes(message.split(':')[0])) {
+        const userId = parseInt(message.split(':&')[1]);
+        this.voiceUserIds.add(parseInt(message.split(':&')[1]));
+        if (message.startsWith('user_joined_call')) {
+          // add user to voiceUserIds
+          this.voiceUserIds.add(userId);
+        } else {
+          // remove user from voiceUserIds
+          this.voiceUserIds.delete(userId);
         }
-
-        // Only if we're connected (i.e. in voice), treat them as a voice participant
-        if (this.connected && user_id !== this.userId) {
-          this.voiceUserIds.add(user_id);
-
-          const pc = this.createPeerConnection(user_id);
-          this.peers.set(user_id, pc);
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          this.sendMessage({ type: 'offer', target: user_id, data: offer });
-        }
-        return;
-      }
-
-      if (type === 'user-left') {
-        this.voiceUserIds.delete(user_id);
-        this.users = this.users.filter(u => u.id !== user_id);
-        this.removeRemoteUser(user_id);
-        return;
-      }
-
-      if (from === this.userId) return;
-
-      let pc = this.peers.get(from);
-      if (!pc) {
-        pc = this.createPeerConnection(from);
-        this.peers.set(from, pc);
-      }
-
-      switch (type) {
-        case 'offer':
-          await pc.setRemoteDescription(new RTCSessionDescription(data));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          this.sendMessage({ type: 'answer', target: from, data: answer });
-          break;
-        case 'answer':
-          await pc.setRemoteDescription(new RTCSessionDescription(data));
-          break;
-        case 'candidate':
-          await pc.addIceCandidate(new RTCIceCandidate(data));
-          break;
+        this.fetchInitialUsers();
+      } else if (message === 'room_closed') {
+        this.leaveCall();
       }
     });
   }
 
   async joinVoiceRoom() {
-    if (this.connected) return;
-    this.connected = true;
-    this.voiceUserIds.add(this.userId);  // Add self to voice chat list
+    if (this.isInCall) return;
 
     try {
       this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.mergeStreams();
+      this.isMicMuted = false;
 
-      for (const user of this.users) {
-        if (user.id !== this.userId) {
-          const pc = this.createPeerConnection(user.id);
-          this.peers.set(user.id, pc);
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          this.sendMessage({ type: 'offer', target: user.id, data: offer });
-        }
-      }
-    } catch (err) {
-      alert("Failed to access microphone.");
-      this.connected = false;
-      console.error(err);
+      this.setVideoStream(this.audioStream);
+
+      this.socketService.sendMessage("user_joined_call:&"+this.userId, false, 'audioRoom');
+      this.isInCall = true;
+      this.voiceUserIds.add(this.userId);
+    } catch (error) {
+      console.error('Error joining call:', error);
     }
   }
 
   async toggleCamera() {
-    if (!this.connected) return;
+    if (!this.isInCall) return;
+
     this.isCameraEnabled = !this.isCameraEnabled;
 
     if (this.isCameraEnabled) {
       try {
         this.cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      } catch (err) {
-        alert("Failed to access camera.");
+        this.setVideoStream(this.cameraStream);
+      } catch (error) {
+        console.error('Error accessing camera:', error);
         this.isCameraEnabled = false;
-        console.error(err);
       }
-    } else if (this.cameraStream) {
-      this.cameraStream.getTracks().forEach(t => t.stop());
-      this.cameraStream = undefined!;
+    } else {
+      this.stopStream(this.cameraStream);
+      this.cameraStream = undefined;
+      this.setVideoStream(this.audioStream);
     }
-
-    this.mergeStreams();
   }
 
   async toggleScreenShare() {
-    if (!this.connected) return;
+    if (!this.isInCall) return;
+
     this.isScreenSharing = !this.isScreenSharing;
 
     if (this.isScreenSharing) {
       try {
         this.screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        this.setVideoStream(this.screenStream);
+
         this.screenStream.getVideoTracks()[0].onended = () => {
           this.isScreenSharing = false;
-          this.screenStream = undefined!;
-          this.mergeStreams();
+          this.screenStream = undefined;
+          this.setVideoStream(this.cameraStream || this.audioStream);
         };
-      } catch (err) {
-        alert("Failed to start screen sharing.");
+      } catch (error) {
+        console.error('Error starting screen share:', error);
         this.isScreenSharing = false;
-        console.error(err);
       }
-    } else if (this.screenStream) {
-      this.screenStream.getTracks().forEach(t => t.stop());
-      this.screenStream = undefined!;
+    } else {
+      this.stopStream(this.screenStream);
+      this.screenStream = undefined;
+      this.setVideoStream(this.cameraStream || this.audioStream);
     }
-
-    this.mergeStreams();
   }
 
   toggleMic() {
-    if (!this.connected) return;
-    this.isMicEnabled = !this.isMicEnabled;
-    if (this.audioStream) {
-      this.audioStream.getAudioTracks().forEach(t => t.enabled = this.isMicEnabled);
-    }
+    if (!this.isInCall || !this.audioStream) return;
+    this.isMicMuted = !this.isMicMuted;
+    this.audioStream.getAudioTracks().forEach(track => {
+      track.enabled = !this.isMicMuted;
+    });
   }
 
-  mergeStreams() {
-    const merged = new MediaStream();
+  leaveCall() {
+    if (!this.isInCall) return;
 
     [this.audioStream, this.cameraStream, this.screenStream].forEach(stream => {
-      if (stream) {
-        stream.getTracks().forEach(track => merged.addTrack(track));
-      }
+      this.stopStream(stream);
     });
 
-    this.localStream = merged;
+    this.audioStream = undefined;
+    this.cameraStream = undefined;
+    this.screenStream = undefined;
 
-    if (this.localVideoRef?.nativeElement && this.cameraStream) {
-      this.localVideoRef.nativeElement.srcObject = this.cameraStream;
-    }
+    this.socketService.sendMessage("user_left_call:&"+this.userId, false, 'audioRoom');
 
-    this.replaceAllTracks();
-  }
+    this.isInCall = false;
+    this.isCameraEnabled = false;
+    this.isScreenSharing = false;
+    this.isMicMuted = false;
+    this.voiceUserIds.delete(this.userId);
 
-  replaceAllTracks() {
-    for (const [userId, pc] of this.peers.entries()) {
-      const senders = pc.getSenders();
-      this.localStream.getTracks().forEach(track => {
-        const sender = senders.find(s => s.track?.kind === track.kind);
-        if (sender) {
-          sender.replaceTrack(track);
-        } else {
-          pc.addTrack(track, this.localStream);
-        }
-      });
+    if (this.localVideoRef?.nativeElement) {
+      this.localVideoRef.nativeElement.srcObject = null;
     }
   }
 
-  createPeerConnection(remoteUserId: number): RTCPeerConnection {
-    const pc = new RTCPeerConnection();
-
-    this.localStream?.getTracks().forEach(track => {
-      pc.addTrack(track, this.localStream);
-    });
-
-    const remoteVideoId = `remote-video-${remoteUserId}`;
-    let remoteVideoEl = document.getElementById(remoteVideoId) as HTMLVideoElement;
-    if (!remoteVideoEl) {
-      remoteVideoEl = document.createElement('video');
-      remoteVideoEl.id = remoteVideoId;
-      remoteVideoEl.autoplay = true;
-      remoteVideoEl.playsInline = true;
-      document.body.appendChild(remoteVideoEl);
+  private setVideoStream(stream?: MediaStream) {
+    if (this.localVideoRef?.nativeElement && stream) {
+      this.localVideoRef.nativeElement.srcObject = stream;
     }
-
-    const remoteStream = new MediaStream();
-    pc.ontrack = (event) => {
-      event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
-      remoteVideoEl.srcObject = remoteStream;
-    };
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.sendMessage({ type: 'candidate', target: remoteUserId, data: event.candidate });
-      }
-    };
-
-    return pc;
   }
 
-  sendMessage(message: any) {
-    this.socketService.sendMessage(JSON.stringify(message), false, 'audioRoom');
-  }
-
-  removeRemoteUser(userId: number) {
-    const videoEl = document.getElementById(`remote-video-${userId}`);
-    if (videoEl) videoEl.remove();
-    const pc = this.peers.get(userId);
-    pc?.close();
-    this.peers.delete(userId);
-  }
-
-  leave() {
-    this.sendMessage({ type: 'user-left', user_id: this.userId });
-    this.socketService.disconnectAll();
-
-    [this.audioStream, this.cameraStream, this.screenStream, this.localStream].forEach(stream => {
-      stream?.getTracks().forEach(track => track.stop());
-    });
-
-    this.peers.forEach(pc => pc.close());
-    this.peers.clear();
-
-    this.voiceUserIds.clear();
-    this.connected = false;
+  private stopStream(stream?: MediaStream) {
+    stream?.getTracks().forEach(track => track.stop());
   }
 }
