@@ -5,19 +5,21 @@
         <img [src]="user.picture" alt="User Avatar">
         <p>{{ user.name }}</p>
 
-        <!-- Local video (only for current user) -->
-        <video #localVideo autoplay muted playsinline
-               *ngIf="user.id === userId && isInCall"></video>
+        <!-- Remote camera video -->
+      <!-- Camera video -->
+      <div #remoteVideoContainer class="remote-videos">
+        <video *ngIf="user.id !== userId"
+        [attr.data-user-id]="user.id"
+        class="camera-video"
+        autoplay playsinline></video>
 
-        <!-- Remote video -->
-        <video autoplay playsinline [attr.data-user-id]="user.id"
-               *ngIf="user.id !== userId && voiceUserIds.has(user.id)"></video>
+  <!-- Screen share video -->
+  <video *ngIf="user.id !== userId"
+        [attr.data-user-id]="user.id"
+        class="screen-share"
+        autoplay playsinline></video>
+      </div>
 
-        <!-- Status indicators -->
-        <div class="status-indicators">
-          <span *ngIf="voiceUserIds.has(user.id)">🎤</span>
-          <span *ngIf="remoteStreams.get(user.id)?.getVideoTracks()?.length">📷</span>
-        </div>
       </div>
     </div>
   </div>

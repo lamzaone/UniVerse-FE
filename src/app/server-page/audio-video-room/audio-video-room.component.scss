@@ -68,3 +68,76 @@ video {
 }
 
 
+.screen-share-container {
+  position: fixed;
+  bottom: 120px;
+  right: 20px;
+  width: 300px;
+  background: #000;
+  border: 2px solid #444;
+  border-radius: 8px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.screen-share-container video {
+  width: 100%;
+  height: auto;
+}
+
+
+.video-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.local-video {
+  video {
+    width: 200px;
+    height: auto;
+    background: #333;
+    border-radius: 8px;
+  }
+}
+
+.remote-screenshares {
+  width: 100%;
+
+  video {
+    width: 100%;
+    max-height: 80vh;
+    background: #333;
+    border-radius: 8px;
+  }
+}
+
+.remote-videos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  .remote-video {
+    video {
+      width: 200px;
+      height: auto;
+      background: #333;
+      border-radius: 8px;
+    }
+  }
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 10px;
+  background: #f0f0f0;
+  border-radius: 8px;
+
+  button {
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+}

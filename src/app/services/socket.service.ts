@@ -31,7 +31,7 @@ export class SocketService {
 
   private handleMessage(key: string, event: MessageEvent): void {
     const data = event.data;
-    console.log(`${key.charAt(0).toUpperCase() + key.slice(1)} update:`, data);
+    // console.log(`${key.charAt(0).toUpperCase() + key.slice(1)} update:`, data);
     // Broadcast to listeners if needed
     this.notifyListeners(key, data);
   }
