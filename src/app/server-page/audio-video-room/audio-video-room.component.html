@@ -4,24 +4,23 @@
       <div class="user" [class.in-voice]="voiceUserIds.has(user.id)">
         <img [src]="user.picture" alt="User Avatar">
         <p>{{ user.name }}</p>
-
-        <!-- Remote camera video -->
-      <!-- Camera video -->
-      <div #remoteVideoContainer class="remote-videos">
-        <video *ngIf="user.id !== userId"
-        [attr.data-user-id]="user.id"
-        class="camera-video"
-        autoplay playsinline></video>
-
-  <!-- Screen share video -->
-  <video *ngIf="user.id !== userId"
-        [attr.data-user-id]="user.id"
-        class="screen-share"
-        autoplay playsinline></video>
-      </div>
-
       </div>
     </div>
+  </div>
+
+  <!-- Remote video container for all users -->
+  <div #remoteVideoContainer class="remote-videos">
+    <ng-container *ngFor="let user of users">
+      <video *ngIf="user.id !== userId"
+             [attr.data-user-id]="user.id"
+             class="camera-video"
+             autoplay playsinline muted></video>
+
+      <video *ngIf="user.id !== userId"
+             [attr.data-user-id]="user.id"
+             class="screen-share"
+             autoplay playsinline muted></video>
+    </ng-container>
   </div>
 
   <div class="buttons">
@@ -35,3 +34,6 @@
   <!-- Hidden audio container for remote audio streams -->
   <div #audioContainer style="display: none;"></div>
 </div>
+
+<!-- Local video preview -->
+<video #localVideo autoplay muted playsinline class="local-video"></video>
