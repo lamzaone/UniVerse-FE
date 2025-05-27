@@ -19,6 +19,7 @@ export class CreateCategoryComponent {
   }
   categoryName:string =""
   categoryDescription:string = ""
+  categoryType:string = "Normal"
 
   // signal to emit closed
   @Output() close = new EventEmitter<void>();
@@ -29,7 +30,7 @@ export class CreateCategoryComponent {
 
   createCategory(){
     console.log(this.categoryName, this.categoryDescription);
-    this.serversService.createCategory(this.serversService.currentServer().id, this.categoryName, this.categoryDescription);
+    this.serversService.createCategory(this.serversService.currentServer().id, this.categoryName, this.categoryType, this.categoryDescription);
     this.close_page();
   }
 }

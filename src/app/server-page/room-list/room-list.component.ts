@@ -78,14 +78,17 @@ export class RoomListComponent {
         category.rooms = category.rooms.sort((a: any, b: any) => a.position - b.position);
       });
       this.categories.set(categories); // Update the signal with sorted categories and rooms
+      console.log('Fetched categories and rooms:', this.categories());
     } catch (error) {
       console.error('Error fetching categories and rooms:', error);
     }
   }
 
   connectedLists() {
-    // Create an array of list ids that the drop list can connect to
-    return this.categories().map(category => `cdk-drop-list-${category.id}`);
+    // Create an array of list ids that the drop list can connect to, excluding categories with type 'assignment'
+    return this.categories()
+      .filter(category => category.type !== 'Assignments')
+      .map(category => `cdk-drop-list-${category.id}`);
   }
 
 

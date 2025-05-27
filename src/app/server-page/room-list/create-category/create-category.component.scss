@@ -68,6 +68,10 @@
   border: 1px solid var(--light-grey);
 }
 
+select{
+  height: 2rem !important;
+  width: 100% !important;
+}
 
 button{
   background-color: var(--light-grey);

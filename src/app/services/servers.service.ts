@@ -56,10 +56,11 @@ export class ServersService {
   }
 
 
-  async createCategory(serverId: number, categoryName: string, categoryDescription: string) {
+  async createCategory(serverId: number, categoryName: string, categoryType: string, categoryDescription: string) {
     try {
       const response = await api.post('http://lamzaone.go.ro:8000/api/server/' + serverId + '/category/create', {
         category_name: categoryName,
+        category_type: categoryType
       });
       if (response.status === 200) {
         return response.data;

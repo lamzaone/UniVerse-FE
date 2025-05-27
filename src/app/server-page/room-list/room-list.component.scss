@@ -79,6 +79,20 @@
   color: var(--white);
   margin: 0;
   margin-bottom: 0.5rem;
+
+
+}
+
+.assignments{
+  // background-color: green;
+  border: 1px solid var(--light-grey);
+  display: flex;
+  flex-direction: row;
+
+  & p{
+    right: 10px;
+    position: absolute;
+  }
 }
 
 .rooms{
