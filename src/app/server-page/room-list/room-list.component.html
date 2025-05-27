@@ -12,12 +12,12 @@
       [cdkDropListData]="category.rooms"
       [cdkDropListConnectedTo]= "connectedLists()"
       (cdkDropListDropped)="drop($event, category.id)">
-  <div class="category"
-      *ngIf="category.rooms.length > 0 || category.name!='Uncategorized'"
-      [attr.category-id]="category.id"
-      [attr.categoryLength]="category.rooms.length">
-    {{ category.name }}
-  </div>
+    <div class="category {{category.category_type}}"
+        *ngIf="category.rooms.length > 0 || category.name!='Uncategorized'"
+        [attr.category-id]="category.id"
+        [attr.categoryLength]="category.rooms.length">
+      {{ category.name }}
+    </div>
     <div class="rooms">
       @if(serverAccessLevel > 0){
         <div class="room"
@@ -41,7 +41,14 @@
             routerLinkActive="router-link-active">
           {{ getRoomIcon(room.type) }} {{ room.name }}
         </div>
-    }
+      }
+      <div class="room"
+      *ngFor="let room of category.assignments"
+        [ngClass]="room.type.split(' ')[0]"
+        [routerLink]="[room.type.split(' ')[0], room.id]"
+        routerLinkActive="router-link-active">
+      {{ getRoomIcon(room.type) }} {{ room.name }}
+    </div>
     </div>
   </div>
 
@@ -50,9 +57,10 @@
   <!-- Context Menu -->
   <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
     <ul>
-      @if(serverAccessLevel > 0){
+      @if(serverAccessLevel > 0) {
         <li (click)="createCategory()">Create a category</li>
-        <li (click)="createRoom()">Create a new room</li>
+        <li *ngIf="!isAssignments" (click)="createRoom()">Create a new room</li>
+        <li *ngIf="isAssignments" (click)="createAssignment()">Create a new assignment</li>
         @if(isRoom) {
           <li (click)="deleteRoom(this.clickedRoomId)">Delete room</li>
         }
@@ -82,4 +90,8 @@
 @if(showCreateRoom){
   <app-create-room [categoryId]="clickedCategoryId ? clickedCategoryId : null" (close)="toggleCreateRoom()"></app-create-room>
 }
+@if(showCreateAssignment){
+  <app-create-assignment [categoryId]="clickedCategoryId ? clickedCategoryId : null" (close)="toggleCreateAssignment()"></app-create-assignment>
+}
+
 

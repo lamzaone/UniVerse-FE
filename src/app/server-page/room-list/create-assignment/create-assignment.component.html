@@ -1,0 +1,24 @@
+<div class="background">
+  <div class="container">
+    <div class="header">
+      <h1>Create new room</h1>
+    </div>
+    <div class="form">
+      <div class="form-group">
+        <label for="categoryName">Assignment name</label>
+        <input type="text" class="form-control" id="categoryName" [(ngModel)]="roomName">
+      </div>
+      <!-- Add calendar to pick due date and hour -->
+      <div class="form-group">
+        <label for="dueDate">Due Date</label>
+        <input type="date" class="form-control" id="dueDate" [(ngModel)]="dueDate">
+      </div>
+      <div class="form-group">
+        <label for="dueTime">Due Time</label>
+        <input type="time" class="form-control" id="dueTime" [(ngModel)]="dueTime">
+    <div>
+      <button (click)="createRoom()">Create</button>
+      <button (click)="close_page()">Close</button>
+    </div>
+  </div>
+</div>
