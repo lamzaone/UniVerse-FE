@@ -10,7 +10,6 @@
             <p class="msg-user-name"><b>{{messageGroup[0].user.name}}</b></p>
             <p class="msg-user-time">{{messageGroup[0].timestamp}}</p>
           </div>
-          <!-- TODO: FIX RANDOM NEWLINE INBETWEEN MESSAGES -->
           <div class="msg-text" *ngFor="let message of messageGroup">
             <div class="msg-text-container">
               <markdown class="msg-text-message" [data]="message.message"></markdown>

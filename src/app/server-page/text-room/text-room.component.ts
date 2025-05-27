@@ -50,9 +50,12 @@ export class TextRoomComponent implements OnInit {
     showSaveButton: false, // Option to hide the save button
     height: '300px', // Set editor height
     theme: 'dark', // Theme can be light or dark depending on the library
+    showPreviewButton: false, // Show the preview button
     syntaxHighlighting: true, // Enable syntax highlighting in code blocks
     enableAdvancedFeatures: true // Enable or disable advanced features like tables, strikethrough, etc.
   };
+
+
   // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
   ngOnInit(): void {
     // Initialize the route_id and join the text room
@@ -94,6 +97,8 @@ export class TextRoomComponent implements OnInit {
 
       for (let i = 0; i < response.data.length; i++) {
         const message = response.data[i];
+        // Replace newline with <br> for markdown support if the next line is not starting with a space, number, dash, or '`', and exclude code blocks enclosed in triple backticks
+        message.message = message.message.replace(/```[\s\S]*?```|(\r\n|\n|\r)(?![ \d\-`>])/g, (match: string, newline: string) => newline ? '<br>' : match);
         const user = await this.usersService.getUserInfo(message.user_id);
         message.user = user;      // Add user info to the message for picture etc.
 
