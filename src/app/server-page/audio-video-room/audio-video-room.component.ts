@@ -101,7 +101,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   private handleUserJoined(userId: number) {
-    if (!this.voiceUserIds.has(userId) && userId !== this.userId) {
+    if (!this.voiceUserIds.has(userId)) {
       this.voiceUserIds.add(userId);
       if (this.isInCall) this.createPeerConnection(userId);
       this.fetchInitialUsers();
