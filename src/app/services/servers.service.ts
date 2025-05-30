@@ -115,6 +115,17 @@ export class ServersService {
     return response;
   }
 
+  async fetchAssignments(route_id:number){
+    const response = await api.post(
+      'http://lamzaone.go.ro:8000/api/assignments',
+      {
+        room_id: route_id,
+        user_token: this.authService.getUser().token
+      }
+    );
+    return response;
+  }
+
   // Join a server and update servers signal
   async joinServer(serverCode: string) {
     if (this.authService.isLoggedIn()) {

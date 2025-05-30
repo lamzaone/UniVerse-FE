@@ -1,1 +1,76 @@
-<p>assignments works!</p>
+<div class="container">
+  <div class="messages" #messagesContainer>
+    <div *ngIf="messages()?.length > 0; else noMessages">
+      <div class="message" *ngFor="let messageGroup of messages()">
+        <div class="avatar">
+          <img [src]="messageGroup[0].user.picture" />
+        </div>
+        <div class="msg">
+          <div class="msg-user">
+            <p class="msg-user-name"><b>{{messageGroup[0].user.name}}</b></p>
+            <p class="msg-user-time">{{messageGroup[0].timestamp}}</p>
+          </div>
+          <div class="msg-text" *ngFor="let message of messageGroup">
+            <div class="msg-text-container">
+              <markdown class="msg-text-message" [data]="message.message"></markdown>
+              <div class="msg-attachments" *ngIf="message.attachments?.length">
+                <div class="attachment" *ngFor="let url of message.attachments">
+                  <img *ngIf="isImage(url)" [src]="url" class="attachment-img" />
+                  <video *ngIf="isVideo(url)" controls [src]="url" class="attachment-video"></video>
+                  <a *ngIf="!isImage(url) && !isVideo(url)" [href]="url" target="_blank" class="attachment-file">
+                    <p class="attachment-file-icon">📄</p>
+                    <p>{{ getFileName(url) }}</p>
+                  </a>
+                </div>
+              </div>
+
+              <p *ngIf="message !== messageGroup[0]" class="msg-text-time">{{message.timestamp}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="last-message"></div>
+    </div>
+    <ng-template #noMessages>
+      <div class="message">
+        <div class="msg">
+          <div class="msg-text">
+            <p class="msg-text-message" style="text-align: center;">No messages to see here... yet!</p>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div class="input">
+    <!-- File Previews Section -->
+    <div class="attachments-preview" *ngIf="selectedFiles.length > 0">
+      <div class="attachment" *ngFor="let file of selectedFiles">
+        <img alt="Preview" *ngIf="file.type.startsWith('image/')" [src]="file.preview" class="attachment-img" />
+        <div class="attachment-file">
+          <p class="attachment-file-icon" *ngIf="!file.type.startsWith('image/')">📎</p>
+          <p *ngIf="!file.type.startsWith('image/')">{{file.name}}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MD Editor Section -->
+    <div class="input-container">
+      <md-editor
+        name="Content"
+        [(ngModel)]="messageText"
+        [height]="'200px'"
+        [options]="editorOptions"
+        required
+        maxlength="500"
+        (keydown.enter)="handleEnter($event)"
+      ></md-editor>
+
+
+      <div class="actions">
+        <button type="button" class="send" (click)="fileInput.click()">📎</button>
+        <button type="button" class="send" (click)="sendMessage()">send</button>
+      </div>
+    </div>
+    <input type="file" multiple (change)="onFileSelected($event)" hidden #fileInput />
+  </div>
+</div>
