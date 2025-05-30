@@ -11,8 +11,17 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
 import { LMarkdownEditorModule } from 'ngx-markdown-editor';
 import api from '../../services/api.service';
+import { Pipe, PipeTransform } from '@angular/core';
 
-@Component({
+
+@Pipe({ name: 'truncate' })
+export class TruncatePipe implements PipeTransform {
+  transform(value: string, limit: number = 50): string {
+    return value.length > limit
+      ? value.substring(0, limit) + '...'
+      : value;
+  }
+}@Component({
   selector: 'app-assignments',
   standalone: true,
   imports: [CommonModule, FormsModule, MarkdownComponent, LMarkdownEditorModule],
@@ -44,6 +53,28 @@ export class AssignmentsComponent implements OnInit {
     this.listenForMessages();
   }
 
+  replyingTo: any = null;
+
+  setReplyTo(message: any) {
+    this.replyingTo = message;
+  }
+
+  cancelReply() {
+    this.replyingTo = null;
+  }
+
+  getRepliedMessage(replyId: number): string {
+    const allMessages = this.messages().flat();
+    const original = allMessages.find((m: { _id: number; message: string }) => m._id === replyId);
+    return original?.message || '';
+  }
+
+  getRepliedUser(replyId: number): any {
+    const allMessages = this.messages().flat();
+    const original = allMessages.find((m: { _id: number; user: any }) => m._id === replyId);
+    return original?.user || null;
+  }
+
   editorOptions = {
     autofocus: true, // Auto-focus the editor
     showPreviewPanel: false, // Show the preview panel
@@ -56,6 +87,7 @@ export class AssignmentsComponent implements OnInit {
     syntaxHighlighting: true, // Enable syntax highlighting in code blocks
     enableAdvancedFeatures: true // Enable or disable advanced features like tables, strikethrough, etc.
   };
+
 
 
   // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
@@ -100,7 +132,7 @@ export class AssignmentsComponent implements OnInit {
       for (let i = 0; i < response.data.length; i++) {
         const message = response.data[i];
         // Replace newline with <br> for markdown support if the next line is not starting with a space, number, dash, or '`', and exclude code blocks enclosed in triple backticks
-        message.message = message.message.replace(/```[\s\S]*?```|(\r\n|\n|\r)(?![ \d\-`>])/g, (match: string, newline: string) => newline ? '<br>' : match);
+        // message.message = message.message.replace(/```[\s\S]*?```|(\r\n|\n|\r)(?![ \d\-`>])/g, (match: string, newline: string) => newline ? '<br>' : match);
         const user = await this.usersService.getUserInfo(message.user_id);
         message.user = user;      // Add user info to the message for picture etc.
 
@@ -177,7 +209,6 @@ export class AssignmentsComponent implements OnInit {
       if (data === 'room_deleted') {
         this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
         return;
-        // TODO: check if this works
       }
       this.fetchMessages();
     });
@@ -209,7 +240,7 @@ export class AssignmentsComponent implements OnInit {
     formData.append('room_id', this.route_id!.toString());
     formData.append('is_private', isPrivate.toString());
     formData.append('user_token', this.authService.userData().token);
-    formData.append('reply_to', '0');
+    formData.append('reply_to', this.replyingTo?._id?.toString() || '0');
 
     for (let i = 0; i < this.selectedFiles.length; i++) {
       formData.append('attachments', this.selectedFiles[i].file);
@@ -225,6 +256,9 @@ export class AssignmentsComponent implements OnInit {
       this.messageText = '';
       this.selectedFiles = [];
       this.scrollToLast();
+      if (this.replyingTo) {
+        this.replyingTo = null;
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }

@@ -12,6 +12,13 @@
           </div>
           <div class="msg-text" *ngFor="let message of messageGroup">
             <div class="msg-text-container">
+              <div class="message-actions">
+                <button class="reply-button" (click)="setReplyTo(message)">↩ Reply</button>
+              </div>
+              <div *ngIf="message.reply_to != '0' " class="reply-preview-message">
+                <p>Replying to <b> {{ getRepliedUser(message.reply_to)?.name }} </b>:</p>
+                <div class="preview-content"> {{getRepliedMessage(message.reply_to)}}</div>
+              </div>
               <markdown class="msg-text-message" [data]="message.message"></markdown>
               <div class="msg-attachments" *ngIf="message.attachments?.length">
                 <div class="attachment" *ngFor="let url of message.attachments">
@@ -40,6 +47,13 @@
         </div>
       </div>
     </ng-template>
+  </div>
+  <div class="reply-preview" *ngIf="replyingTo">
+    <div class="preview-content">
+      <p>Replying to <b>{{replyingTo.user.name}}</b>:</p>
+      <div class="preview-message">{{replyingTo.message}}</div>
+    </div>
+    <button class="cancel-reply" (click)="cancelReply()">✕</button>
   </div>
   <div class="input">
     <!-- File Previews Section -->
