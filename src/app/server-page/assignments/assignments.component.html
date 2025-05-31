@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" (contextmenu)="onRightClick($event)">
   <div class="messages" #messagesContainer>
     <div *ngIf="messages()?.length > 0; else noMessages">
       <div class="message" *ngFor="let messageGroup of messages()">
@@ -11,13 +11,10 @@
             <p class="msg-user-time">{{messageGroup[0].timestamp}}</p>
           </div>
           <div class="msg-text" *ngFor="let message of messageGroup">
-            <div class="msg-text-container">
-              <div class="message-actions">
-                <button class="reply-button" (click)="setReplyTo(message)">↩ Reply</button>
-              </div>
+            <div class="msg-text-container" [attr.message-id]="message._id">
               <div *ngIf="message.reply_to != '0' " class="reply-preview-message">
-                <p>Replying to <b> {{ getRepliedUser(message.reply_to)?.name }} </b>:</p>
-                <div class="preview-content"> {{getRepliedMessage(message.reply_to)}}</div>
+                <p class="reply-preview-user">Replying to <b> {{ getRepliedUser(message.reply_to)?.name }} </b>:</p>
+                <markdown class="reply-preview-content"> {{getRepliedMessage(message.reply_to)}}</markdown>
               </div>
               <markdown class="msg-text-message" [data]="message.message"></markdown>
               <div class="msg-attachments" *ngIf="message.attachments?.length">
@@ -87,4 +84,19 @@
     </div>
     <input type="file" multiple (change)="onFileSelected($event)" hidden #fileInput />
   </div>
+  <!-- Context Menu -->
+  <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
+    <ul>
+      @if (serverAccessLevel > 0) {
+        @if (isMessage) {
+          <li>Grade</li>
+          <li>Delete</li>
+          <li>Edit</li>
+          <li (click)="setReplyTo(getMessageById(clickedMessageId))">Reply</li>
+        }
+      }
+
+    </ul>
+  </div>
+
 </div>

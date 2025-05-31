@@ -1,7 +1,7 @@
 
 import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
@@ -36,6 +36,11 @@ export class AssignmentsComponent implements OnInit {
   room = signal<any>(null);
   messages = signal<any>(null);
   messageText = '';
+  clickedMessageId: string | null = null; // Store the ID of the clicked message for context menu
+  showContextMenu = false;
+  isMessage = false;
+  serverAccessLevel:number = 0;
+  contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
 
   paramz:any;
   private previousRouteId: number | null = null; // Store the previous route_id
@@ -50,7 +55,16 @@ export class AssignmentsComponent implements OnInit {
     private router: Router
   ) {
 
-    this.listenForMessages();
+    const waitForServer = async () => {
+      while (!this.serversService.currentServer()) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Wait for 100ms
+      }
+      this.listenForMessages();
+      this.serverAccessLevel = this.serversService.currentServer().access_level; // Get the access level from the current server
+    };
+
+    waitForServer();
+
   }
 
   replyingTo: any = null;
@@ -314,6 +328,38 @@ export class AssignmentsComponent implements OnInit {
     }
   }
 
+  onRightClick(event: MouseEvent): void {
+    event.preventDefault();
+    let targetElement = event.target as HTMLElement;
 
+    // Traverse up the DOM tree to check for the parent element with the desired class
+    while (targetElement && !targetElement.classList.contains('msg-text-container')) {
+      targetElement = targetElement.parentElement as HTMLElement;
+    }
+
+    this.isMessage = !!targetElement; // Check if a valid element with the class was found
+    if (this.isMessage) {
+      this.clickedMessageId = targetElement.getAttribute('message-id');
+      console.log('Message:', this.clickedMessageId);
+    }
+
+    this.contextMenuPosition = { x: event.clientX, y: event.clientY };
+    this.showContextMenu = true;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    this.showContextMenu = false;
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapePress(event: KeyboardEvent): void {
+    this.showContextMenu = false;
+  }
+
+  getMessageById(messageId: string | null): any {
+    const allMessages = this.messages().flat();
+    return allMessages.find((m: { _id: string }) => m._id === messageId) || null;
+  }
 
 }
