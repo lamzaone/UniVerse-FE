@@ -41,6 +41,8 @@ export class AssignmentsComponent implements OnInit {
   isMessage = false;
   serverAccessLevel:number = 0;
   contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
+  currentUser = this.authService.userData();
+  clickedMessage: any = null; // Store the clicked message for context menu
 
   paramz:any;
   private previousRouteId: number | null = null; // Store the previous route_id
@@ -64,6 +66,7 @@ export class AssignmentsComponent implements OnInit {
     };
 
     waitForServer();
+    console.log("current user", this.authService.userData());
 
   }
 
@@ -71,6 +74,7 @@ export class AssignmentsComponent implements OnInit {
 
   setReplyTo(message: any) {
     this.replyingTo = message;
+    console.log("Replying to message:", message);
   }
 
   cancelReply() {
@@ -147,6 +151,7 @@ export class AssignmentsComponent implements OnInit {
         const message = response.data[i];
         // Replace newline with <br> for markdown support if the next line is not starting with a space, number, dash, or '`', and exclude code blocks enclosed in triple backticks
         // message.message = message.message.replace(/```[\s\S]*?```|(\r\n|\n|\r)(?![ \d\-`>])/g, (match: string, newline: string) => newline ? '<br>' : match);
+
         const user = await this.usersService.getUserInfo(message.user_id);
         message.user = user;      // Add user info to the message for picture etc.
 
@@ -250,6 +255,7 @@ export class AssignmentsComponent implements OnInit {
     if (this.messageText.trim() === '' && this.selectedFiles.length === 0) return;
 
     const formData = new FormData();
+    this.messageText = this.messageText.replace(/(\r\n|\n|\r)/g, '\n\n').trim(); // Normalize newlines
     formData.append('message', this.messageText);
     formData.append('room_id', this.route_id!.toString());
     formData.append('is_private', isPrivate.toString());
@@ -261,6 +267,7 @@ export class AssignmentsComponent implements OnInit {
     }
 
     try {
+      // replace 1 newline with two newlines
       const response = await api.post('http://lamzaone.go.ro:8000/api/assignment', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -340,6 +347,7 @@ export class AssignmentsComponent implements OnInit {
     this.isMessage = !!targetElement; // Check if a valid element with the class was found
     if (this.isMessage) {
       this.clickedMessageId = targetElement.getAttribute('message-id');
+      this.clickedMessage = this.getMessageById(this.clickedMessageId);
       console.log('Message:', this.clickedMessageId);
     }
 

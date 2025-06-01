@@ -1,6 +1,6 @@
 import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
@@ -28,6 +28,13 @@ export class TextRoomComponent implements OnInit {
 
   paramz:any;
   private previousRouteId: number | null = null; // Store the previous route_id
+  isMessage = false;
+  serverAccessLevel:number = 0;
+  contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
+  currentUser = this.authService.userData();
+  clickedMessage: any = null; // Store the clicked message for context menu
+  clickedMessageId: string | null = null; // Store the ID of the clicked message for context menu
+  showContextMenu = false;
 
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
@@ -40,7 +47,42 @@ export class TextRoomComponent implements OnInit {
   ) {
 
     this.listenForMessages();
+    const waitForServer = async () => {
+      while (!this.serversService.currentServer()) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Wait for 100ms
+      }
+      this.listenForMessages();
+      this.serverAccessLevel = this.serversService.currentServer().access_level; // Get the access level from the current server
+    };
+
+    waitForServer();
+    console.log("current user", this.authService.userData());
   }
+
+
+  replyingTo: any = null;
+
+  setReplyTo(message: any) {
+    this.replyingTo = message;
+    console.log("Replying to message:", message);
+  }
+
+  cancelReply() {
+    this.replyingTo = null;
+  }
+
+  getRepliedMessage(replyId: number): string {
+    const allMessages = this.messages().flat();
+    const original = allMessages.find((m: { _id: number; message: string }) => m._id === replyId);
+    return original?.message || '';
+  }
+
+  getRepliedUser(replyId: number): any {
+    const allMessages = this.messages().flat();
+    const original = allMessages.find((m: { _id: number; user: any }) => m._id === replyId);
+    return original?.user || null;
+  }
+
 
   editorOptions = {
     autofocus: true, // Auto-focus the editor
@@ -98,7 +140,7 @@ export class TextRoomComponent implements OnInit {
       for (let i = 0; i < response.data.length; i++) {
         const message = response.data[i];
         // Replace newline with <br> for markdown support if the next line is not starting with a space, number, dash, or '`', and exclude code blocks enclosed in triple backticks
-        message.message = message.message.replace(/```[\s\S]*?```|(\r\n|\n|\r)(?![ \d\-`>])/g, (match: string, newline: string) => newline ? '<br>' : match);
+        // message.message = message.message.replace(/```[\s\S]*?```|(\r\n|\n|\r)(?![ \d\-`>])/g, (match: string, newline: string) => newline ? '<br>' : match);
         const user = await this.usersService.getUserInfo(message.user_id);
         message.user = user;      // Add user info to the message for picture etc.
 
@@ -203,11 +245,13 @@ export class TextRoomComponent implements OnInit {
     if (this.messageText.trim() === '' && this.selectedFiles.length === 0) return;
 
     const formData = new FormData();
+    this.messageText = this.messageText.replace(/(\r\n|\n|\r)/g, '\n\n').trim(); // Normalize newlines
     formData.append('message', this.messageText);
     formData.append('room_id', this.route_id!.toString());
     formData.append('is_private', isPrivate.toString());
     formData.append('user_token', this.authService.userData().token);
-    formData.append('reply_to', '0');
+    formData.append('reply_to', this.replyingTo?._id?.toString() || '0');
+
 
     for (let i = 0; i < this.selectedFiles.length; i++) {
       formData.append('attachments', this.selectedFiles[i].file);
@@ -223,6 +267,9 @@ export class TextRoomComponent implements OnInit {
       this.messageText = '';
       this.selectedFiles = [];
       this.scrollToLast();
+      if (this.replyingTo) {
+        this.replyingTo = null;
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -278,6 +325,40 @@ export class TextRoomComponent implements OnInit {
     }
   }
 
+  onRightClick(event: MouseEvent): void {
+    event.preventDefault();
+    let targetElement = event.target as HTMLElement;
+
+    // Traverse up the DOM tree to check for the parent element with the desired class
+    while (targetElement && !targetElement.classList.contains('msg-text-container')) {
+      targetElement = targetElement.parentElement as HTMLElement;
+    }
+
+    this.isMessage = !!targetElement; // Check if a valid element with the class was found
+    if (this.isMessage) {
+      this.clickedMessageId = targetElement.getAttribute('message-id');
+      this.clickedMessage = this.getMessageById(this.clickedMessageId);
+      console.log('Message:', this.clickedMessageId);
+    }
+
+    this.contextMenuPosition = { x: event.clientX, y: event.clientY };
+    this.showContextMenu = true;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    this.showContextMenu = false;
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapePress(event: KeyboardEvent): void {
+    this.showContextMenu = false;
+  }
+
+  getMessageById(messageId: string | null): any {
+    const allMessages = this.messages().flat();
+    return allMessages.find((m: { _id: string }) => m._id === messageId) || null;
+  }
 
 
 }

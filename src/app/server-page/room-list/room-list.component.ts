@@ -52,7 +52,12 @@ export class RoomListComponent {
       // TODO: rework getAccessLevel to be stored in the currentServer signal
       this.serversService.getAccessLevel(this.route_id).then((res) => {
         this.serverAccessLevel = res;
-        this.serversService.currentServer().access_level = res; // Update the access level in the current server
+        const currentServer = this.serversService.currentServer();
+        if (currentServer) {
+          currentServer.access_level = res; // Update the access level in the current server
+        } else {
+          console.warn('Current server is null, cannot set access level.');
+        }
         console.log(res);
       });
     });

@@ -91,9 +91,14 @@
         @if (isMessage) {
           <li>Grade</li>
           <li>Delete</li>
-          <li>Edit</li>
-          <li (click)="setReplyTo(getMessageById(clickedMessageId))">Reply</li>
         }
+      }
+      @if (isMessage) {
+        <li (click)="setReplyTo(getMessageById(clickedMessageId))">Reply</li>
+      }
+      @if (isMessage && this.clickedMessage.user_id === this.currentUser.id) {
+        <li (click)="editMessage(getMessageById(clickedMessageId))">Edit</li>
+        <li *ngIf="serverAccessLevel == 0">Delete</li>
       }
 
     </ul>

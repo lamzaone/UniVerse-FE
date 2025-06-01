@@ -84,7 +84,7 @@
 
   &-text{
     display:flex;
-    grid-gap: 1rem;
+    // grid-gap: 1rem;
 
     &-container{
       width: 100%;
@@ -94,17 +94,21 @@
       flex-direction: column;
     }
     &-message{
+      padding: 0.1rem;
       margin: 0.4rem 0 0 0;
       color: var(--white);
       font-size: 1rem;
       width: calc(100%);
       word-wrap: break-word;
       // white-space: pre-wrap;
+      border-radius: 5px;
+      transition: 0.3s all ease-in-out;
 
       &:hover{
         &+.msg-text-time{
           opacity: 100%;
         }
+        background-color: var(--grey);
       }
 
     }
