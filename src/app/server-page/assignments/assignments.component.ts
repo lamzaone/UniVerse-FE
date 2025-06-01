@@ -47,6 +47,7 @@ export class AssignmentsComponent implements OnInit {
   paramz:any;
   showGrading: boolean = false; // Flag to show/hide grading options
   private previousRouteId: number | null = null; // Store the previous route_id
+  editingMessageId: string | null = null; // Store the ID of the message being edited
 
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
@@ -65,6 +66,7 @@ export class AssignmentsComponent implements OnInit {
       this.listenForMessages();
       this.serverAccessLevel = this.serversService.currentServer().access_level; // Get the access level from the current server
     };
+
 
     waitForServer();
     console.log("current user", this.authService.userData());
@@ -256,7 +258,7 @@ export class AssignmentsComponent implements OnInit {
     if (this.messageText.trim() === '' && this.selectedFiles.length === 0) return;
 
     const formData = new FormData();
-    this.messageText = this.messageText.replace(/(\r\n|\n|\r)/g, '\n\n').trim(); // Normalize newlines
+    this.messageText = this.messageText.replace(/(\r\n|\n|\r)(?!\n)/g, '\n\n').trim(); // Normalize newlines
     formData.append('message', this.messageText);
     formData.append('room_id', this.route_id!.toString());
     formData.append('is_private', isPrivate.toString());
@@ -269,11 +271,27 @@ export class AssignmentsComponent implements OnInit {
 
     try {
       // replace 1 newline with two newlines
-      const response = await api.post('http://lamzaone.go.ro:8000/api/assignment', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      if (this.editingMessageId !== null) {
+        if (this.editingMessageId !== null) {
+          formData.append('assignment_id', this.editingMessageId);
+          this.editingMessageId = null; // Reset editing message ID after sending
+          this.messageText = ''; // Clear the input field
         }
-      });
+        formData.delete('reply_to'); // Remove reply_to if editing a message
+        formData.delete('user_token'); // Remove user_token if editing
+        formData.delete('is_private'); // Remove is_private if editing
+        await api.put('http://lamzaone.go.ro:8000/api/assignment/edit', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        const response = await api.post('http://lamzaone.go.ro:8000/api/assignment', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
 
       this.messageText = '';
       this.selectedFiles = [];
@@ -388,6 +406,11 @@ export class AssignmentsComponent implements OnInit {
   getMessageById(messageId: string | null): any {
     const allMessages = this.messages().flat();
     return allMessages.find((m: { _id: string }) => m._id === messageId) || null;
+  }
+
+  async editMessage(messageId: string | null): Promise<void> {
+    this.editingMessageId = messageId;
+    this.messageText = this.clickedMessage?.message || '';
   }
 
 }

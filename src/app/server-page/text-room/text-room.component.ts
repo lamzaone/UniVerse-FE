@@ -35,6 +35,7 @@ export class TextRoomComponent implements OnInit {
   clickedMessage: any = null; // Store the clicked message for context menu
   clickedMessageId: string | null = null; // Store the ID of the clicked message for context menu
   showContextMenu = false;
+  editingMessageId: string | null = null; // Store the ID of the message being edited
 
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
@@ -258,11 +259,29 @@ export class TextRoomComponent implements OnInit {
     }
 
     try {
-      const response = await api.post('http://lamzaone.go.ro:8000/api/message', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+            // replace 1 newline with two newlines
+            if (this.editingMessageId !== null) {
+              if (this.editingMessageId !== null) {
+                formData.append('message_id', this.editingMessageId);
+                this.editingMessageId = null; // Reset editing message ID after sending
+                this.messageText = ''; // Clear the input field
+              }
+              formData.delete('reply_to'); // Remove reply_to if editing a message
+              formData.delete('user_token'); // Remove user_token if editing
+              formData.delete('is_private'); // Remove is_private if editing
+              await api.put('http://lamzaone.go.ro:8000/api/message/edit', formData, {
+                headers: {
+                  'Content-Type': 'multipart/form-data'
+                }
+              });
+            } else {
+              const response = await api.post('http://lamzaone.go.ro:8000/api/message', formData, {
+                headers: {
+                  'Content-Type': 'multipart/form-data'
+                }
+              });
+            }
+
 
       this.messageText = '';
       this.selectedFiles = [];
@@ -358,6 +377,11 @@ export class TextRoomComponent implements OnInit {
   getMessageById(messageId: string | null): any {
     const allMessages = this.messages().flat();
     return allMessages.find((m: { _id: string }) => m._id === messageId) || null;
+  }
+
+  async editMessage(messageId: string | null): Promise<void> {
+    this.editingMessageId = messageId;
+    this.messageText = this.clickedMessage?.message || '';
   }
 
 
