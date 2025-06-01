@@ -29,6 +29,8 @@
               </div>
 
               <p *ngIf="message !== messageGroup[0]" class="msg-text-time">{{message.timestamp}}</p>
+
+              <div class="grade" *ngIf="message.grade">Grade: {{message.grade}}/10</div>
             </div>
           </div>
         </div>
@@ -48,7 +50,7 @@
   <div class="reply-preview" *ngIf="replyingTo">
     <div class="preview-content">
       <p>Replying to <b>{{replyingTo.user.name}}</b>:</p>
-      <div class="preview-message">{{replyingTo.message}}</div>
+      <markdown class="preview-message">{{replyingTo.message | slice:0:100}}{{replyingTo.message.length > 100 ? '...' : ''}}</markdown>
     </div>
     <button class="cancel-reply" (click)="cancelReply()">✕</button>
   </div>
@@ -89,7 +91,7 @@
     <ul>
       @if (serverAccessLevel > 0) {
         @if (isMessage) {
-          <li>Grade</li>
+          <li (click)="showGrading = !showGrading"> Grade</li>
           <li>Delete</li>
         }
       }
@@ -102,6 +104,21 @@
       }
 
     </ul>
+  </div>
+  <div class="background" *ngIf="showGrading">
+    <div class="grading-container">
+      <div class="header">
+        <h1>Add a grade</h1>
+      </div>
+      <div class="form">
+        <div class="form-group">
+          <label for="grade">Grade to add</label>
+          <input type="number" class="form-control" id="grade" [(ngModel)]="grade">
+        </div>
+        <button (click)="gradeAssignment(clickedMessageId!, grade)">Set grade</button>
+        <button (click)="showGrading = !showGrading">Close</button>
+      </div>
+    </div>
   </div>
 
 </div>

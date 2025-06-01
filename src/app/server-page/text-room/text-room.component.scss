@@ -88,6 +88,7 @@
 
     &-container{
       width: calc(100% + 1rem);
+      max-width: calc(100% + 1rem);
       margin-left: -0.5rem;
       padding: 0 0.5rem;
       display: flex;
@@ -96,6 +97,7 @@
       flex-direction: column;
       transition: 0.2s all ease-in-out;
       border-radius: 10px;;
+      box-sizing: border-box;
 
       &:hover{
         background-color: var(--grey);
@@ -305,4 +307,36 @@
     margin: 0 0 0.5rem 0;
   }
 
+}
+
+
+.reply-preview{
+  display: flex;
+  z-index: 2;
+  justify-self: center;
+  background-color: var(--light-grey);
+  width: 95%;
+  max-width: 95%;
+  // margin: 0.5rem 0 0 0.5rem;
+  padding: 0.5rem;
+  padding-top:0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  word-break: break-all;
+  transition: 0.2s all ease-in-out;
+
+  & button {
+    margin-left: auto;
+    right: 0.5rem;
+    width: 4rem;
+    background-color: var(--grey);
+    transition: 0.2s all ease-in-out;
+    border: none;
+    border-radius: 5px;;
+
+    &:hover{
+      background-color: var(--red);
+    }
+  }
 }

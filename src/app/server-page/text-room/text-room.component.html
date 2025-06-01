@@ -48,7 +48,7 @@
   <div class="reply-preview" *ngIf="replyingTo">
     <div class="preview-content">
       <p>Replying to <b>{{replyingTo.user.name}}</b>:</p>
-      <div class="preview-message">{{replyingTo.message}}</div>
+      <markdown class="preview-message">{{replyingTo.message | slice:0:100}}{{replyingTo.message.length > 100 ? '...' : ''}}</markdown>
     </div>
     <button class="cancel-reply" (click)="cancelReply()">✕</button>
   </div>

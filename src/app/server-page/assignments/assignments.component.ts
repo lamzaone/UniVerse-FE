@@ -43,8 +43,9 @@ export class AssignmentsComponent implements OnInit {
   contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
   currentUser = this.authService.userData();
   clickedMessage: any = null; // Store the clicked message for context menu
-
+  grade: number = 1; // Default grade value
   paramz:any;
+  showGrading: boolean = false; // Flag to show/hide grading options
   private previousRouteId: number | null = null; // Store the previous route_id
 
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
@@ -332,6 +333,25 @@ export class AssignmentsComponent implements OnInit {
     if (keyboardEvent.key === 'Enter' && !keyboardEvent.shiftKey) {
       keyboardEvent.preventDefault();
       this.sendMessage();
+    }
+  }
+
+  async gradeAssignment(assignmentId: string, grade: number) {
+    try {
+      const response = await api.put('http://lamzaone.go.ro:8000/api/assignment/grade', {
+        assignment_id: assignmentId,
+        room_id: this.route_id,
+        grade: grade,
+      });
+
+      if (response.status === 200) {
+        console.log('Assignment graded successfully:', response.data);
+      } else {
+        console.error('Failed to grade assignment:', response.data.message);
+      }
+      this.showGrading = false; // Hide grading options after grading
+    } catch (error) {
+      console.error('Error grading assignment:', error);
     }
   }
 
