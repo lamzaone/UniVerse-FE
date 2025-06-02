@@ -456,8 +456,48 @@
   display: flex;
   flex-direction: row;
   height: 1.5rem;
+  border-bottom: 2px solid var(--light-grey);
+  padding-bottom: 5px;
+  background-color: var(--grey);
+  z-index: 1;
 
   &-dropdown{
     margin-left: auto;
+  }
+  & select{
+    background-color: var(--dark-grey);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    padding: 0.2rem;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    width: 6rem;
+    height: 1.5rem;
+  }
+  & input{
+    background-color: var(--dark-grey);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    padding: 0.2rem;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    width: 10rem;
+  }
+  & button{
+    background-color: var(--light-grey);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    padding: 0.2rem;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: 0.2s all ease-in-out;
+
+    &:hover{
+      background-color: var(--grey);
+    }
   }
 }
