@@ -29,7 +29,7 @@ export class TextRoomComponent implements OnInit {
   paramz:any;
   private previousRouteId: number | null = null; // Store the previous route_id
   isMessage = false;
-  serverAccessLevel:number = 0;
+  serverAccessLevel= signal<number>(0); // Signal to hold the server access level
   contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
   currentUser = this.authService.userData();
   clickedMessage: any = null; // Store the clicked message for context menu
@@ -47,16 +47,17 @@ export class TextRoomComponent implements OnInit {
     private router: Router
   ) {
 
-    this.listenForMessages();
-    const waitForServer = async () => {
-      while (!this.serversService.currentServer()) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Wait for 100ms
+    const interval = setInterval(() => {
+      const currentServer = this.serversService.currentServer();
+      if (currentServer && currentServer.access_level !== undefined) {
+      this.serverAccessLevel = currentServer.access_level;
+      console.log("current user", this.authService.userData());
+      clearInterval(interval); // Stop checking once initialized
       }
-      this.listenForMessages();
-      this.serverAccessLevel = this.serversService.currentServer().access_level; // Get the access level from the current server
-    };
+    }, 100); // Check every 100ms
 
-    waitForServer();
+
+    this.listenForMessages();
     console.log("current user", this.authService.userData());
   }
 

@@ -1,7 +1,7 @@
 
 import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, ElementRef, HostListener, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, Signal, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
@@ -39,9 +39,9 @@ export class AssignmentsComponent implements OnInit {
   clickedMessageId: string | null = null; // Store the ID of the clicked message for context menu
   showContextMenu = false;
   isMessage = false;
-  serverAccessLevel:number = 0;
+  serverAccessLevel = signal<any>(0);
   contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
-  currentUser = this.authService.userData();
+  currentUser: Signal<any> = this.authService.userData;
   clickedMessage: any = null; // Store the clicked message for context menu
   grade: number = 1; // Default grade value
   paramz:any;
@@ -62,17 +62,17 @@ export class AssignmentsComponent implements OnInit {
     private router: Router
   ) {
 
-    const waitForServer = async () => {
-      while (!this.serversService.currentServer()) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Wait for 100ms
+    const interval = setInterval(() => {
+      const currentServer = this.serversService.currentServer();
+      if (currentServer && currentServer.access_level !== undefined) {
+      this.serverAccessLevel = currentServer.access_level;
+      console.log("current user", this.authService.userData());
+      clearInterval(interval); // Stop checking once initialized
       }
-      this.listenForMessages();
-      this.serverAccessLevel = this.serversService.currentServer().access_level; // Get the access level from the current server
-    };
+    }, 100); // Check every 100ms
 
+    this.listenForMessages();
 
-    waitForServer();
-    console.log("current user", this.authService.userData());
 
   }
 
@@ -416,7 +416,7 @@ export class AssignmentsComponent implements OnInit {
     }
 
     this.contextMenuPosition = { x: event.clientX, y: event.clientY };
-    this.showContextMenu = true;
+    this.showContextMenu = true; // Get the access level from the current server
   }
 
   @HostListener('document:click', ['$event'])

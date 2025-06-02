@@ -118,7 +118,7 @@
       @if (isMessage) {
         <li (click)="setReplyTo(getMessageById(clickedMessageId))">Reply</li>
       }
-      @if (isMessage && this.clickedMessage.user_id === this.currentUser.id) {
+      @if (isMessage && this.clickedMessage.user_id === this.currentUser().id) {
         <li (click)="editMessage(clickedMessageId)">Edit</li>
         <li *ngIf="serverAccessLevel == 0">Delete</li>
       }
