@@ -1,7 +1,7 @@
 .container{
   background-color: transparent;
   display:grid;
-  grid-template-rows:1fr auto;
+  grid-template-rows:1.5rem 1fr auto;
   height: calc(100% - 1rem);
 }
 
@@ -449,5 +449,15 @@
     &:hover{
       background-color: var(--red);
     }
+  }
+}
+
+.search {
+  display: flex;
+  flex-direction: row;
+  height: 1.5rem;
+
+  &-dropdown{
+    margin-left: auto;
   }
 }

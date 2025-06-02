@@ -88,11 +88,7 @@
     <!-- Context Menu -->
     <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
       <ul>
-        @if (serverAccessLevel > 0) {
-          @if (isMessage) {
-            <li>Delete</li>
-          }
-        }
+
         @if (isMessage) {
           <li (click)="setReplyTo(getMessageById(clickedMessageId))">Reply</li>
         }

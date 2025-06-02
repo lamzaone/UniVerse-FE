@@ -48,7 +48,10 @@ export class AssignmentsComponent implements OnInit {
   showGrading: boolean = false; // Flag to show/hide grading options
   private previousRouteId: number | null = null; // Store the previous route_id
   editingMessageId: string | null = null; // Store the ID of the message being edited
-
+  searchQuery: any;
+  originalMessages = signal<any[][]>([]);
+  selectedUser: any = "All Users"; // Default selected user for filtering
+  usersWithoutGrades: any;
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
     private socketService: SocketService,
@@ -134,6 +137,7 @@ export class AssignmentsComponent implements OnInit {
     this.paramz.unsubscribe(); // Unsubscribe from the route params to prevent memory leaks
   }
 
+
   // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
   // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
   async fetchMessages() {
@@ -202,14 +206,36 @@ export class AssignmentsComponent implements OnInit {
         }
       }
 
+
       // Update the messages signal with grouped messages
       this.messages.set(groupedMessages);
+      this.originalMessages.set(groupedMessages); // Store original for filtering
       this.previousRouteId = 0;
       // Scroll to the last message if necessary
       const lastMessage = document.getElementById('last-message');
       const isLastMessageInView = lastMessage ? lastMessage.getBoundingClientRect().top <= window.innerHeight : false;
 
       if (isLastMessageInView) this.scrollToLast();
+
+    // Collect users that have grades
+    const usersWithGrades = new Set();
+    this.messages().flat().forEach((message: any) => {
+      if (message.grade && message.grade > 0) {
+        usersWithGrades.add(message.user_id);
+      }
+    });
+
+    // Filter out users that have no grades at all and exclude the current user
+    this.usersWithoutGrades = Array.from(
+      new Set(
+        this.messages()
+          .flat()
+          .filter((message: any) => !usersWithGrades.has(message.user_id) && message.user_id !== this.authService.userData().id)
+          .map((message: any) => message.user)
+      )
+    );
+    console.log("Users without grades:", this.usersWithoutGrades);
+
 
       // this.scrollToLast();
 
@@ -413,4 +439,60 @@ export class AssignmentsComponent implements OnInit {
     this.messageText = this.clickedMessage?.message || '';
   }
 
+  filterMessages() {
+    const searchTerm = this.searchQuery?.toLowerCase().trim();
+
+    if (!searchTerm) {
+      this.messages.set(this.originalMessages());
+      return;
+    }
+
+    const filteredGroups = this.originalMessages().filter(group => {
+      return group.some(message =>
+        message.user?.name?.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    // Collect all message IDs from the filtered groups
+    const filteredMessageIds = new Set(
+      filteredGroups.flat().map(message => message._id)
+    );
+
+    // Add messages that have reply_to pointing to a message in the filtered groups
+    const additionalMessages = this.originalMessages().flat().filter(message =>
+      filteredMessageIds.has(message.reply_to)
+    );
+
+    // Merge the filtered groups with the additional messages while maintaining the original order
+    const mergedMessages = this.originalMessages().flat().filter(message =>
+      filteredMessageIds.has(message._id) || additionalMessages.includes(message)
+    );
+
+    // Group the merged messages back into their original structure
+    const groupedMessages = [];
+    let currentGroup = [];
+
+    for (const message of mergedMessages) {
+      if (
+        currentGroup.length > 0 &&
+        currentGroup[currentGroup.length - 1].user_id !== message.user_id
+      ) {
+        groupedMessages.push(currentGroup);
+        currentGroup = [];
+      }
+      currentGroup.push(message);
+    }
+
+    if (currentGroup.length > 0) {
+      groupedMessages.push(currentGroup);
+    }
+
+    this.messages.set(groupedMessages);
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.selectedUser = "All Users"; // Reset selected user
+    this.filterMessages();
+  }
 }
