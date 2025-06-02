@@ -8,11 +8,12 @@ import { SocketService } from '../../services/socket.service';
 import axios from 'axios';
 import { CreateCategoryComponent } from './create-category/create-category.component';
 import { CreateRoomComponent } from './create-room/create-room.component';
+import { CreateAssignmentComponent } from './create-assignment/create-assignment.component';
 import api from '../../services/api.service';
 @Component({
   selector: 'app-room-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, DragDropModule, CreateCategoryComponent, CreateRoomComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, DragDropModule, CreateCategoryComponent, CreateRoomComponent, CreateAssignmentComponent],
   templateUrl: './room-list.component.html',
   styleUrls: ['./room-list.component.scss']
 })
@@ -23,6 +24,7 @@ export class RoomListComponent {
 
   showContextMenu = false;
   showCreateCategory = false;
+  showCreateAssignment = false;
   showCreateRoom = false;
   contextMenuPosition = { x: 0, y: 0 };
   uncategorizedRooms: any[] = [];
@@ -31,6 +33,7 @@ export class RoomListComponent {
   serverAccessLevel:number = 0;
   isRoom: any;
   isCategory: any;
+  isAssignments: any;
   clickedRoomId:any;
   clickedCategoryId:any;
   clickedCategoryLength:any;
@@ -49,6 +52,12 @@ export class RoomListComponent {
       // TODO: rework getAccessLevel to be stored in the currentServer signal
       this.serversService.getAccessLevel(this.route_id).then((res) => {
         this.serverAccessLevel = res;
+        const currentServer = this.serversService.currentServer();
+        if (currentServer) {
+          currentServer.access_level = res; // Update the access level in the current server
+        } else {
+          console.warn('Current server is null, cannot set access level.');
+        }
         console.log(res);
       });
     });
@@ -74,18 +83,39 @@ export class RoomListComponent {
   async fetchCategoriesAndRooms(serverId: string) {
     try {
       const categories = await this.serversService.fetchCategoriesAndRooms(+serverId);
+      categories.sort((a: any, b: any) => {
+        if (a.category_type === 'Assignments' && b.category_type !== 'Assignments') {
+          return -1;
+        }
+        if (a.category_type !== 'Assignments' && b.category_type === 'Assignments') {
+          return 1;
+        }
+        return 0;
+      });
+      console.log('Fetched categories:', categories);
       categories.forEach((category: any) => {
-        category.rooms = category.rooms.sort((a: any, b: any) => a.position - b.position);
+        const assignments = category.rooms
+          .filter((room: any) => typeof room.type === 'string' && room.type.split(' ')[0] === 'assignments')
+          .sort((a: any, b: any) => a.position - b.position);
+        if (assignments.length > 0) {
+          category.assignments = assignments;
+        }
+        category.rooms = category.rooms
+          .filter((room: any) => typeof room.type === 'string' && room.type.split(' ')[0] !== 'assignments')
+          .sort((a: any, b: any) => a.position - b.position);
       });
       this.categories.set(categories); // Update the signal with sorted categories and rooms
+      console.log('Fetched categories and rooms:', this.categories());
     } catch (error) {
       console.error('Error fetching categories and rooms:', error);
     }
   }
 
   connectedLists() {
-    // Create an array of list ids that the drop list can connect to
-    return this.categories().map(category => `cdk-drop-list-${category.id}`);
+    // Create an array of list ids that the drop list can connect to, excluding categories with type 'assignment'
+    return this.categories()
+      .filter(category => category.category_type !== 'Assignments')
+      .map(category => `cdk-drop-list-${category.id}`)
   }
 
 
@@ -137,6 +167,13 @@ export class RoomListComponent {
     this.showContextMenu = false;
     this.toggleCreateRoom();
   }
+
+  createAssignment(): void {
+    console.log('Create a new assignment');
+    this.showContextMenu = false;
+    this.toggleCreateAssignment();
+  }
+
   async deleteRoom(room_id: Number): Promise<void> {
     console.log('Deleted room', room_id);
     console.log(await api.put('http://lamzaone.go.ro:8000/api/server/' + this.route_id + '/room/' + room_id + '/delete'));
@@ -156,6 +193,7 @@ export class RoomListComponent {
     event.preventDefault();
     this.isRoom = (event.target instanceof HTMLElement && event.target.classList.contains('room'));
     this.isCategory = (event.target instanceof HTMLElement && event.target.classList.contains('category'));
+    this.isAssignments = (event.target instanceof HTMLElement && event.target.classList.contains('Assignments'));
     if (this.isRoom) {
       this.clickedRoomId = (event.target as HTMLElement).getAttribute('room-id');
     }
@@ -191,16 +229,23 @@ export class RoomListComponent {
     this.showCreateRoom = !this.showCreateRoom;
   }
 
+  toggleCreateAssignment() {
+    this.showCreateAssignment = !this.showCreateAssignment;
+  }
+
   getRoomIcon(type: string): string {
-    switch (type) {
+    switch (type.split(' ')[0]) {
       case 'text':
         return '#';
       case 'audio':
         return '🔊';
+      case 'assignments':
+        return '📚';
       default:
         return ' ';
     }
   }
+
 }
 
 

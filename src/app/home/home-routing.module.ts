@@ -8,6 +8,7 @@ import { ServerPageComponent } from '../server-page/server-page.component';
 import { TextRoomComponent } from '../server-page/text-room/text-room.component';
 import { ServerDashboardComponent } from '../server-page/server-dashboard/server-dashboard.component';
 import { AudioVideoRoomComponent } from '../server-page/audio-video-room/audio-video-room.component';
+import { AssignmentsComponent } from '../server-page/assignments/assignments.component';
 
 const routes: Routes = [
   {
@@ -50,6 +51,11 @@ const routes: Routes = [
           {
             path: 'audio/:room_id',
             component: AudioVideoRoomComponent,
+            canActivate: [AuthGuard],
+          },
+          {
+            path: 'assignments/:room_id',
+            component: AssignmentsComponent,
             canActivate: [AuthGuard],
           }
         ]

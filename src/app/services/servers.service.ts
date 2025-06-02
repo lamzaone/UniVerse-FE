@@ -11,6 +11,7 @@ export class ServersService {
   // public currentRoom = signal<any>(null);  // Signal to hold current room data
   public servers = signal<any[]>([]); // Signal to hold server data
   public currentServer = signal<any>(null);
+  public currentRoom = signal<any>(null);
   user = this.authService.getUser();  // Fetch user from AuthService
 
   constructor(private authService: AuthService, private router: Router) {
@@ -27,6 +28,9 @@ export class ServersService {
 
   async setCurrentServer(server: any) {
     this.currentServer.set(server);
+  }
+  async setCurrentRoom(room: any) {
+    this.currentRoom.set(room);
   }
 
 
@@ -52,10 +56,11 @@ export class ServersService {
   }
 
 
-  async createCategory(serverId: number, categoryName: string, categoryDescription: string) {
+  async createCategory(serverId: number, categoryName: string, categoryType: string, categoryDescription: string) {
     try {
       const response = await api.post('http://lamzaone.go.ro:8000/api/server/' + serverId + '/category/create', {
         category_name: categoryName,
+        category_type: categoryType
       });
       if (response.status === 200) {
         return response.data;
@@ -102,6 +107,17 @@ export class ServersService {
   async fetchMessages(route_id:number){
     const response = await api.post(
       'http://lamzaone.go.ro:8000/api/messages',
+      {
+        room_id: route_id,
+        user_token: this.authService.getUser().token
+      }
+    );
+    return response;
+  }
+
+  async fetchAssignments(route_id:number){
+    const response = await api.post(
+      'http://lamzaone.go.ro:8000/api/assignments',
       {
         room_id: route_id,
         user_token: this.authService.getUser().token

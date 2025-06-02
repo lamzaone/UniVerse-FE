@@ -1,6 +1,7 @@
+
 import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, ElementRef, HostListener, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, Signal, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
@@ -10,33 +11,47 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
 import { LMarkdownEditorModule } from 'ngx-markdown-editor';
 import api from '../../services/api.service';
+import { Pipe, PipeTransform } from '@angular/core';
 
-@Component({
-  selector: 'app-text-room',
+
+@Pipe({ name: 'truncate' })
+export class TruncatePipe implements PipeTransform {
+  transform(value: string, limit: number = 50): string {
+    return value.length > limit
+      ? value.substring(0, limit) + '...'
+      : value;
+  }
+}@Component({
+  selector: 'app-assignments',
   standalone: true,
   imports: [CommonModule, FormsModule, MarkdownComponent, LMarkdownEditorModule],
-  templateUrl: './text-room.component.html',
-  styleUrls: ['./text-room.component.scss'],
+  templateUrl: './assignments.component.html',
+  styleUrl: './assignments.component.scss',
   providers: [provideMarkdown()]
 })
-export class TextRoomComponent implements OnInit {
+
+export class AssignmentsComponent implements OnInit {
   @ViewChild('messageInput') messageInput!: ElementRef<HTMLTextAreaElement>;
   route_id: number | null = null;
   room = signal<any>(null);
   messages = signal<any>(null);
   messageText = '';
-
-  paramz:any;
-  private previousRouteId: number | null = null; // Store the previous route_id
-  isMessage = false;
-  serverAccessLevel= signal<number>(0); // Signal to hold the server access level
-  contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
-  currentUser = this.authService.userData();
-  clickedMessage: any = null; // Store the clicked message for context menu
   clickedMessageId: string | null = null; // Store the ID of the clicked message for context menu
   showContextMenu = false;
+  isMessage = false;
+  serverAccessLevel = signal<any>(0);
+  contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
+  currentUser: Signal<any> = this.authService.userData;
+  clickedMessage: any = null; // Store the clicked message for context menu
+  grade: number = 1; // Default grade value
+  paramz:any;
+  showGrading: boolean = false; // Flag to show/hide grading options
+  private previousRouteId: number | null = null; // Store the previous route_id
   editingMessageId: string | null = null; // Store the ID of the message being edited
-
+  searchQuery: any;
+  originalMessages = signal<any[][]>([]);
+  selectedUser: any = "All Users"; // Default selected user for filtering
+  usersWithoutGrades: any;
   // TODO: ADD MARKDOWN (RICH TEXT EDITOR) SUPPORT
   constructor(
     private socketService: SocketService,
@@ -56,11 +71,10 @@ export class TextRoomComponent implements OnInit {
       }
     }, 100); // Check every 100ms
 
-
     this.listenForMessages();
-    console.log("current user", this.authService.userData());
-  }
 
+
+  }
 
   replyingTo: any = null;
 
@@ -85,7 +99,6 @@ export class TextRoomComponent implements OnInit {
     return original?.user || null;
   }
 
-
   editorOptions = {
     autofocus: true, // Auto-focus the editor
     showPreviewPanel: false, // Show the preview panel
@@ -98,6 +111,7 @@ export class TextRoomComponent implements OnInit {
     syntaxHighlighting: true, // Enable syntax highlighting in code blocks
     enableAdvancedFeatures: true // Enable or disable advanced features like tables, strikethrough, etc.
   };
+
 
 
   // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
@@ -123,6 +137,7 @@ export class TextRoomComponent implements OnInit {
     this.paramz.unsubscribe(); // Unsubscribe from the route params to prevent memory leaks
   }
 
+
   // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
   // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
   async fetchMessages() {
@@ -133,7 +148,7 @@ export class TextRoomComponent implements OnInit {
     this.previousRouteId = this.route_id; // Update the previous route_id
     try {
       this.serversService.fetchMessages(this.route_id!);
-      const response = await this.serversService.fetchMessages(this.route_id!);
+      const response = await this.serversService.fetchAssignments(this.route_id!);
 
 
       const groupedMessages = []; // Array of message groups
@@ -143,6 +158,7 @@ export class TextRoomComponent implements OnInit {
         const message = response.data[i];
         // Replace newline with <br> for markdown support if the next line is not starting with a space, number, dash, or '`', and exclude code blocks enclosed in triple backticks
         // message.message = message.message.replace(/```[\s\S]*?```|(\r\n|\n|\r)(?![ \d\-`>])/g, (match: string, newline: string) => newline ? '<br>' : match);
+
         const user = await this.usersService.getUserInfo(message.user_id);
         message.user = user;      // Add user info to the message for picture etc.
 
@@ -190,14 +206,36 @@ export class TextRoomComponent implements OnInit {
         }
       }
 
+
       // Update the messages signal with grouped messages
       this.messages.set(groupedMessages);
+      this.originalMessages.set(groupedMessages); // Store original for filtering
       this.previousRouteId = 0;
       // Scroll to the last message if necessary
       const lastMessage = document.getElementById('last-message');
       const isLastMessageInView = lastMessage ? lastMessage.getBoundingClientRect().top <= window.innerHeight : false;
 
       if (isLastMessageInView) this.scrollToLast();
+
+    // Collect users that have grades
+    const usersWithGrades = new Set();
+    this.messages().flat().forEach((message: any) => {
+      if (message.grade && message.grade > 0) {
+        usersWithGrades.add(message.user_id);
+      }
+    });
+
+    // Filter out users that have no grades at all and exclude the current user
+    this.usersWithoutGrades = Array.from(
+      new Set(
+        this.messages()
+          .flat()
+          .filter((message: any) => !usersWithGrades.has(message.user_id) && message.user_id !== this.authService.userData().id)
+          .map((message: any) => message.user)
+      )
+    );
+    console.log("Users without grades:", this.usersWithoutGrades);
+
 
       // this.scrollToLast();
 
@@ -219,7 +257,6 @@ export class TextRoomComponent implements OnInit {
       if (data === 'room_deleted') {
         this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
         return;
-        // TODO: check if this works
       }
       this.fetchMessages();
     });
@@ -247,42 +284,40 @@ export class TextRoomComponent implements OnInit {
     if (this.messageText.trim() === '' && this.selectedFiles.length === 0) return;
 
     const formData = new FormData();
-    this.messageText = this.messageText.replace(/(\r\n|\n|\r)/g, '\n\n').trim(); // Normalize newlines
+    this.messageText = this.messageText.replace(/(\r\n|\n|\r)(?!\n)/g, '\n\n').trim(); // Normalize newlines
     formData.append('message', this.messageText);
     formData.append('room_id', this.route_id!.toString());
     formData.append('is_private', isPrivate.toString());
     formData.append('user_token', this.authService.userData().token);
     formData.append('reply_to', this.replyingTo?._id?.toString() || '0');
 
-
     for (let i = 0; i < this.selectedFiles.length; i++) {
       formData.append('attachments', this.selectedFiles[i].file);
     }
 
     try {
-            // replace 1 newline with two newlines
-            if (this.editingMessageId !== null) {
-              if (this.editingMessageId !== null) {
-                formData.append('message_id', this.editingMessageId);
-                this.editingMessageId = null; // Reset editing message ID after sending
-                this.messageText = ''; // Clear the input field
-              }
-              formData.delete('reply_to'); // Remove reply_to if editing a message
-              formData.delete('user_token'); // Remove user_token if editing
-              formData.delete('is_private'); // Remove is_private if editing
-              await api.put('http://lamzaone.go.ro:8000/api/message/edit', formData, {
-                headers: {
-                  'Content-Type': 'multipart/form-data'
-                }
-              });
-            } else {
-              const response = await api.post('http://lamzaone.go.ro:8000/api/message', formData, {
-                headers: {
-                  'Content-Type': 'multipart/form-data'
-                }
-              });
-            }
-
+      // replace 1 newline with two newlines
+      if (this.editingMessageId !== null) {
+        if (this.editingMessageId !== null) {
+          formData.append('assignment_id', this.editingMessageId);
+          this.editingMessageId = null; // Reset editing message ID after sending
+          this.messageText = ''; // Clear the input field
+        }
+        formData.delete('reply_to'); // Remove reply_to if editing a message
+        formData.delete('user_token'); // Remove user_token if editing
+        formData.delete('is_private'); // Remove is_private if editing
+        await api.put('http://lamzaone.go.ro:8000/api/assignment/edit', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        const response = await api.post('http://lamzaone.go.ro:8000/api/assignment', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
 
       this.messageText = '';
       this.selectedFiles = [];
@@ -345,6 +380,25 @@ export class TextRoomComponent implements OnInit {
     }
   }
 
+  async gradeAssignment(assignmentId: string, grade: number) {
+    try {
+      const response = await api.put('http://lamzaone.go.ro:8000/api/assignment/grade', {
+        assignment_id: assignmentId,
+        room_id: this.route_id,
+        grade: grade,
+      });
+
+      if (response.status === 200) {
+        console.log('Assignment graded successfully:', response.data);
+      } else {
+        console.error('Failed to grade assignment:', response.data.message);
+      }
+      this.showGrading = false; // Hide grading options after grading
+    } catch (error) {
+      console.error('Error grading assignment:', error);
+    }
+  }
+
   onRightClick(event: MouseEvent): void {
     event.preventDefault();
     let targetElement = event.target as HTMLElement;
@@ -362,7 +416,7 @@ export class TextRoomComponent implements OnInit {
     }
 
     this.contextMenuPosition = { x: event.clientX, y: event.clientY };
-    this.showContextMenu = true;
+    this.showContextMenu = true; // Get the access level from the current server
   }
 
   @HostListener('document:click', ['$event'])
@@ -385,5 +439,60 @@ export class TextRoomComponent implements OnInit {
     this.messageText = this.clickedMessage?.message || '';
   }
 
+  filterMessages() {
+    const searchTerm = this.searchQuery?.toLowerCase().trim();
 
+    if (!searchTerm) {
+      this.messages.set(this.originalMessages());
+      return;
+    }
+
+    const filteredGroups = this.originalMessages().filter(group => {
+      return group.some(message =>
+        message.user?.name?.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    // Collect all message IDs from the filtered groups
+    const filteredMessageIds = new Set(
+      filteredGroups.flat().map(message => message._id)
+    );
+
+    // Add messages that have reply_to pointing to a message in the filtered groups
+    const additionalMessages = this.originalMessages().flat().filter(message =>
+      filteredMessageIds.has(message.reply_to)
+    );
+
+    // Merge the filtered groups with the additional messages while maintaining the original order
+    const mergedMessages = this.originalMessages().flat().filter(message =>
+      filteredMessageIds.has(message._id) || additionalMessages.includes(message)
+    );
+
+    // Group the merged messages back into their original structure
+    const groupedMessages = [];
+    let currentGroup = [];
+
+    for (const message of mergedMessages) {
+      if (
+        currentGroup.length > 0 &&
+        currentGroup[currentGroup.length - 1].user_id !== message.user_id
+      ) {
+        groupedMessages.push(currentGroup);
+        currentGroup = [];
+      }
+      currentGroup.push(message);
+    }
+
+    if (currentGroup.length > 0) {
+      groupedMessages.push(currentGroup);
+    }
+
+    this.messages.set(groupedMessages);
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.selectedUser = "All Users"; // Reset selected user
+    this.filterMessages();
+  }
 }

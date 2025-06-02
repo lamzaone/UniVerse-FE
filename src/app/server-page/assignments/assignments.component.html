@@ -1,4 +1,24 @@
-<div class="container"  (contextmenu)="onRightClick($event)">
+<div class="container" (contextmenu)="onRightClick($event)">
+    <div class="search">
+      <div class="search-bar">
+        <input
+          type="text"
+          placeholder="Filter by user name"
+          [(ngModel)]="searchQuery"
+          (input)="filterMessages()"
+        />
+
+      </div>
+      <div class="search-dropdown">
+        Ungraded users:
+        <select [(ngModel)]="selectedUser" (change)="this.searchQuery = selectedUser; filterMessages()">
+          <option value="">All Users</option>
+          <option *ngFor="let user of usersWithoutGrades" [value]="user.name">{{ user.name }}</option>
+        </select>
+        <button (click)="clearSearch()">Clear</button>
+      </div>
+
+    </div>
   <div class="messages" #messagesContainer>
     <div *ngIf="messages()?.length > 0; else noMessages">
       <div class="message" *ngFor="let messageGroup of messages()">
@@ -29,6 +49,8 @@
               </div>
 
               <p *ngIf="message !== messageGroup[0]" class="msg-text-time">{{message.timestamp}}</p>
+
+              <div class="grade" *ngIf="message.grade">Grade: {{message.grade}}/10</div>
             </div>
           </div>
         </div>
@@ -84,19 +106,39 @@
     </div>
     <input type="file" multiple (change)="onFileSelected($event)" hidden #fileInput />
   </div>
-
-    <!-- Context Menu -->
-    <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
-      <ul>
-
+  <!-- Context Menu -->
+  <div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
+    <ul>
+      @if (serverAccessLevel > 0) {
         @if (isMessage) {
-          <li (click)="setReplyTo(getMessageById(clickedMessageId))">Reply</li>
+          <li (click)="showGrading = !showGrading"> Grade</li>
+          <li>Delete</li>
         }
-        @if (isMessage && this.clickedMessage.user_id === this.currentUser.id) {
-          <li (click)="editMessage(clickedMessageId)">Edit</li>
-          <li *ngIf="serverAccessLevel == 0">Delete</li>
-        }
+      }
+      @if (isMessage) {
+        <li (click)="setReplyTo(getMessageById(clickedMessageId))">Reply</li>
+      }
+      @if (isMessage && this.clickedMessage.user_id === this.currentUser().id) {
+        <li (click)="editMessage(clickedMessageId)">Edit</li>
+        <li *ngIf="serverAccessLevel == 0">Delete</li>
+      }
 
-      </ul>
+    </ul>
+  </div>
+  <div class="background" *ngIf="showGrading">
+    <div class="grading-container">
+      <div class="header">
+        <h1>Add a grade</h1>
+      </div>
+      <div class="form">
+        <div class="form-group">
+          <label for="grade">Grade to add</label>
+          <input type="number" class="form-control" id="grade" [(ngModel)]="grade">
+        </div>
+        <button (click)="gradeAssignment(clickedMessageId!, grade)">Set grade</button>
+        <button (click)="showGrading = !showGrading">Close</button>
+      </div>
     </div>
+  </div>
+
 </div>
