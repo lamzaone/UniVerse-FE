@@ -49,29 +49,6 @@ export class RoomListComponent {
       this.route_id = +params.id;
       this.fetchCategoriesAndRooms(this.route_id.toString());
 
-      // kinda botched but it works. with the current experience, next projects will be much cleaner
-      const setAccessLevel = async () => {
-        while (true) {
-          const res = await this.serversService.getAccessLevel(this.route_id!);
-          if (res !== undefined && res !== null) {
-            this.serverAccessLevel = res;
-            const currentServer = this.serversService.currentServer();
-            if (currentServer) {
-              currentServer.access_level = res; // Update the access level in the current server
-              console.log(res);
-              break; // Exit the loop once access_level is set
-            } else {
-              console.warn('Current server is null, retrying to set access level...');
-              await new Promise(resolve => setTimeout(resolve, 20)); // Wait for 50ms before retrying
-            }
-          } else {
-            console.warn('Access level is undefined or null, retrying...');
-            await new Promise(resolve => setTimeout(resolve, 20)); // Wait for 50ms before retrying
-          }
-        }
-      };
-
-      setAccessLevel();
     });
 
     this.listenToServerUpdates();
@@ -80,7 +57,6 @@ export class RoomListComponent {
   // selectRoom(room: {}) {
   //   this.serversService.setCurrentRoom(room);
   // }
-
 
   listenToServerUpdates() {
     // Listen for server updates

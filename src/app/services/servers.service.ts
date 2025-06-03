@@ -155,7 +155,7 @@ export class ServersService {
   // TODO: switch userID to user token for security reasons
   async getServer(serverId: number, userId: number) {
     try {
-      const response = await api.post('http://lamzaone.go.ro:8000/api/server', { server_id: serverId, user_id: userId });
+      const response = await api.post('http://lamzaone.go.ro:8000/api/server', { server_id: serverId });
       if (response.status === 200) {
         return response.data;
       } else {
