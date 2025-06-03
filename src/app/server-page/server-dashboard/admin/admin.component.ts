@@ -1,7 +1,7 @@
 import { Component, Signal, effect, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ServersService } from '../../../services/servers.service';
-
+import api from '../../../services/api.service';
 
 @Component({
   selector: 'app-admin',
@@ -14,7 +14,9 @@ import { ServersService } from '../../../services/servers.service';
 
 export class AdminComponent {
 
-  server: Signal<any> = this.serverService.currentServer();
+  server = signal<any>({});
+  server_id:number = 0;
+  weeks: Array<any> = [];
 
   constructor(
     private serverService: ServersService
@@ -25,6 +27,8 @@ export class AdminComponent {
     effect(() => {
       this.server = this.serverService.currentServer();
       // console.log('Server data updated:', this.server);
+      this.server_id = this.serverService.currentServer().id;
+      this.weeks = this.serverService.currentServer().weeks || [];
     });
   }
 
@@ -32,6 +36,21 @@ export class AdminComponent {
 
   ngOnInit() {
     // Any additional setup after component initialization
+  }
+
+
+  async startNewWeek() {
+    try {
+      await api.post('http://lamzaone.go.ro:8000/api/server/' + this.server_id + '/weeks/create', {
+        'week_number': this.weeks.length + 1
+      });
+
+
+    } catch (error) {
+      console.error('Error starting new week:', error);
+
+    }
+
   }
 
 }

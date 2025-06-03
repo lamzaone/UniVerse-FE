@@ -14,6 +14,7 @@ interface Server {
   description: string;
   owner_id: number;
   invite_code: string;
+  weeks: Array<any>;
 }
 
 @Component({
@@ -71,17 +72,24 @@ export class ServerPageComponent {
       if (data === "server_updated") {
         this.refreshServerData();  // Refresh server data if server is updated
       }
+      if (data === "week_created") {
+        this.refreshServerData();  // Refresh server data if a new week is created
+      }
+      // console.log('Server message received:', data);  // Log the received message
     });
+
   }
 
   refreshServerData() {
     if (this.route_id) {
       // Re-fetch server details from the server
       this.serverService.getServer(this.route_id, this.authService.getUser().id).then(server => {
-        this.server.set(server);  // Update server data
+        this.server.set(server);
+        this.serverService.currentServer.set(server);  // Update server data
       }).catch(error => {
         console.error('Error fetching server on update:', error);
       });
+
     }
   }
 

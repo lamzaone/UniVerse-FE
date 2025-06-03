@@ -8,7 +8,7 @@
       <h2>Week {{server.weeks.length}}</h2>
       <div class="card-content">
         <p>Manage faculty weeks.</p>
-        <button class="btn btn-primary" routerLink="/admin/courses">Start new week</button>
+        <button class="btn btn-primary" (click)="startNewWeek()">Start new week</button>
         <button class="btn btn-secondary" routerLink="/admin/courses">Delete week</button>
       </div>
     </div>

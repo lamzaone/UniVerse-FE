@@ -4,9 +4,12 @@ import axios from 'axios';
 import { Router } from '@angular/router';
 import api from './api.service';
 
+
 @Injectable({
   providedIn: 'root'
 })
+
+
 export class ServersService {
   // public currentRoom = signal<any>(null);  // Signal to hold current room data
   public servers = signal<any[]>([]); // Signal to hold server data
