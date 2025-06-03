@@ -29,7 +29,8 @@ export class AttendanceComponent implements OnInit {
   }
 
   fetchWeeks() {
-    this.http.get<Week[]>(`/api/server/${this.serverId}/weeks`).subscribe((weeks) => {
+    api.get<Week[]>(`http://lamzaone.go.ro:8000/api/server/${this.serverId}/weeks`).then((response) => {
+      const weeks: Week[] = response.data;
       this.weeks = weeks;
       if (weeks.length) {
         this.selectedWeek = weeks[0].week_number;
@@ -40,19 +41,20 @@ export class AttendanceComponent implements OnInit {
 
   fetchAttendance(weekNumber: number) {
     this.selectedWeek = weekNumber;
-    this.http
-      .get<{ week: number; attendance: AttendanceRecord[] }>(
-        `/api/server/${this.serverId}/week/${weekNumber}/attendance`
+    api.get<{ week: number; attendance: AttendanceRecord[] }>(
+        `http://lamzaone.go.ro:8000/api/server/${this.serverId}/week/${weekNumber}/attendance`
       )
-      .subscribe((data) => {
+      .then((response) => {
+        const data: { week: number; attendance: AttendanceRecord[] } = response.data;
         this.attendance[weekNumber] = data.attendance;
       });
   }
 
   exportAttendance() {
-    this.http.get(`/api/server/${this.serverId}/attendance/export`, {
+    api.get(`http://lamzaone.go.ro:8000/api/server/${this.serverId}/attendance/export`, {
       responseType: 'blob',
-    }).subscribe((blob) => {
+    }).then((response) => {
+      const blob: Blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
