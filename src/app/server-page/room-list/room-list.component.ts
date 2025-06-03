@@ -53,15 +53,20 @@ export class RoomListComponent {
       const setAccessLevel = async () => {
         while (true) {
           const res = await this.serversService.getAccessLevel(this.route_id!);
-          this.serverAccessLevel = res;
-          const currentServer = this.serversService.currentServer();
-          if (currentServer) {
-        currentServer.access_level = res; // Update the access level in the current server
-        console.log(res);
-        break; // Exit the loop once access_level is set
+          if (res !== undefined && res !== null) {
+            this.serverAccessLevel = res;
+            const currentServer = this.serversService.currentServer();
+            if (currentServer) {
+              currentServer.access_level = res; // Update the access level in the current server
+              console.log(res);
+              break; // Exit the loop once access_level is set
+            } else {
+              console.warn('Current server is null, retrying to set access level...');
+              await new Promise(resolve => setTimeout(resolve, 50)); // Wait for 50ms before retrying
+            }
           } else {
-        console.warn('Current server is null, retrying to set access level...');
-        await new Promise(resolve => setTimeout(resolve, 50)); // Wait for 1 second before retrying
+            console.warn('Access level is undefined or null, retrying...');
+            await new Promise(resolve => setTimeout(resolve, 50)); // Wait for 50ms before retrying
           }
         }
       };

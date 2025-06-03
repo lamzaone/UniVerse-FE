@@ -12,6 +12,7 @@ import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
 import { LMarkdownEditorModule } from 'ngx-markdown-editor';
 import api from '../../services/api.service';
 import { Pipe, PipeTransform } from '@angular/core';
+import { distinctUntilChanged, from, map, Observable, Subscription, switchMap, tap } from 'rxjs';
 
 
 @Pipe({ name: 'truncate' })
@@ -44,7 +45,7 @@ export class AssignmentsComponent implements OnInit {
   currentUser: Signal<any> = this.authService.userData;
   clickedMessage: any = null; // Store the clicked message for context menu
   grade: number = 1; // Default grade value
-  paramz:any;
+  paramz!: Subscription;
   showGrading: boolean = false; // Flag to show/hide grading options
   private previousRouteId: number | null = null; // Store the previous route_id
   editingMessageId: string | null = null; // Store the ID of the message being edited
@@ -114,33 +115,30 @@ export class AssignmentsComponent implements OnInit {
 
 
 
-  // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
-  ngOnInit(): void {
-    // Initialize the route_id and join the text room
-    this.paramz = this.route.params.subscribe(params => {
-      const newRouteId = +params['room_id'];
-      if (this.route_id !== newRouteId) {
-        this.route_id = newRouteId;
-        console.log("Room id: " + this.route_id);
-        this.socketService.joinTextRoom(this.route_id.toString());
-        this.fetchMessages();
-      }
-    });
+  private isActive = true;
 
-    // Initialize the room signal
-    // this.room = this.serversService.currentRoom;
+  ngOnInit(): void {
+    this.isActive = true;
+
+    this.paramz = this.route.params.pipe(
+      map(params => +params['room_id']),
+      distinctUntilChanged(),
+      tap(roomId => {
+        this.route_id = roomId;
+        console.log("Room id: " + roomId);
+        this.socketService.joinTextRoom(roomId.toString());
+      }),
+      switchMap(roomId => from(this.fetchMessages()))
+    ).subscribe();
   }
 
   ngOnDestroy(): void {
-    // Called once, before the instance is destroyed.
-    // Add 'implements OnDestroy' to the class.
-    this.paramz.unsubscribe(); // Unsubscribe from the route params to prevent memory leaks
+    this.isActive = false;
+    this.paramz?.unsubscribe();
   }
 
-
-  // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
-  // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
   async fetchMessages() {
+    if (!this.isActive) return;
     if (this.previousRouteId === this.route_id) {
       return; // Prevent fetch if it's the same room
     }

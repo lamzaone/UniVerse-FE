@@ -1,4 +1,4 @@
-import { Component, Input, signal} from '@angular/core';
+import { Component, Input, Signal, signal} from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import { AdminComponent } from './admin/admin.component';
 import { AuthGuard } from '../../auth.guard';
@@ -15,33 +15,33 @@ import { StudentComponent } from './student/student.component';
 
 
 export class ServerDashboardComponent {
-  server = signal<any>(null); // Signal to hold the current server data
+  server: Signal<any> = this.serversService.currentServer(); // Signal to hold the current server data
   accessLevel: any;
   constructor(private serversService: ServersService,
     private authService:AuthService,
   ) {
-    this.initializeServer();
+    console.log("ServerDashboardComponent initialized");
+    console.log("Current server:", this.server);
+    console.log("Server service:", this.serversService.currentServer());
+    console.log("Access level:", this.accessLevel);
   }
 
-  private initializeServer() {
-    const initialize = () => {
-      const currentServer = this.serversService.currentServer();
-      if (currentServer && currentServer.access_level !== undefined) {
-        this.accessLevel = currentServer.access_level;
-        console.log("current user", this.authService.userData());
-        return true; // Initialization successful
-      }
-      return false; // Not yet initialized
-    };
+  private initializeServer(): boolean {
+    const currentServer = this.serversService.currentServer();
+    if (currentServer && currentServer.access_level !== undefined) {
+      this.accessLevel = currentServer.access_level;
+      console.log("current user", this.authService.userData());
+      return true; // Initialization successful
+    }
+    return false; // Not yet initialized
+  }
 
+  ngOnInit() {
     const interval = setInterval(() => {
-      if (initialize()) {
+      if (this.initializeServer()) {
         clearInterval(interval); // Stop checking once initialized
       }
-    }, 10); // Check every 100ms
+    }, 200); // Check every 100ms
   }
-  ngOnInit() {
-  }
-
 
 }
