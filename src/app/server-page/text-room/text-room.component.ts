@@ -57,7 +57,7 @@ export class TextRoomComponent implements OnInit {
       }
     }, 100); // Check every 100ms
 
-
+    this.listenForMessages(); // Listen for incoming messages from the socket
     console.log("current user", this.authService.userData());
   }
 

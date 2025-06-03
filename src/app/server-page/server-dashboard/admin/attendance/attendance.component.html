@@ -1,0 +1,27 @@
+<div>
+  <h2>Attendance Records</h2>
+
+  <div>
+    <label for="week">Select Week:</label>
+    <select id="week" [(ngModel)]="selectedWeek" (change)="fetchAttendance(selectedWeek)">
+      <option *ngFor="let week of weeks" [value]="week.week_number">{{ week.week_number }}</option>
+    </select>
+  </div>
+
+  <div *ngIf="attendance[selectedWeek]">
+    <table>
+      <tr>
+        <th>User ID</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+      <tr *ngFor="let record of attendance[selectedWeek]">
+        <td>{{ record.user_id }}</td>
+        <td>{{ record.status }}</td>
+        <td>{{ record.date | date:'short' }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <button (click)="exportAttendance()">Export CSV</button>
+</div>
