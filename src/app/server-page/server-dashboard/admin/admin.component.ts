@@ -24,7 +24,7 @@ export class AdminComponent {
 
     effect(() => {
       this.server = this.serverService.currentServer();
-      console.log('Server data updated:', this.server);
+      // console.log('Server data updated:', this.server);
     });
   }
 

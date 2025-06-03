@@ -62,11 +62,11 @@ export class RoomListComponent {
               break; // Exit the loop once access_level is set
             } else {
               console.warn('Current server is null, retrying to set access level...');
-              await new Promise(resolve => setTimeout(resolve, 50)); // Wait for 50ms before retrying
+              await new Promise(resolve => setTimeout(resolve, 10)); // Wait for 50ms before retrying
             }
           } else {
             console.warn('Access level is undefined or null, retrying...');
-            await new Promise(resolve => setTimeout(resolve, 50)); // Wait for 50ms before retrying
+            await new Promise(resolve => setTimeout(resolve, 10)); // Wait for 50ms before retrying
           }
         }
       };

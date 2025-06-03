@@ -51,7 +51,7 @@ export class ServerPageComponent {
       next: server => {
         this.server.set(server);  // Update the server details
         this.serverService.setCurrentServer(server);
-        console.log('Server data fetched:', server);  // Log the fetched server data
+        // console.log('Server data fetched:', server);  // Log the fetched server data
         this.socketService.joinServer(this.route_id!.toString());  // Connect to the server socket
         this.listenForServerUpdates();  // Start listening for server updates
       },

@@ -20,17 +20,17 @@ export class ServerDashboardComponent {
   constructor(private serversService: ServersService,
     private authService:AuthService,
   ) {
-    console.log("ServerDashboardComponent initialized");
-    console.log("Current server:", this.server);
-    console.log("Server service:", this.serversService.currentServer());
-    console.log("Access level:", this.accessLevel);
+    // console.log("ServerDashboardComponent initialized");
+    // console.log("Current server:", this.server);
+    // console.log("Server service:", this.serversService.currentServer());
+    // console.log("Access level:", this.accessLevel);
   }
 
   private initializeServer(): boolean {
     const currentServer = this.serversService.currentServer();
     if (currentServer && currentServer.access_level !== undefined) {
       this.accessLevel = currentServer.access_level;
-      console.log("current user", this.authService.userData());
+      // console.log("current user", this.authService.userData());
       return true; // Initialization successful
     }
     return false; // Not yet initialized
@@ -41,7 +41,12 @@ export class ServerDashboardComponent {
       if (this.initializeServer()) {
         clearInterval(interval); // Stop checking once initialized
       }
-    }, 200); // Check every 100ms
+    }, 50); // Check every 100ms
+  }
+
+  ngOnDestroy(): void {
+    //Called once, before the instance is destroyed.
+    //Add 'implements OnDestroy' to the class.
   }
 
 }
