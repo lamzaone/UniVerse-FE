@@ -1,18 +1,47 @@
-import { Component, Input} from '@angular/core';
+import { Component, Input, signal} from '@angular/core';
 import { ServersService } from '../../services/servers.service';
+import { AdminComponent } from './admin/admin.component';
+import { AuthGuard } from '../../auth.guard';
+import { AuthService } from '../../services/auth.service';
+import { StudentComponent } from './student/student.component';
 
 @Component({
   selector: 'app-server-dashboard',
   standalone: true,
-  imports: [],
+  imports: [AdminComponent, StudentComponent],
   templateUrl: './server-dashboard.component.html',
   styleUrl: './server-dashboard.component.scss'
 })
+
+
 export class ServerDashboardComponent {
-  @Input() server:{} | null = null;
-
-  constructor(private serversService:ServersService){
-
+  server = signal<any>(null); // Signal to hold the current server data
+  accessLevel: any;
+  constructor(private serversService: ServersService,
+    private authService:AuthService,
+  ) {
+    this.initializeServer();
   }
+
+  private initializeServer() {
+    const initialize = () => {
+      const currentServer = this.serversService.currentServer();
+      if (currentServer && currentServer.access_level !== undefined) {
+        this.accessLevel = currentServer.access_level;
+        console.log("current user", this.authService.userData());
+        return true; // Initialization successful
+      }
+      return false; // Not yet initialized
+    };
+
+    const interval = setInterval(() => {
+      if (initialize()) {
+        clearInterval(interval); // Stop checking once initialized
+      }
+    }, 10); // Check every 100ms
+  }
+  ngOnInit() {
+  }
+
 
 }

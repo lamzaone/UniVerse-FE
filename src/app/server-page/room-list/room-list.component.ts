@@ -50,16 +50,23 @@ export class RoomListComponent {
       this.fetchCategoriesAndRooms(this.route_id.toString());
 
       // TODO: rework getAccessLevel to be stored in the currentServer signal
-      this.serversService.getAccessLevel(this.route_id).then((res) => {
-        this.serverAccessLevel = res;
-        const currentServer = this.serversService.currentServer();
-        if (currentServer) {
-          currentServer.access_level = res; // Update the access level in the current server
-        } else {
-          console.warn('Current server is null, cannot set access level.');
-        }
+      const setAccessLevel = async () => {
+        while (true) {
+          const res = await this.serversService.getAccessLevel(this.route_id!);
+          this.serverAccessLevel = res;
+          const currentServer = this.serversService.currentServer();
+          if (currentServer) {
+        currentServer.access_level = res; // Update the access level in the current server
         console.log(res);
-      });
+        break; // Exit the loop once access_level is set
+          } else {
+        console.warn('Current server is null, retrying to set access level...');
+        await new Promise(resolve => setTimeout(resolve, 50)); // Wait for 1 second before retrying
+          }
+        }
+      };
+
+      setAccessLevel();
     });
 
     this.listenToServerUpdates();
