@@ -41,7 +41,7 @@ export class ServerDashboardComponent {
       if (this.initializeServer()) {
         clearInterval(interval); // Stop checking once initialized
       }
-    }, 100); // Check every 100ms
+    }, 20); // Check every 100ms
   }
 
   ngOnDestroy(): void {

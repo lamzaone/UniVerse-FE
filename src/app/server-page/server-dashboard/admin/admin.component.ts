@@ -41,9 +41,7 @@ export class AdminComponent {
 
   async startNewWeek() {
     try {
-      await api.post('http://lamzaone.go.ro:8000/api/server/' + this.server_id + '/weeks/create', {
-        'week_number': this.weeks.length + 1
-      });
+      await api.post('http://lamzaone.go.ro:8000/api/server/' + this.server_id + '/weeks/create', {});
 
 
     } catch (error) {

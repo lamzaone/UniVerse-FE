@@ -1,4 +1,4 @@
-import { Component, ElementRef, Signal, ViewChild, effect, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, Signal, ViewChild, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map, switchMap } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
@@ -24,14 +24,14 @@ interface Server {
   templateUrl: './server-page.component.html',
   styleUrls: ['./server-page.component.scss']
 })
-export class ServerPageComponent {
+export class ServerPageComponent implements OnDestroy {
 
   @ViewChild('serverinfo') serverinfo!: ElementRef;
   @ViewChild('maincontent') maincontent!: ElementRef;
   route_id: number | null = null;
   server = signal({} as Server);
   is_collapsed = this.sharedService.leftSidebar_isCollapsed;
-
+  private subscription: any;
 
 
   constructor(
@@ -42,7 +42,7 @@ export class ServerPageComponent {
     private sharedService: SharedServiceService
   ) {
     // Listen to route changes and fetch server data
-    this.route.params.pipe(
+    this.subscription = this.route.params.pipe(
       map(params => params.id),
       switchMap(id => {
         this.route_id = +id;
@@ -66,6 +66,13 @@ export class ServerPageComponent {
     })
   }
 
+  ngOnDestroy() {
+    // Unsubscribe from the route params to prevent memory leaks
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
+
   listenForServerUpdates() {
     // Listen for messages from the server socket
     this.socketService.onServerMessage((data: any) => {
@@ -84,7 +91,6 @@ export class ServerPageComponent {
     if (this.route_id) {
       // Re-fetch server details from the server
       this.serverService.getServer(this.route_id, this.authService.getUser().id).then(server => {
-        this.server.set(server);
         this.serverService.currentServer.set(server);  // Update server data
       }).catch(error => {
         console.error('Error fetching server on update:', error);
