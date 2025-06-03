@@ -1,6 +1,6 @@
 import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, ElementRef, HostListener, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, Signal, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
@@ -29,9 +29,9 @@ export class TextRoomComponent implements OnInit {
   paramz:any;
   private previousRouteId: number | null = null; // Store the previous route_id
   isMessage = false;
-  serverAccessLevel= signal<number>(0); // Signal to hold the server access level
+  serverAccessLevel = signal<any>(0);
   contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
-  currentUser = this.authService.userData();
+  currentUser: Signal<any> = this.authService.userData;
   clickedMessage: any = null; // Store the clicked message for context menu
   clickedMessageId: string | null = null; // Store the ID of the clicked message for context menu
   showContextMenu = false;
