@@ -3,13 +3,12 @@ import { Component, computed } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
-import { AddServerComponent } from "../add-server/add-server.component";
 import { ServersService } from '../../services/servers.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, SharedModule, AddServerComponent],
+  imports: [CommonModule, SharedModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

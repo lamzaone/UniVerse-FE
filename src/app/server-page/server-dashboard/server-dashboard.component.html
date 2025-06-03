@@ -1,1 +1,11 @@
-<p>server-dashboard works!</p>
+@if (this.accessLevel != null){
+  @if (this.accessLevel>0) {
+    <app-admin>
+    </app-admin>
+  }
+  @else{
+    <app-student>
+    </app-student>
+  }
+}
+

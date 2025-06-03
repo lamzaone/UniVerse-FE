@@ -1,4 +1,4 @@
-import { Component, ElementRef, Signal, ViewChild, effect, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, Signal, ViewChild, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map, switchMap } from 'rxjs/operators';
 import { ServersService } from '../services/servers.service';
@@ -14,6 +14,7 @@ interface Server {
   description: string;
   owner_id: number;
   invite_code: string;
+  weeks: Array<any>;
 }
 
 @Component({
@@ -23,14 +24,14 @@ interface Server {
   templateUrl: './server-page.component.html',
   styleUrls: ['./server-page.component.scss']
 })
-export class ServerPageComponent {
+export class ServerPageComponent implements OnDestroy {
 
   @ViewChild('serverinfo') serverinfo!: ElementRef;
   @ViewChild('maincontent') maincontent!: ElementRef;
   route_id: number | null = null;
   server = signal({} as Server);
   is_collapsed = this.sharedService.leftSidebar_isCollapsed;
-
+  private subscription: any;
 
 
   constructor(
@@ -41,7 +42,7 @@ export class ServerPageComponent {
     private sharedService: SharedServiceService
   ) {
     // Listen to route changes and fetch server data
-    this.route.params.pipe(
+    this.subscription = this.route.params.pipe(
       map(params => params.id),
       switchMap(id => {
         this.route_id = +id;
@@ -51,6 +52,7 @@ export class ServerPageComponent {
       next: server => {
         this.server.set(server);  // Update the server details
         this.serverService.setCurrentServer(server);
+        // console.log('Server data fetched:', server);  // Log the fetched server data
         this.socketService.joinServer(this.route_id!.toString());  // Connect to the server socket
         this.listenForServerUpdates();  // Start listening for server updates
       },
@@ -64,23 +66,36 @@ export class ServerPageComponent {
     })
   }
 
+  ngOnDestroy() {
+    // Unsubscribe from the route params to prevent memory leaks
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
+
   listenForServerUpdates() {
     // Listen for messages from the server socket
     this.socketService.onServerMessage((data: any) => {
       if (data === "server_updated") {
         this.refreshServerData();  // Refresh server data if server is updated
       }
+      if (data === "week_created") {
+        this.refreshServerData();  // Refresh server data if a new week is created
+      }
+      // console.log('Server message received:', data);  // Log the received message
     });
+
   }
 
   refreshServerData() {
     if (this.route_id) {
       // Re-fetch server details from the server
       this.serverService.getServer(this.route_id, this.authService.getUser().id).then(server => {
-        this.server.set(server);  // Update server data
+        this.serverService.currentServer.set(server);  // Update server data
       }).catch(error => {
         console.error('Error fetching server on update:', error);
       });
+
     }
   }
 

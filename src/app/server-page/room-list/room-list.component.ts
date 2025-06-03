@@ -49,17 +49,6 @@ export class RoomListComponent {
       this.route_id = +params.id;
       this.fetchCategoriesAndRooms(this.route_id.toString());
 
-      // TODO: rework getAccessLevel to be stored in the currentServer signal
-      this.serversService.getAccessLevel(this.route_id).then((res) => {
-        this.serverAccessLevel = res;
-        const currentServer = this.serversService.currentServer();
-        if (currentServer) {
-          currentServer.access_level = res; // Update the access level in the current server
-        } else {
-          console.warn('Current server is null, cannot set access level.');
-        }
-        console.log(res);
-      });
     });
 
     this.listenToServerUpdates();
@@ -68,7 +57,6 @@ export class RoomListComponent {
   // selectRoom(room: {}) {
   //   this.serversService.setCurrentRoom(room);
   // }
-
 
   listenToServerUpdates() {
     // Listen for server updates

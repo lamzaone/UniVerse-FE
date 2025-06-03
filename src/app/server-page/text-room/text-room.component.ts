@@ -1,6 +1,6 @@
 import { SocketService } from '../../services/socket.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, ElementRef, HostListener, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, Signal, ViewChild, signal } from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import axios from 'axios';
 import { AuthService } from '../../services/auth.service';
@@ -10,6 +10,7 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
 import { LMarkdownEditorModule } from 'ngx-markdown-editor';
 import api from '../../services/api.service';
+import { distinctUntilChanged, from, map, Observable, Subscription, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-text-room',
@@ -26,12 +27,12 @@ export class TextRoomComponent implements OnInit {
   messages = signal<any>(null);
   messageText = '';
 
-  paramz:any;
+  paramz!: Subscription;
   private previousRouteId: number | null = null; // Store the previous route_id
   isMessage = false;
-  serverAccessLevel= signal<number>(0); // Signal to hold the server access level
+  serverAccessLevel = signal<any>(0);
   contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
-  currentUser = this.authService.userData();
+  currentUser: Signal<any> = this.authService.userData;
   clickedMessage: any = null; // Store the clicked message for context menu
   clickedMessageId: string | null = null; // Store the ID of the clicked message for context menu
   showContextMenu = false;
@@ -57,7 +58,6 @@ export class TextRoomComponent implements OnInit {
     }, 100); // Check every 100ms
 
 
-    this.listenForMessages();
     console.log("current user", this.authService.userData());
   }
 
@@ -100,32 +100,31 @@ export class TextRoomComponent implements OnInit {
   };
 
 
-  // TODO: Fix calling fetchMessages multiple times when switching rooms ( the more you switch rooms, the more requests are sent every time )
-  ngOnInit(): void {
-    // Initialize the route_id and join the text room
-    this.paramz = this.route.params.subscribe(params => {
-      const newRouteId = +params['room_id'];
-      if (this.route_id !== newRouteId) {
-        this.route_id = newRouteId;
-        console.log("Room id: " + this.route_id);
-        this.socketService.joinTextRoom(this.route_id.toString());
-        this.fetchMessages();
-      }
-    });
+  private isActive = true;
 
-    // Initialize the room signal
-    // this.room = this.serversService.currentRoom;
+  ngOnInit(): void {
+    this.isActive = true;
+
+    this.paramz = this.route.params.pipe(
+      map(params => +params['room_id']),
+      distinctUntilChanged(),
+      tap(roomId => {
+        this.route_id = roomId;
+        console.log("Room id: " + roomId);
+        this.socketService.joinTextRoom(roomId.toString());
+      }),
+      switchMap(roomId => from(this.fetchMessages()))
+    ).subscribe();
   }
 
   ngOnDestroy(): void {
-    // Called once, before the instance is destroyed.
-    // Add 'implements OnDestroy' to the class.
-    this.paramz.unsubscribe(); // Unsubscribe from the route params to prevent memory leaks
+    this.isActive = false;
+    this.paramz?.unsubscribe();
   }
 
-  // FIXME: FIX FETCHING A TEXTROOM THAT DOESNT EXIST
-  // FIXME: FIX FETCHING A TEXTROOM FROM ANOTHER SERVER
+
   async fetchMessages() {
+    if (!this.isActive) return;
     if (this.previousRouteId === this.route_id) {
       return; // Prevent fetch if it's the same room
     }
