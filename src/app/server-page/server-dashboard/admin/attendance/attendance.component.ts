@@ -1,10 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Signal, signal, computed} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import api from '../../../../services/api.service';
+import { ServersService } from '../../../../services/servers.service';
+import { log } from 'console';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+
 interface AttendanceRecord {
   user_id: number;
+  user_name: string;
   status: string;
   date: string;
+  attendance_id: number;
+}
+
+interface BulkEditPayload {
+  updates: { attendance_id: number; status: string }[];
 }
 
 interface Week {
@@ -14,15 +26,19 @@ interface Week {
 
 @Component({
   selector: 'app-attendance',
+  imports: [FormsModule, CommonModule],
+  standalone: true,
+  styleUrls: ['./attendance.component.scss'],
   templateUrl: './attendance.component.html',
 })
 export class AttendanceComponent implements OnInit {
-  serverId = 1; // Replace with dynamic source
-  weeks: Week[] = [];
+  serverId = this.serversService.currentServer().id;
+  weeks = signal([] as Week[]);
   attendance: Record<number, AttendanceRecord[]> = {};
+  editableAttendance: Record<number, AttendanceRecord[]> = {};
   selectedWeek: number = 0;
 
-  constructor(private http: HttpClient) {}
+  constructor(private serversService: ServersService) {}
 
   ngOnInit(): void {
     this.fetchWeeks();
@@ -30,11 +46,11 @@ export class AttendanceComponent implements OnInit {
 
   fetchWeeks() {
     api.get<Week[]>(`http://lamzaone.go.ro:8000/api/server/${this.serverId}/weeks`).then((response) => {
-      const weeks: Week[] = response.data;
-      this.weeks = weeks;
+      const weeks = response.data;
+      this.weeks.set(weeks);
       if (weeks.length) {
         this.selectedWeek = weeks[0].week_number;
-        this.fetchAttendance(weeks[0].week_number);
+        this.fetchAttendance(this.selectedWeek);
       }
     });
   }
@@ -42,12 +58,32 @@ export class AttendanceComponent implements OnInit {
   fetchAttendance(weekNumber: number) {
     this.selectedWeek = weekNumber;
     api.get<{ week: number; attendance: AttendanceRecord[] }>(
-        `http://lamzaone.go.ro:8000/api/server/${this.serverId}/week/${weekNumber}/attendance`
-      )
-      .then((response) => {
-        const data: { week: number; attendance: AttendanceRecord[] } = response.data;
-        this.attendance[weekNumber] = data.attendance;
-      });
+      `http://lamzaone.go.ro:8000/api/server/${this.serverId}/week/${weekNumber}/attendance`
+    ).then((response) => {
+      const records = response.data.attendance;
+      this.attendance[weekNumber] = records;
+      // Deep copy for editable binding
+      this.editableAttendance[weekNumber] = records.map(r => ({ ...r }));
+    });
+  }
+
+  saveChanges() {
+    const updates = this.editableAttendance[this.selectedWeek].map(record => ({
+      attendance_id: record.attendance_id,
+      status: record.status
+    }));
+
+    const payload: BulkEditPayload = { updates };
+
+    api.put(
+      `http://lamzaone.go.ro:8000/api/server/${this.serverId}/week/${this.selectedWeek}/attendance/bulk_edit`,
+      payload
+    ).then(() => {
+      alert("Attendance updated successfully!");
+      this.fetchAttendance(this.selectedWeek); // Refresh to sync
+    }).catch(() => {
+      alert("Failed to save changes.");
+    });
   }
 
   exportAttendance() {

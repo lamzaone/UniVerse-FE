@@ -1,27 +1,50 @@
-<div>
+<div class="container">
   <h2>Attendance Records</h2>
 
   <div>
     <label for="week">Select Week:</label>
-    <select id="week" [(ngModel)]="selectedWeek" (change)="fetchAttendance(selectedWeek)">
-      <option *ngFor="let week of weeks" [value]="week.week_number">{{ week.week_number }}</option>
+    <select
+      id="week"
+      [(ngModel)]="selectedWeek"
+      (change)="fetchAttendance(selectedWeek)">
+      <option *ngFor="let week of weeks()" [value]="week.week_number">
+        {{ week.week_number }}
+      </option>
     </select>
   </div>
 
-  <div *ngIf="attendance[selectedWeek]">
+  <div class="tableDiv" *ngIf="editableAttendance[selectedWeek]?.length">
     <table>
-      <tr>
-        <th>User ID</th>
-        <th>Status</th>
-        <th>Date</th>
-      </tr>
-      <tr *ngFor="let record of attendance[selectedWeek]">
-        <td>{{ record.user_id }}</td>
-        <td>{{ record.status }}</td>
-        <td>{{ record.date | date:'short' }}</td>
-      </tr>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let record of editableAttendance[selectedWeek]; let i = index">
+          <td>{{ record.user_id }}</td>
+          <td>{{ record.user_name }}</td>
+          <td>
+            <select [(ngModel)]="editableAttendance[selectedWeek][i].status">
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="excused">Excused</option>
+            </select>
+          </td>
+          <td>{{ record.date | date:'short' }}</td>
+        </tr>
+      </tbody>
     </table>
+
+    <button class="button"(click)="saveChanges()">Save Changes</button>
+    <button class="button" id="export" (click)="exportAttendance()">Export CSV</button>
   </div>
 
-  <button (click)="exportAttendance()">Export CSV</button>
+  <div *ngIf="!attendance[selectedWeek]?.length">
+    <p>No attendance records for this week.</p>
+  </div>
+
 </div>
