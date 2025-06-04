@@ -30,7 +30,7 @@ export class TextRoomComponent implements OnInit {
   paramz!: Subscription;
   private previousRouteId: number | null = null; // Store the previous route_id
   isMessage = false;
-  serverAccessLevel = signal<any>(0);
+  serverAccessLevel :any ;
   contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
   currentUser: Signal<any> = this.authService.userData;
   clickedMessage: any = null; // Store the clicked message for context menu
