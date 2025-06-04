@@ -11,6 +11,7 @@ import { AudioVideoRoomComponent } from '../server-page/audio-video-room/audio-v
 import { AssignmentsComponent } from '../server-page/assignments/assignments.component';
 import { AdminComponent } from '../server-page/server-dashboard/admin/admin.component';
 import { AttendanceComponent } from '../server-page/server-dashboard/admin/attendance/attendance.component';
+import { GradesComponent } from '../server-page/server-dashboard/admin/grades/grades.component';
 
 const routes: Routes = [
   {
@@ -48,6 +49,11 @@ const routes: Routes = [
           {
             path: 'dashboard/admin/attendance',
             component: AttendanceComponent,
+            canActivate: [AuthGuard],
+          },
+          {
+            path: 'dashboard/admin/grading',
+            component: GradesComponent,
             canActivate: [AuthGuard],
           },
           {
