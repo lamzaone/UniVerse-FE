@@ -39,8 +39,10 @@
       </tbody>
     </table>
 
-    <button class="button"(click)="saveChanges()">Save Changes</button>
-    <button class="button" id="export" (click)="exportAttendance()">Export CSV</button>
+    <div class="buttonGroup">
+      <button class="button"(click)="saveChanges()">Save Changes</button>
+      <button class="button exportButton" (click)="exportAttendance()">Export CSV</button>
+    </div>
   </div>
 
   <div *ngIf="!attendance[selectedWeek]?.length">

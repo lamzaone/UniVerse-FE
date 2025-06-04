@@ -49,7 +49,7 @@ export class AttendanceComponent implements OnInit {
       const weeks = response.data;
       this.weeks.set(weeks);
       if (weeks.length) {
-        this.selectedWeek = weeks[0].week_number;
+        this.selectedWeek = weeks.length;
         this.fetchAttendance(this.selectedWeek);
       }
     });
