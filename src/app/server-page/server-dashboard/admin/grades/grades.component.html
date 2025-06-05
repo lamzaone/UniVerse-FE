@@ -28,9 +28,9 @@
             <div class="grades-list">
               <div *ngFor="let g of user.grades" class="grade-entry">
                 <label>Grade:</label>
-                <input type="number" [(ngModel)]="g.grade" />
+                <input type="number" [(ngModel)]="g.grade" title="Enter grade" placeholder="Grade" />
                 <span class="badge info" [ngClass]="g.assignment_id ? 'badge-assignment' : 'badge-manual'"
-                 [style.backgroundColor]="g.assignment_id ? '#4CAF50' : '#FF9800'">
+                  [style.backgroundColor]="g.assignment_id ? '#4CAF50' : '#FF9800'">
                     {{ g.assignment_id ? 'ID #'+(g.room_id | number:'3.0-0') : (g.date | slice:0:10) }}
                 </span>
                 <span class="badge" [ngClass]="g.assignment_id ? 'badge-assignment' : 'badge-manual'">

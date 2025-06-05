@@ -38,7 +38,7 @@
           <td>{{ record.user_id }}</td>
           <td>{{ record.user_name }}</td>
           <td>
-            <select [(ngModel)]="editableAttendance[selectedWeek][i].status">
+            <select title="Attendance" [(ngModel)]="editableAttendance[selectedWeek][i].status">
               <option value="present">Present</option>
               <option value="absent">Absent</option>
               <option value="excused">Excused</option>
