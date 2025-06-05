@@ -30,6 +30,7 @@
           <th>Name</th>
           <th>Status</th>
           <th>Date</th>
+          <th>Total</th>
         </tr>
       </thead>
       <tbody>
@@ -37,13 +38,16 @@
           <td>{{ record.user_id }}</td>
           <td>{{ record.user_name }}</td>
           <td>
-            <select [(ngModel)]="record.status">
+            <select [(ngModel)]="editableAttendance[selectedWeek][i].status">
               <option value="present">Present</option>
               <option value="absent">Absent</option>
               <option value="excused">Excused</option>
             </select>
           </td>
           <td>{{ record.date | date:'short' }}</td>
+          <td>
+            {{ record.total }}
+          </td>
         </tr>
       </tbody>
     </table>

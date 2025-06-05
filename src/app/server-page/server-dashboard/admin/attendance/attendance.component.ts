@@ -13,6 +13,7 @@ interface AttendanceRecord {
   status: string;
   date: string;
   attendance_id: number;
+  total: number;
 }
 
 interface BulkEditPayload {
@@ -48,7 +49,7 @@ export class AttendanceComponent implements OnInit {
   filteredAttendance = computed(() => {
     const query = this.searchQuery().toLowerCase();
     return this.editableAttendance[this.selectedWeek]?.filter(record =>
-      record.user_name.toLowerCase().includes(query) || record.user_id.toString().includes(query)
+      record.user_name.toLowerCase().includes(query)
     ) || [];
   });
 
@@ -63,6 +64,7 @@ export class AttendanceComponent implements OnInit {
     });
   }
 
+  userAttendanceCount: Record<number, number> = {};
   fetchAttendance(weekNumber: number) {
     this.selectedWeek = weekNumber;
     api.get<{ week: number; attendance: AttendanceRecord[] }>(
@@ -72,6 +74,13 @@ export class AttendanceComponent implements OnInit {
       this.attendance[weekNumber] = records;
       // Deep copy for editable binding
       this.editableAttendance[weekNumber] = records.map(r => ({ ...r }));
+
+      // Add total attendance count for each user
+      records.forEach(record => {
+        this.userAttendanceCount[record.user_id] = (this.userAttendanceCount[record.user_id] || 0) + 1;
+      });
+
+      console.log('Total attendance count per user:', this.userAttendanceCount);
     });
   }
 

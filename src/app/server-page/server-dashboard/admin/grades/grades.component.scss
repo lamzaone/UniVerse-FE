@@ -98,7 +98,10 @@ table {
         color: white;
         font-weight: bold;
         float: right;
-        margin-left: auto;
+
+        &.info {
+          margin-left: auto;
+        }
       }
 
       .badge-assignment {
