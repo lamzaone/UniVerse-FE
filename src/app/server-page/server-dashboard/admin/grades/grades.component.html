@@ -1,0 +1,54 @@
+<div class="search-box">
+  <input
+    type="text"
+    placeholder="Search by name..."
+    [(ngModel)]="searchQuery"
+    (ngModelChange)="searchQuery.set($event)"
+  />
+</div>
+
+<div class="grades-container">
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let user of filteredGrades()">
+        <tr class="user-row cursor-pointer" (click)="toggleExpand(user.user_id)">
+          <td><strong>{{ user.name }}</strong></td>
+          <td>
+            <button class="btn-sm" (click)="saveGrades(user); $event.stopPropagation()">💾 Save</button>
+          </td>
+        </tr>
+        <tr *ngIf="isExpanded(user.user_id)">
+          <td colspan="2">
+            <div class="grades-list">
+              <div *ngFor="let g of user.grades" class="grade-entry">
+                <label>Grade:</label>
+                <input type="number" [(ngModel)]="g.grade" title="Enter grade" placeholder="Grade" />
+                <span class="badge info" [ngClass]="g.assignment_id ? 'badge-assignment' : 'badge-manual'"
+                  [style.backgroundColor]="g.assignment_id ? '#4CAF50' : '#FF9800'">
+                    {{ g.assignment_id ? 'ID #'+(g.room_id | number:'3.0-0') : (g.date | slice:0:10) }}
+                </span>
+                <span class="badge" [ngClass]="g.assignment_id ? 'badge-assignment' : 'badge-manual'">
+                  {{ g.assignment_id ? 'Assignment' : 'Manual' }}
+                </span>
+              </div>
+
+              <div class="grade-add">
+                <input type="number" placeholder="Add manual grade" [(ngModel)]="user.newGrade" />
+                <button class="btn-sm" (click)="addManualGrade(user)">➕ Add</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+</div>
+<div class="actions">
+  <button (click)="saveAllGrades()">💾 Save All Grades</button>
+</div>

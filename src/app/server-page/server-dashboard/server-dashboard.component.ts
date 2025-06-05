@@ -1,4 +1,4 @@
-import { Component, Input, Signal, signal} from '@angular/core';
+import { Component, effect, Input, Signal, signal} from '@angular/core';
 import { ServersService } from '../../services/servers.service';
 import { AdminComponent } from './admin/admin.component';
 import { AuthGuard } from '../../auth.guard';
@@ -24,6 +24,13 @@ export class ServerDashboardComponent {
     // console.log("Current server:", this.server);
     // console.log("Server service:", this.serversService.currentServer());
     // console.log("Access level:", this.accessLevel);
+    effect(() => {
+      const currentServer = this.serversService.currentServer();
+      if (currentServer) {
+        this.accessLevel = currentServer.access_level;
+        // console.log("Access level updated:", this.accessLevel);
+      }
+    });
   }
 
   private initializeServer(): boolean {

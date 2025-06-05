@@ -14,7 +14,7 @@ import api from '../../../services/api.service';
 
 export class AdminComponent {
 
-  server = signal<any>({});
+  server: any;
   server_id:number = 0;
   weeks: Array<any> = [];
 

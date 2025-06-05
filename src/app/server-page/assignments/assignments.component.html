@@ -50,7 +50,7 @@
 
               <p *ngIf="message !== messageGroup[0]" class="msg-text-time">{{message.timestamp}}</p>
 
-              <div class="grade" *ngIf="message.grade">Grade: {{message.grade}}/10</div>
+              <div class="grade" *ngIf="message.grade" [style.background-color]="message.grade >= 7 ? 'rgb(0, 100, 25)' : message.grade >=5 ? 'rgb(161, 59, 0)' : 'rgb(100, 7, 0)'"> {{message.grade}}/10</div>
             </div>
           </div>
         </div>

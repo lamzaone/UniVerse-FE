@@ -35,17 +35,18 @@
 }
 
 .grade{
-  transition: 0.1s all ease-in-out;
   display: flex;
+  justify-content: center;
+  width: 2rem;
+  font-size: 0.8rem;
   // opacity: 0%;
-  right: 0;
-  bottom: 0.3rem;
+  left: -2.6rem;
+  bottom: 0;
   position: absolute;
-  color: #707070;
-  font-size: 1rem;
-  margin:0;
-  margin-top: 0.1rem;
-  background-color: black;
+  // color: #000000;
+  padding: 0.2rem;
+  background-color: rgb(100, 7, 0);
+  border-radius: 5px;
 }
 
 

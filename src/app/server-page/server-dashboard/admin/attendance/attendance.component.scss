@@ -1,0 +1,138 @@
+/* Container styling */
+
+.container{
+  flex-direction: column;
+  padding: 2rem;
+}
+
+div {
+  padding: 1rem;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  // background-color: #f9f9f9;
+
+  color:var(--white);
+}
+
+.tableDiv {
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+}
+
+
+/* Header */
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color:var(--white);
+}
+
+/* Label and Select */
+label {
+  font-weight: 600;
+  margin-right: 0.5rem;
+
+}
+
+select {
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  color:var(--white);
+  font-size: 1rem;
+
+  color: rgb(63, 63, 63);
+  transition: border-color 0.2s;
+}
+
+select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Table styling */
+table {
+
+  color: rgb(63, 63, 63);
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+
+  & * {
+    transition: 0.2s ease-in-out all
+  }
+}
+
+thead {
+  background-color: #007bff;
+  color: white;
+
+}
+
+th, td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+tr:hover {
+  background-color: #c0c0c0;
+
+}
+
+/* Message when no data */
+p {
+  margin-top: 1rem;
+  font-style: italic;
+  color: #777;
+}
+
+/* Button styling */
+
+
+.buttonGroup{
+  display: flex;
+  width: 100%;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+
+  & .button {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 15rem;
+  }
+
+  & .exportButton {
+    background-color: #28a745;
+  }
+
+  @media (max-width: 1100px) {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    & .button, & {
+      max-width: 20rem;;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+}
+
+
+
+button:hover {
+  background-color: #0056b3;
+}

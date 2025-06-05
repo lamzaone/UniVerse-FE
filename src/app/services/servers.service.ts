@@ -134,8 +134,7 @@ export class ServersService {
     if (this.authService.isLoggedIn()) {
       try {
         const response = await api.post('http://lamzaone.go.ro:8000/api/server/join', {
-          invite_code: serverCode,
-          user_id: this.user.id
+          invite_code: serverCode
         });
 
         if (response.status === 200) {

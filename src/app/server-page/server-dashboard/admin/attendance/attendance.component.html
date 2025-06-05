@@ -1,0 +1,65 @@
+<div class="container">
+  <h2>Attendance Records</h2>
+
+  <div>
+    <label for="week">Select Week:</label>
+    <select
+      id="week"
+      [(ngModel)]="selectedWeek"
+      (change)="fetchAttendance(selectedWeek)">
+      <option *ngFor="let week of weeks()" [value]="week.week_number">
+        {{ week.week_number }}
+      </option>
+    </select>
+  </div>
+
+  <div class="search-box">
+    <input
+      type="text"
+      placeholder="Search by name..."
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="searchQuery.set($event)"
+    />
+  </div>
+
+  <div class="tableDiv" *ngIf="editableAttendance[selectedWeek]?.length">
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let record of filteredAttendance(); let i = index">
+          <td>{{ record.user_id }}</td>
+          <td>{{ record.user_name }}</td>
+          <td>
+            <select title="Attendance" [(ngModel)]="editableAttendance[selectedWeek][i].status">
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="excused">Excused</option>
+            </select>
+          </td>
+          <td>{{ record.date | date:'short' }}</td>
+          <td>
+            {{ record.total }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="buttonGroup">
+      <button class="button"(click)="saveChanges()">Save Changes</button>
+      <button class="button exportButton" (click)="exportAttendance()">Export CSV</button>
+    </div>
+  </div>
+
+  <div *ngIf="!attendance[selectedWeek]?.length">
+    <p>No attendance records for this week.</p>
+  </div>
+
+</div>

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, computed, signal } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ServersService } from '../../services/servers.service';
@@ -49,6 +49,14 @@ export class RoomListComponent {
       this.route_id = +params.id;
       this.fetchCategoriesAndRooms(this.route_id.toString());
 
+    });
+
+    effect(() => {
+      const currentServer = this.serversService.currentServer;
+      if (currentServer) {
+        this.serverAccessLevel = currentServer().access_level;
+        console.log('Current server access level:', this.serverAccessLevel);
+      }
     });
 
     this.listenToServerUpdates();
