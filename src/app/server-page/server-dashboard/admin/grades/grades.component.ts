@@ -27,13 +27,24 @@ interface UserGradeGroup {
   templateUrl: './grades.component.html',
 })
 export class GradesComponent implements OnInit {
-  serverId = this.serversService.currentServer().id;
+  serverId = this.serversService.currentServer()?.id;
   groupedGrades = signal<UserGradeGroup[]>([]);
   expandedUserIds = signal<Set<number>>(new Set());
   searchQuery = signal('');
 
 
-  constructor(private serversService: ServersService) {}
+  constructor(private serversService: ServersService) {
+    // sleep until currentServer is defined
+    if (!this.serverId) {
+      const interval = setInterval(() => {
+        this.serverId = this.serversService.currentServer()?.id;
+        if (this.serverId) {
+          clearInterval(interval);
+          this.fetchGrades();
+        }
+      }, 100);
+    }
+  }
 
   ngOnInit(): void {
     this.fetchGrades();

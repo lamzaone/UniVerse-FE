@@ -33,14 +33,24 @@ interface Week {
   templateUrl: './attendance.component.html',
 })
 export class AttendanceComponent implements OnInit {
-  serverId = this.serversService.currentServer().id;
+  serverId = this.serversService.currentServer()?.id;
   weeks = signal([] as Week[]);
   attendance: Record<number, AttendanceRecord[]> = {};
   editableAttendance: Record<number, AttendanceRecord[]> = {};
   selectedWeek: number = 0;
   searchQuery = signal('');
 
-  constructor(private serversService: ServersService) {}
+  constructor(private serversService: ServersService) {
+    if (!this.serverId) {
+      const interval = setInterval(() => {
+        this.serverId = this.serversService.currentServer()?.id;
+        if (this.serverId) {
+          clearInterval(interval);
+          this.fetchWeeks();
+        }
+      }, 100);
+    }
+  }
 
   ngOnInit(): void {
     this.fetchWeeks();
