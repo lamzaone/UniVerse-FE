@@ -141,5 +141,6 @@ export class GradesComponent implements OnInit {
     }
 
     alert(`Grades for user #${userGroup.user_id} saved.`);
+    this.fetchGrades();
   }
 }
