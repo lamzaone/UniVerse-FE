@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal, signal } from '@angular/core';
+import { Component, computed, OnInit, Signal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import api from '../../../../services/api.service';
@@ -30,12 +30,20 @@ export class GradesComponent implements OnInit {
   serverId = this.serversService.currentServer().id;
   groupedGrades = signal<UserGradeGroup[]>([]);
   expandedUserIds = signal<Set<number>>(new Set());
+  searchQuery = signal('');
+
 
   constructor(private serversService: ServersService) {}
 
   ngOnInit(): void {
     this.fetchGrades();
   }
+
+  filteredGrades = computed(() =>
+    this.groupedGrades().filter(user =>
+      user.name?.toLowerCase().includes(this.searchQuery().toLowerCase())
+    )
+  );
 
   saveAllGrades() {
     const serverId = this.serversService.currentServer()?.id;
@@ -88,6 +96,8 @@ export class GradesComponent implements OnInit {
   isExpanded(userId: number): boolean {
     return this.expandedUserIds().has(userId);
   }
+
+
 
   saveGrades(userGroup: UserGradeGroup) {
     const manualGrades = userGroup.grades.filter(g => !g.assignment_id);

@@ -13,6 +13,15 @@
     </select>
   </div>
 
+  <div class="search-box">
+    <input
+      type="text"
+      placeholder="Search by name..."
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="searchQuery.set($event)"
+    />
+  </div>
+
   <div class="tableDiv" *ngIf="editableAttendance[selectedWeek]?.length">
     <table>
       <thead>
@@ -24,11 +33,11 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let record of editableAttendance[selectedWeek]; let i = index">
+        <tr *ngFor="let record of filteredAttendance(); let i = index">
           <td>{{ record.user_id }}</td>
           <td>{{ record.user_name }}</td>
           <td>
-            <select [(ngModel)]="editableAttendance[selectedWeek][i].status">
+            <select [(ngModel)]="record.status">
               <option value="present">Present</option>
               <option value="absent">Absent</option>
               <option value="excused">Excused</option>

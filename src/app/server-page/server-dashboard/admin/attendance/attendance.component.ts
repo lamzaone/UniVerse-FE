@@ -37,12 +37,20 @@ export class AttendanceComponent implements OnInit {
   attendance: Record<number, AttendanceRecord[]> = {};
   editableAttendance: Record<number, AttendanceRecord[]> = {};
   selectedWeek: number = 0;
+  searchQuery = signal('');
 
   constructor(private serversService: ServersService) {}
 
   ngOnInit(): void {
     this.fetchWeeks();
   }
+
+  filteredAttendance = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    return this.editableAttendance[this.selectedWeek]?.filter(record =>
+      record.user_name.toLowerCase().includes(query) || record.user_id.toString().includes(query)
+    ) || [];
+  });
 
   fetchWeeks() {
     api.get<Week[]>(`http://lamzaone.go.ro:8000/api/server/${this.serverId}/weeks`).then((response) => {

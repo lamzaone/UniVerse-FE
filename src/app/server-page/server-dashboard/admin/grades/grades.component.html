@@ -1,3 +1,12 @@
+<div class="search-box">
+  <input
+    type="text"
+    placeholder="Search by name..."
+    [(ngModel)]="searchQuery"
+    (ngModelChange)="searchQuery.set($event)"
+  />
+</div>
+
 <div class="grades-container">
   <table>
     <thead>
@@ -7,7 +16,7 @@
       </tr>
     </thead>
     <tbody>
-      <ng-container *ngFor="let user of groupedGrades()">
+      <ng-container *ngFor="let user of filteredGrades()">
         <tr class="user-row cursor-pointer" (click)="toggleExpand(user.user_id)">
           <td><strong>{{ user.name }}</strong></td>
           <td>
