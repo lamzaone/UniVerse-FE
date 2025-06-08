@@ -7,14 +7,32 @@
 
   <!-- Remote Videos -->
   <div #remoteContainer class="remote-container">
-    <div *ngFor="let userId of remoteStreams.keys()" class="remote-user">
+    <div *ngFor="let userId of remoteStreams.keys()" class="remote-user" [attr.data-user-id]="userId">
       <div *ngIf="remoteStreams.get(userId)?.camera" class="video-container">
-        <video [attr.data-user-id]="userId" data-type="camera" autoplay playsinline></video>
-        <div>User {{userId}} Camera</div>
+        <video
+          [srcObject]="remoteStreams.get(userId)?.camera"
+          [attr.data-user-id]="userId"
+          data-type="camera"
+          [attr.data-stream-id]="remoteStreams.get(userId)?.camera?.id"
+          autoplay
+          playsinline
+        ></video>
+        <div class="user-info">
+          <span>User {{ userId }} Camera</span>
+        </div>
       </div>
       <div *ngIf="remoteStreams.get(userId)?.screen" class="video-container">
-        <video [attr.data-user-id]="userId" data-type="screen" autoplay playsinline></video>
-        <div>User {{userId}} Screen</div>
+        <video
+          [srcObject]="remoteStreams.get(userId)?.screen"
+          [attr.data-user-id]="userId"
+          data-type="screen"
+          [attr.data-stream-id]="remoteStreams.get(userId)?.screen?.id"
+          autoplay
+          playsinline
+        ></video>
+        <div class="user-info">
+          <span>User {{ userId }} Screen</span>
+        </div>
       </div>
     </div>
   </div>
