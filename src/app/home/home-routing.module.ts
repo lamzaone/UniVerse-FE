@@ -12,6 +12,7 @@ import { AssignmentsComponent } from '../server-page/assignments/assignments.com
 import { AdminComponent } from '../server-page/server-dashboard/admin/admin.component';
 import { AttendanceComponent } from '../server-page/server-dashboard/admin/attendance/attendance.component';
 import { GradesComponent } from '../server-page/server-dashboard/admin/grades/grades.component';
+import { TestingRoomComponent } from '../server-page/testing-room/testing-room.component';
 
 const routes: Routes = [
   {
@@ -70,7 +71,12 @@ const routes: Routes = [
             path: 'assignments/:room_id',
             component: AssignmentsComponent,
             canActivate: [AuthGuard],
-          }
+          },
+          {
+            path: 'test/:room_id',
+            component: TestingRoomComponent,
+            canActivate: [AuthGuard],
+          },
         ]
       },
 
