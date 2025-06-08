@@ -1,58 +1,36 @@
 <div class="container">
-  <!-- Local Media -->
-  <div class="local-media">
-    <video #localVideo autoplay muted playsinline></video>
-    <div *ngIf="isScreenSharing" class="screen-share-indicator">Screen Sharing</div>
-  </div>
-
-  <!-- Remote Videos -->
-  <div #remoteContainer class="remote-container">
-    <div *ngFor="let userId of remoteStreams.keys()" class="remote-user" [attr.data-user-id]="userId">
-      <div *ngIf="remoteStreams.get(userId)?.camera" class="video-container">
-        <video
-          [srcObject]="remoteStreams.get(userId)?.camera"
-          [attr.data-user-id]="userId"
-          data-type="camera"
-          [attr.data-stream-id]="remoteStreams.get(userId)?.camera?.id"
-          autoplay
-          playsinline
-        ></video>
-        <div class="user-info">
-          <span>User {{ userId }} Camera</span>
-        </div>
-      </div>
-      <div *ngIf="remoteStreams.get(userId)?.screen" class="video-container">
-        <video
-          [srcObject]="remoteStreams.get(userId)?.screen"
-          [attr.data-user-id]="userId"
-          data-type="screen"
-          [attr.data-stream-id]="remoteStreams.get(userId)?.screen?.id"
-          autoplay
-          playsinline
-        ></video>
-        <div class="user-info">
-          <span>User {{ userId }} Screen</span>
-        </div>
-      </div>
+  <div class="users-list">
+    <div *ngFor="let user of users" class="user" [class.in-voice]="voiceUserIds.has(user.id)">
+      <img [src]="user.picture" alt="User Avatar">
+      <p>{{ user.name }}</p>
     </div>
   </div>
 
-  <!-- Audio Container (hidden) -->
-  <div #audioContainer style="display: none;"></div>
-
-  <!-- Controls -->
-  <div class="controls">
-    <button (click)="isInCall ? leaveCall() : joinCall()" [class.active]="isInCall">
-      {{ isInCall ? 'Leave' : 'Join' }} Call
-    </button>
-    <button (click)="toggleMic()" [class.muted]="isMicMuted">
-      {{ isMicMuted ? 'Unmute' : 'Mute' }} Mic
-    </button>
-    <button (click)="toggleCamera()" [class.disabled]="!isCameraEnabled">
-      {{ isCameraEnabled ? 'Disable' : 'Enable' }} Camera
-    </button>
-    <button (click)="toggleScreenShare()" [class.active]="isScreenSharing">
-      {{ isScreenSharing ? 'Stop' : 'Start' }} Screen Share
-    </button>
+  <!-- Remote video container for all users -->
+  <div #remoteVideoContainer class="remote-videos">
+    <div *ngFor="let user of users" class="remote-video">
+      <video *ngIf="user.id !== userId"
+             [attr.data-user-id]="user.id"
+             class="camera-video"
+             autoplay playsinline muted></video>
+      <video *ngIf="user.id !== userId"
+             [attr.data-user-id]="user.id"
+             class="screen-share"
+             autoplay playsinline muted></video>
+    </div>
   </div>
+
+  <div class="buttons">
+    <div class="button mute" (click)="toggleMic()">{{ isMicMuted ? '🔇' : '🎙️' }}</div>
+    <div class="button screenshare" (click)="toggleScreenShare()">{{ isScreenSharing ? '🖥️' : '📺' }}</div>
+    <div class="button camera" (click)="toggleCamera()">{{ isCameraEnabled ? '📷' : '🚫' }}</div>
+    <div class="button leave" (click)="leaveCall()" [class.disabled]="!isInCall">🚪</div>
+    <div class="button join" (click)="joinVoiceRoom()" [class.disabled]="isInCall">🎤</div>
+  </div>
+
+  <!-- Hidden audio container for remote audio streams -->
+  <div #audioContainer style="display: none;"></div>
 </div>
+
+<!-- Local video preview -->
+<video #localVideo autoplay muted playsinline class="local-video"></video>
