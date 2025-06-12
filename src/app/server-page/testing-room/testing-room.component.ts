@@ -94,8 +94,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         res.data.userIds.map(async (id: string) => {
           const user = await this.userService.getUserInfo(id);
           const user_access_level_res = await api.get(
-            `http://lamzaone.go.ro:8000/api/server/${this.serverService.currentServer().id}/user/access_level`,
-            { params: { user_id: id } }
+            `http://lamzaone.go.ro:8000/api/server/${this.serverService.currentServer().id}/user/${id}/access_level`
           );
           console.log(`[Init] Fetched user ${id}:`, user, ' access level:', user_access_level_res.data.access_level);
           return { ...user, id: parseInt(id), isAdmin: user_access_level_res.data.access_level > 0 };
@@ -113,7 +112,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     if (this.isInTest) return;
     console.log('[Test] Joining test room');
     this.isInTest = true;
-    this.socketService.sendMessage(`user_joined_test:&${this.userId}`, false, 'audioRoom');
+    this.socketService.sendMessage(`user_joined_call:&${this.userId}`, false, 'audioRoom');
     this.testUserIds.add(parseInt(this.userId));
 
     if (this.isTestStarted && !this.isAdmin) {
@@ -135,10 +134,10 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     console.log('[Socket] Setting up socket listeners');
     this.socketService.onAudioRoomMessage((message: string) => {
       console.log('[Socket] Received message:', message);
-      if (message.startsWith('user_joined_test')) {
+      if (message.startsWith('user_joined_call')) {
         const userId = parseInt(message.split(':&')[1]);
         if (!isNaN(userId)) this.handleUserJoined(userId);
-      } else if (message.startsWith('user_left_test')) {
+      } else if (message.startsWith('user_left_call')) {
         const userId = parseInt(message.split(':&')[1]);
         if (!isNaN(userId)) this.handleUserLeft(userId);
       } else if (message.startsWith('test_started')) {
@@ -596,7 +595,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     }
     this.audioContainerRef.nativeElement.innerHTML = '';
     this.remoteStreams.clear();
-    this.socketService.sendMessage(`user_left_test:&${this.userId}`, false, 'audioRoom');
+    this.socketService.sendMessage(`user_joined_call:&${this.userId}`, false, 'audioRoom');
     this.debounceChangeDetection();
   }
 
