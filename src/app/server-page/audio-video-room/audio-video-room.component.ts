@@ -404,6 +404,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
         }
       });
 
+      this.voiceUserIds.add(parseInt(this.userId));
+      this.fetchInitialUsers();
+
       this.debounceChangeDetection();
     } catch (error) {
       console.error('[Call] Error joining call:', error);
