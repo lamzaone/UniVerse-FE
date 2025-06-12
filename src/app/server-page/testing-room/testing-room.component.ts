@@ -22,6 +22,8 @@ interface PeerConnection {
     screen?: MediaStreamTrack;
   };
   displayName: string;
+  retryCount: number;
+  lastConnectionAttempt: number;
 }
 
 interface ActiveWindow {
@@ -62,6 +64,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   private changeDetectionTimeout: any;
   private negotiationLock = new Map<number, boolean>();
   private windowCheckInterval: any;
+  private readonly MAX_RETRIES = 5;
+  private readonly BASE_RETRY_DELAY = 1000; // 1 second
+  private readonly ICE_CONNECTION_TIMEOUT = 10000; // 10 seconds
 
   constructor(
     private userService: UsersService,
@@ -247,26 +252,33 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
           urls: "turn:standard.relay.metered.ca:443",
           username: "0e20581fb4b8fc2be07831e3",
           credential: "1KJmXjnD4HKrE2uk",
-        }
+        },
+        { urls: "stun:stun.l.google.com:19302" }, // Additional STUN server
+        { urls: "stun:stun1.l.google.com:19302" }  // Additional STUN server
       ]
     });
-    const peer: PeerConnection = { pc, streams: {}, displayName };
+    const peer: PeerConnection = {
+      pc,
+      streams: {},
+      displayName,
+      retryCount: 0,
+      lastConnectionAttempt: 0
+    };
     this.peerConnections.set(userId, peer);
     this.pendingCandidates.set(userId, []);
+
+    // ICE connection timeout monitoring
+    const connectionTimeout = setTimeout(() => {
+      if (pc.connectionState !== 'connected' && pc.connectionState !== 'connecting') {
+        console.warn(`[Connection] Timeout for user ${userId}`);
+        this.reconnectPeer(userId);
+      }
+    }, this.ICE_CONNECTION_TIMEOUT);
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log(`[ICE] Sending candidate to user ${userId}`);
-        this.socketService.sendMessage(
-          JSON.stringify({
-            type: 'ice-candidate',
-            sender: this.userId,
-            receiver: userId,
-            candidate: event.candidate
-          }),
-          false,
-          'audioRoom'
-        );
+        this.sendIceCandidateWithRetry(userId, event.candidate);
       }
     };
 
@@ -281,10 +293,22 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
 
     pc.onconnectionstatechange = () => {
       console.log(`[Connection] State for user ${userId}: ${pc.connectionState}`);
-      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        setTimeout(() => this.reconnectPeer(userId), 1000);
+      peer.lastConnectionAttempt = Date.now();
+
+      if (pc.connectionState === 'connected') {
+        peer.retryCount = 0; // Reset retry count on successful connection
+        clearTimeout(connectionTimeout);
+      } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        this.reconnectPeer(userId);
       } else if (pc.connectionState === 'closed') {
         this.closePeerConnection(userId);
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[ICE] Connection state for user ${userId}: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+        this.reconnectPeer(userId);
       }
     };
 
@@ -296,6 +320,33 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     // Only non-admins initiate the offer
     if (!this.isAdmin) {
       this.negotiateConnection(userId);
+    }
+  }
+
+  private async sendIceCandidateWithRetry(userId: number, candidate: RTCIceCandidate, attempt: number = 1) {
+    try {
+      this.socketService.sendMessage(
+        JSON.stringify({
+          type: 'ice-candidate',
+          sender: this.userId,
+          receiver: userId,
+          candidate: candidate,
+          attempt
+        }),
+        false,
+        'audioRoom'
+      );
+    } catch (error) {
+      console.error(`[ICE] Failed to send candidate to ${userId}, attempt ${attempt}:`, error);
+      if (attempt < this.MAX_RETRIES) {
+        const delay = this.BASE_RETRY_DELAY * Math.pow(2, attempt);
+        setTimeout(() => {
+          this.sendIceCandidateWithRetry(userId, candidate, attempt + 1);
+        }, delay);
+      } else {
+        console.error(`[ICE] Max retries reached for candidate to ${userId}`);
+        this.reconnectPeer(userId);
+      }
     }
   }
 
@@ -357,10 +408,44 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     if (this.isScreenSharing || this.isAdmin) return;
     console.log('[ScreenShare] Starting screen share');
     try {
-      this.localStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 30 } },
-        audio: false
-      });
+      if (this.electronService.isElectron()) {
+        // Check screen recording permission on macOS
+        if (process.platform === 'darwin') {
+          const status = await (window as any).electronAPI.checkScreenPermission();
+          if (status !== 'granted') {
+            alert('Please enable screen recording permission in System Preferences > Security & Privacy > Privacy > Screen Recording.');
+            throw new Error('Screen recording permission denied');
+          }
+        }
+
+        // Get screen sharing sources
+        const sources = await (window as any).electronAPI.getScreenSources();
+        if (!sources || sources.length === 0) {
+          throw new Error('No screen sharing sources available');
+        }
+
+        // Optionally: Implement a UI to let users select a source
+        const source = sources[0]; // Auto-select first source (e.g., entire screen)
+        this.localStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            // @ts-ignore: Electron desktop capture uses non-standard constraints
+            chromeMediaSource: 'desktop',
+            // @ts-ignore: Electron desktop capture uses non-standard constraints
+            chromeMediaSourceId: source.id,
+            width: { max: 1920 },
+            height: { max: 1080 },
+            frameRate: { max: 30 }
+          } as any,
+          audio: false,
+        });
+      } else {
+        // Browser fallback
+        this.localStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 30 } },
+          audio: false,
+        });
+      }
+
       this.isScreenSharing = true;
       this.localStream.getVideoTracks()[0].contentHint = 'detail';
       this.localStream.getTracks().forEach(track => {
@@ -372,7 +457,6 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         this.localVideoRef.nativeElement.srcObject = this.localStream;
         this.safePlayVideo(this.localVideoRef.nativeElement);
       }
-      // Update tracks for existing connections to admins
       this.peerConnections.forEach((peer, userId) => {
         if (this.users.find(u => u.id === userId)?.isAdmin) {
           this.updatePeerTracks(peer);
@@ -384,7 +468,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     } catch (err) {
       console.error('[ScreenShare] Failed to share screen:', err);
       this.isScreenSharing = false;
-      alert('Screen sharing failed.');
+      alert('Screen sharing failed. Please ensure screen recording permissions are granted.');
     }
     this.debounceChangeDetection();
   }
@@ -432,6 +516,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       );
     } catch (error) {
       console.error('[Negotiation] Error:', error);
+      this.reconnectPeer(userId);
     } finally {
       this.negotiationLock.set(userId, false);
     }
@@ -508,6 +593,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       this.pendingCandidates.set(userId, []);
     } catch (error) {
       console.error(`[Offer ${userId}] Error:`, error);
+      this.reconnectPeer(userId);
     } finally {
       this.negotiationLock.set(userId, false);
     }
@@ -524,6 +610,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
     } catch (error) {
       console.error(`[Answer ${userId}] Error:`, error);
+      this.reconnectPeer(userId);
     }
   }
 
@@ -536,12 +623,26 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     }
     if (!peer) {
       console.warn(`[ICE] No peer for user ${userId}`);
+      this.reconnectPeer(userId);
       return;
     }
     const rtcCandidate = new RTCIceCandidate(candidate);
     if (peer.pc.remoteDescription && peer.pc.signalingState !== 'closed') {
       console.log(`[ICE] Adding candidate for user ${userId}`);
-      await peer.pc.addIceCandidate(rtcCandidate).catch(error => console.error(`[ICE ${userId}] Error:`, error));
+      try {
+        await peer.pc.addIceCandidate(rtcCandidate);
+      } catch (error) {
+        console.error(`[ICE ${userId}] Error adding candidate:`, error);
+        if (candidate.attempt < this.MAX_RETRIES) {
+          const delay = this.BASE_RETRY_DELAY * Math.pow(2, candidate.attempt || 1);
+          setTimeout(() => {
+            this.sendIceCandidateWithRetry(userId, rtcCandidate, (candidate.attempt || 1) + 1);
+          }, delay);
+        } else {
+          console.error(`[ICE] Max retries reached for candidate to ${userId}`);
+          this.reconnectPeer(userId);
+        }
+      }
     } else {
       console.log(`[ICE] Queuing candidate for user ${userId}`);
       const pending = this.pendingCandidates.get(userId) || [];
@@ -574,14 +675,35 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   }
 
   private reconnectPeer(userId: number) {
-    if (this.isInTest && this.testUserIds.has(userId)) {
-      this.closePeerConnection(userId);
-      setTimeout(() => {
-        if (this.isInTest && this.testUserIds.has(userId)) {
-          this.createPeerConnection(userId);
-        }
-      }, 1000 + Math.random() * 2000);
+    const peer = this.peerConnections.get(userId);
+    if (!this.isInTest || !this.testUserIds.has(userId) || !peer) {
+      console.log(`[Reconnect] Skipping reconnect for user ${userId}: not in test or no peer`);
+      return;
     }
+
+    if (peer.retryCount >= this.MAX_RETRIES) {
+      console.error(`[Reconnect] Max retries reached for user ${userId}`);
+      this.closePeerConnection(userId);
+      return;
+    }
+
+    const now = Date.now();
+    const delay = this.BASE_RETRY_DELAY * Math.pow(2, peer.retryCount);
+    if (now - peer.lastConnectionAttempt < delay) {
+      console.log(`[Reconnect] Waiting for backoff period for user ${userId}`);
+      return;
+    }
+
+    console.log(`[Reconnect] Attempting reconnect to user ${userId}, attempt ${peer.retryCount + 1}`);
+    peer.retryCount++;
+    peer.lastConnectionAttempt = now;
+    this.closePeerConnection(userId);
+
+    setTimeout(() => {
+      if (this.isInTest && this.testUserIds.has(userId)) {
+        this.createPeerConnection(userId);
+      }
+    }, delay + Math.random() * 100); // Add jitter
   }
 
   leaveTest() {

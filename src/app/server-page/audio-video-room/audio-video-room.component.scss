@@ -1,6 +1,6 @@
 .users-list {
-  width: 100% !important;
-  height: calc(98% - 5rem) !important;
+  width: 100%;
+  height: calc(98% - 5rem);
   background-color: black;
   display: flex;
   flex-wrap: wrap;
@@ -10,39 +10,46 @@
 }
 
 .user {
+  padding-top: 1rem;
   background-color: rgb(39, 39, 39);
   width: 16rem;
   height: auto;
-  display: flex;
   border-radius: 20px;
-  display:flex;
+  display: flex;
   flex-direction: column;
-
   justify-content: center;
   align-items: center;
 }
 
-.user-info{
+.user-info {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
 
-  & img{
+  & img {
     width: 3rem;
     height: 3rem;
     border-radius: 50%;
     margin-right: 0.5rem;
   }
+
+  & span {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-left: 0.5rem;
+  }
 }
 
-.remote-videos{
+.remote-videos {
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow:scroll;
+  overflow: scroll;
   justify-content: center;
   align-items: center;
+  margin: 0;
+  padding: 0;
 }
 
 .buttons {
@@ -72,6 +79,11 @@
   &:hover {
     transform: scale(1.05);
   }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .container {
@@ -86,66 +98,24 @@ video {
   border-radius: 10px;
 }
 
-.screen-share-container {
-  position: fixed;
-  bottom: 120px;
-  right: 20px;
-  width: 300px;
-  background: #000;
-  border: 2px solid #444;
-  border-radius: 8px;
-  z-index: 100;
-  overflow: hidden;
-}
-
-.screen-share-container video {
-  width: 100%;
-  height: auto;
-}
-
-.video-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-// .local-video {
-//   width: 200px;
-//   height: auto;
-//   background: #333;
-//   border-radius: 8px;
-// }
-
-// .remote-videos {
-//   display: flex;
-//   flex-wrap: wrap;
-//   gap: 10px;
-// }
-
-// .remote-video {
-//   display: flex;
-//   flex-direction: column;
-//   gap: 5px;
-// }
-
-.remote-video video {
+.local-video {
   width: 200px;
   height: auto;
   background: #333;
   border-radius: 8px;
 }
 
-.controls {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  padding: 10px;
-  background: #f0f0f0;
-  border-radius: 8px;
 
-  button {
-    padding: 8px 16px;
-    cursor: pointer;
-  }
+.remote-video {
+  width: 200px;
+  height: auto;
+  background: #333;
+  border-radius: 8px;
+}
+
+.camera-video {
+  width: 200px;
+  height: auto;
+  background: #333;
+  border-radius: 8px;
 }

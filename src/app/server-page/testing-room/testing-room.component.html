@@ -7,10 +7,10 @@
         <span *ngIf="getActiveWindowTitle(user.id) as windowTitle">
           ({{ windowTitle }})
         </span>
-      </div>
-      <div class="remote-videos" #remoteVideoContainer *ngIf="isAdmin && !user.isAdmin">
-        <div class="remote-video">
-          <!-- Screen share videos added dynamically for admins only -->
+        <div class="remote-videos" #remoteVideoContainer *ngIf="isAdmin && !user.isAdmin">
+          <div class="remote-video">
+            <!-- Screen share videos added dynamically for admins only -->
+          </div>
         </div>
       </div>
     </div>
