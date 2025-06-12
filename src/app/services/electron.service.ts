@@ -28,4 +28,14 @@ export class ElectronService {
       this.ipc.on(channel, listener);
     }
   }
+
+  async getActiveWindow(): Promise<{ title: string } | null> {
+    if (!this.isElectron()) return null;
+    return new Promise((resolve) => {
+      this.ipc.once('get-active-window-response', (event, result) => {
+        resolve(result);
+      });
+      this.ipc.send('get-active-window');
+    });
+  }
 }

@@ -1,1 +1,28 @@
-<p>testing-room works!</p>
+<div class="container">
+  <div class="users-list">
+    <div *ngFor="let user of users" class="user" [attr.data-user-id]="user.id">
+      <div class="user-info">
+        <img [src]="user.picture" alt="User Avatar">
+        <p>{{ user.name }} {{ user.isAdmin ? '(Admin)' : '' }}</p>
+        <span *ngIf="getActiveWindowTitle(user.id) as windowTitle">
+          ({{ windowTitle }})
+        </span>
+      </div>
+      <div class="remote-videos" #remoteVideoContainer *ngIf="isAdmin && !user.isAdmin">
+        <div class="remote-video">
+          <!-- Screen share videos added dynamically for admins only -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <div class="button join" (click)="joinTestRoom()" [class.disabled]="isInTest">🎯</div>
+    <div class="button start" *ngIf="isAdmin" (click)="startTest()" [class.disabled]="!isInTest || isTestStarted">🚀</div>
+    <div class="button leave" (click)="leaveTest()" [class.disabled]="!isInTest">🚪</div>
+  </div>
+
+  <div #audioContainer style="display: none;"></div>
+</div>
+
+<video #localVideo autoplay muted playsinline class="local-video" *ngIf="!isAdmin"></video>

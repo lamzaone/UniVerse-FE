@@ -237,6 +237,8 @@ export class RoomListComponent {
         return '🔊';
       case 'assignments':
         return '📚';
+      case 'test':
+        return '📝';
       default:
         return ' ';
     }
