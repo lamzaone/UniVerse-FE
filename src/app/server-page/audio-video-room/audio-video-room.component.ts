@@ -4,14 +4,15 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
-  ViewChild
+  ViewChild,
+  ViewChildren,
+  QueryList
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import api from '../../services/api.service';
-import { screen } from 'electron';
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -33,10 +34,10 @@ interface PeerConnection {
 export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   @ViewChild('localVideo', { static: false }) localVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('audioContainer', { static: false }) audioContainerRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('remoteVideoContainer', { static: false }) remoteVideoRef!: ElementRef<HTMLDivElement>;
+  @ViewChildren('remoteVideoContainer') remoteVideoContainers!: QueryList<ElementRef<HTMLDivElement>>;
 
   roomId: number = 14;
-  userId = this.authService.getUser().id;
+  userId: string = this.authService.getUser().id;
 
   users: any[] = [];
   voiceUserIds: Set<number> = new Set();
@@ -99,7 +100,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   private setupSocketListeners() {
     console.log('[Socket] Setting up socket listeners');
     this.socketService.onAudioRoomMessage((message: string) => {
-      // console.log('[Socket] Received message:', message);
       if (message.startsWith('user_joined_call')) {
         const parts = message.split(':&');
         if (parts.length === 2) {
@@ -144,14 +144,27 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     });
   }
 
-  private handleUserJoined(userId: number) {
-    if (!this.voiceUserIds.has(userId) && userId !== this.userId) {
+  private async handleUserJoined(userId: number) {
+    if (!this.voiceUserIds.has(userId) && userId !== parseInt(this.userId)) {
       console.log(`[User] User ${userId} joined`);
       this.voiceUserIds.add(userId);
+
+      // Fetch user info and add to users list
+      try {
+        const user = await this.userService.getUserInfo(userId.toString());
+        if (!this.users.find(u => u.id === userId)) {
+          this.users.push({ ...user, id: userId });
+        }
+      } catch (error) {
+        console.error(`[User] Failed to fetch info for user ${userId}`, error);
+        if (!this.users.find(u => u.id === userId)) {
+          this.users.push({ id: userId, name: `User ${userId}`, picture: '' });
+        }
+      }
+
       if (this.isInCall) {
         setTimeout(() => this.createPeerConnection(userId), 500);
       }
-      this.fetchInitialUsers();
       this.debounceChangeDetection();
     }
   }
@@ -160,7 +173,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     console.log(`[User] User ${userId} left`);
     this.voiceUserIds.delete(userId);
     this.closePeerConnection(userId);
-    this.fetchInitialUsers();
+    this.users = this.users.filter(u => u.id !== userId);
     this.debounceChangeDetection();
   }
 
@@ -225,15 +238,13 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
       console.log(`[Track] Received ${track.kind} track from user ${userId}`, track);
 
-      // Better screen share detection
       const isScreen = track.kind === 'video' &&
                       (track.contentHint === 'detail' ||
                        track.contentHint === 'text' ||
                        stream.id.includes('screen') ||
                        stream.id.includes('desktop'));
 
-      if (track.kind === 'audio' && userId !== this.userId) {
-        // Audio handling remains the same
+      if (track.kind === 'audio' && userId !== parseInt(this.userId)) {
         const audio = document.createElement('audio');
         audio.srcObject = stream;
         audio.autoplay = true;
@@ -254,18 +265,14 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
     pc.onconnectionstatechange = () => {
       console.log(`[Connection] State with user ${userId}: ${pc.connectionState}`);
-
       switch(pc.connectionState) {
         case 'connected':
-          // Connection is ready
           break;
         case 'disconnected':
         case 'failed':
-          // Attempt reconnection
           setTimeout(() => this.reconnectPeer(userId), 1000);
           break;
         case 'closed':
-          // Clean up
           this.closePeerConnection(userId);
           break;
       }
@@ -323,14 +330,22 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   private updateVideoElements(userId: number) {
-    const container = this.remoteVideoRef.nativeElement;
+    const userContainer = this.remoteVideoContainers.find(
+      container => (container.nativeElement.closest('.user') as HTMLElement | null)?.dataset.userId === userId.toString()
+    )?.nativeElement.querySelector('.remote-video');
+
+    if (!userContainer) {
+      console.error(`[Video] No container found for user ${userId}`);
+      return;
+    }
+
     const streams = this.remoteStreams.get(userId) || {};
 
-    // Remove all existing video elements for this user
-    const existingVideos = container.querySelectorAll(`video[data-user-id="${userId}"]`);
+    // Remove existing video elements for this user
+    const existingVideos = userContainer.querySelectorAll(`video[data-user-id="${userId}"]`);
     existingVideos.forEach(video => video.remove());
 
-    // Create new video elements as needed
+    // Add camera video if present
     if (streams.camera) {
       const cameraVideo = document.createElement('video');
       cameraVideo.classList.add('camera-video');
@@ -338,10 +353,11 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       cameraVideo.autoplay = true;
       cameraVideo.playsInline = true;
       cameraVideo.srcObject = streams.camera;
-      container.appendChild(cameraVideo);
+      userContainer.appendChild(cameraVideo);
       this.safePlayVideo(cameraVideo);
     }
 
+    // Add screen share video if present
     if (streams.screen) {
       const screenVideo = document.createElement('video');
       screenVideo.classList.add('screen-share');
@@ -349,7 +365,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       screenVideo.autoplay = true;
       screenVideo.playsInline = true;
       screenVideo.srcObject = streams.screen;
-      container.appendChild(screenVideo);
+      userContainer.appendChild(screenVideo);
       this.safePlayVideo(screenVideo);
     }
 
@@ -379,9 +395,10 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
       this.isInCall = true;
       this.socketService.sendMessage(`user_joined_call:&${this.userId}`, false, 'audioRoom');
+      this.voiceUserIds.add(parseInt(this.userId));
 
       this.users.forEach(user => {
-        if (user.id !== this.userId) {
+        if (user.id !== parseInt(this.userId)) {
           console.log(`[Peer] Creating connection for user ${user.id}`);
           this.createPeerConnection(user.id);
         }
@@ -402,7 +419,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     if (this.isScreenSharing) {
       try {
         this.screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { width: { max: 320 }, height: { max: 240 }, frameRate: { max: 30 } },
+          video: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 30 } },
           audio: false
         });
         this.screenStream.getVideoTracks()[0].contentHint = 'detail';
@@ -560,12 +577,12 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (receiverId !== this.userId) {
+    if (receiverId !== parseInt(this.userId)) {
       console.log(`[Signaling] Ignoring message not addressed to user ${this.userId}:`, data);
       return;
     }
 
-    if (!this.voiceUserIds.has(senderId) || senderId === this.userId) {
+    if (!this.voiceUserIds.has(senderId) || senderId === parseInt(this.userId)) {
       console.log(`[Signaling] Ignoring message from invalid or self sender ${senderId}:`, data);
       return;
     }
@@ -682,28 +699,39 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     if (peer) {
       console.log(`[Peer ${userId}] Closing connection`);
 
-      // Don't close the connection immediately - first check states
       if (peer.pc.connectionState !== 'closed') {
         peer.pc.close();
       }
 
-      // Clean up streams for this user only
-      this.remoteStreams.delete(userId);
+      const streams = this.remoteStreams.get(userId);
+      if (streams) {
+        if (streams.camera) {
+          streams.camera.getTracks().forEach(track => track.stop());
+        }
+        if (streams.screen) {
+          streams.screen.getTracks().forEach(track => track.stop());
+        }
+        this.remoteStreams.delete(userId);
+      }
 
-      // Remove only elements related to this user
       const audioElements = this.audioContainerRef.nativeElement.querySelectorAll(`audio[data-user-id="${userId}"]`);
       audioElements.forEach((audio: Element) => {
         (audio as HTMLAudioElement).srcObject = null;
         audio.remove();
       });
 
-      const videoContainer = this.remoteVideoRef?.nativeElement;
-      if (videoContainer) {
-        const userVideos = videoContainer.querySelectorAll(`video[data-user-id="${userId}"]`);
-        userVideos.forEach(video => video.remove());
+      const userContainer = this.remoteVideoContainers.find(
+        container => (container.nativeElement.closest('.user') as HTMLElement | null)?.dataset.userId === userId.toString()
+      )?.nativeElement.querySelector('.remote-video');
+
+      if (userContainer) {
+        const userVideos = userContainer.querySelectorAll(`video[data-user-id="${userId}"]`);
+        userVideos.forEach(video => {
+          (video as HTMLVideoElement).srcObject = null;
+          video.remove();
+        });
       }
 
-      // Only then remove from maps
       this.peerConnections.delete(userId);
       this.pendingCandidates.delete(userId);
       this.negotiationLock.delete(userId);
@@ -713,19 +741,14 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
   private reconnectPeer(userId: number) {
     console.log(`[Peer] Attempting to reconnect to user ${userId}`);
-
-    // Only reconnect if we're still in call and user is still connected
     if (this.isInCall && this.voiceUserIds.has(userId)) {
-      // Close existing connection cleanly
       this.closePeerConnection(userId);
-
-      // Add delay before reconnecting
       setTimeout(() => {
         if (this.isInCall && this.voiceUserIds.has(userId)) {
           console.log(`[Peer] Creating new connection for user ${userId}`);
           this.createPeerConnection(userId);
         }
-      }, 1000 + Math.random() * 2000); // Random delay to avoid thundering herd
+      }, 1000 + Math.random() * 2000);
     }
   }
 
@@ -747,6 +770,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
 
     this.audioContainerRef.nativeElement.innerHTML = '';
+    this.remoteStreams.clear();
 
     this.socketService.sendMessage(`user_left_call:&${this.userId}`, false, 'audioRoom');
     this.debounceChangeDetection();

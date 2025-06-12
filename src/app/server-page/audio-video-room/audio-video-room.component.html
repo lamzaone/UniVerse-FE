@@ -1,22 +1,15 @@
 <div class="container">
   <div class="users-list">
-    <div *ngFor="let user of users" class="user" [class.in-voice]="voiceUserIds.has(user.id)">
-      <img [src]="user.picture" alt="User Avatar">
-      <p>{{ user.name }}</p>
-    </div>
-  </div>
-
-  <!-- Remote video container for all users -->
-  <div #remoteVideoContainer class="remote-videos">
-    <div *ngFor="let user of users" class="remote-video">
-      <video *ngIf="user.id !== userId"
-             [attr.data-user-id]="user.id"
-             class="camera-video"
-             autoplay playsinline muted></video>
-      <video *ngIf="user.id !== userId"
-             [attr.data-user-id]="user.id"
-             class="screen-share"
-             autoplay playsinline muted></video>
+    <div *ngFor="let user of users" class="user" [attr.data-user-id]="user.id">
+      <div class="user-info">
+        <img [src]="user.picture" alt="User Avatar">
+        <p>{{ user.name }}</p>
+      </div>
+      <div class="remote-videos" #remoteVideoContainer>
+        <div class="remote-video">
+          <!-- Video elements will be dynamically added here for each user -->
+        </div>
+      </div>
     </div>
   </div>
 
