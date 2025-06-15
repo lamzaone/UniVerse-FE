@@ -10,6 +10,7 @@
 }
 
 .user {
+  padding-top: 1rem;
   background-color: rgb(39, 39, 39);
   width: 16rem;
   height: auto;
@@ -47,6 +48,8 @@
   overflow: scroll;
   justify-content: center;
   align-items: center;
+  margin: 0;
+  padding: 0;
 }
 
 .buttons {
@@ -104,6 +107,13 @@ video {
 
 
 .remote-video {
+  width: 200px;
+  height: auto;
+  background: #333;
+  border-radius: 8px;
+}
+
+.camera-video {
   width: 200px;
   height: auto;
   background: #333;
