@@ -40,6 +40,11 @@ interface ActiveWindow {
   timestamp: number;
 }
 
+interface StreamTypeMap {
+  stream: MediaStream;
+  type: 'audio' | 'screen' | 'camera' | 'combined';
+}
+
 @Component({
   selector: 'app-testing-room',
   standalone: true,
@@ -67,6 +72,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   peerConnections = new Map<number, PeerConnection>();
   remoteStreams = new Map<number, { screen?: MediaStream; camera?: MediaStream }>();
   pendingCandidates = new Map<number, RTCIceCandidate[]>();
+  private streamTypeMap = new Map<MediaStream, StreamTypeMap>();
 
   isInTest = false;
   isTestStarted = false;
@@ -149,6 +155,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       this.testUserIds.add(parseInt(this.userId));
 
       this.localStream = await mediaPromise;
+      this.streamTypeMap.set(this.localStream, { stream: this.localStream, type: 'audio' });
       if (this.localVideoRef?.nativeElement) {
         this.localVideoRef.nativeElement.srcObject = this.localStream;
         this.localVideoRef.nativeElement.muted = true;
@@ -358,12 +365,19 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         this.addAudioElement(userId, stream);
       } else if (track.kind === 'video' && this.isAdmin) {
         const current = this.remoteStreams.get(userId) || {};
-        if (stream.id === 'screen') {
+        const streamType = this.streamTypeMap.get(stream)?.type;
+        if (streamType === 'screen') {
           current.screen = stream;
-        } else if (stream.id === 'camera') {
+          peer.streams.screen = track;
+        } else if (streamType === 'camera') {
           current.camera = stream;
+          peer.streams.camera = track;
         } else {
-          current.camera = stream; // Fallback to camera
+          const settings = track.getSettings();
+          const isScreen = track.contentHint === 'detail' ||
+                         (settings.width && settings.width >= 1280);
+          current[isScreen ? 'screen' : 'camera'] = stream;
+          peer.streams[isScreen ? 'screen' : 'camera'] = track;
         }
         this.remoteStreams.set(userId, current);
         this.updateVideoElements(userId);
@@ -473,31 +487,35 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
 
     if (audioTracks.length > 0) {
       tracks.push(...audioTracks);
+      peer.streams.audio = audioTracks[0];
     }
     if (!this.isAdmin) {
       if (screenTracks.length > 0) {
         tracks.push(...screenTracks);
+        peer.streams.screen = screenTracks[0];
       }
       if (cameraTracks.length > 0) {
         tracks.push(...cameraTracks);
+        peer.streams.camera = cameraTracks[0];
       }
     }
 
     tracks.forEach(track => {
-      let streamId = 'unknown';
+      let streamType: StreamTypeMap['type'] = 'audio';
       if (audioTracks.includes(track)) {
-        streamId = 'audio';
+        streamType = 'audio';
       } else if (screenTracks.includes(track)) {
-        streamId = 'screen';
+        streamType = 'screen';
+        track.contentHint = 'detail';
       } else if (cameraTracks.includes(track)) {
-        streamId = 'camera';
+        streamType = 'camera';
+        track.contentHint = 'motion';
       }
       const stream = new MediaStream([track]);
-      // stream.id is read-only; use a custom property if needed
-      (stream as any)._customStreamId = streamId;
       if (!peer.pc.getSenders().some(s => s.track === track)) {
-        console.log(`[Track] Adding ${streamId} track to peer ${peer.displayName}`);
+        console.log(`[Track] Adding ${streamType} track to peer ${peer.displayName}`);
         peer.pc.addTrack(track, stream);
+        this.streamTypeMap.set(stream, { stream, type: streamType });
       }
     });
   }
@@ -533,6 +551,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         const screenVideo = document.createElement('video');
         screenVideo.classList.add('screen-share');
         screenVideo.dataset.userId = userId.toString();
+        screenVideo.dataset.streamType = 'screen';
         screenVideo.autoplay = true;
         screenVideo.playsInline = true;
         screenVideo.srcObject = streams.screen;
@@ -552,6 +571,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         const cameraVideo = document.createElement('video');
         cameraVideo.classList.add('camera-video');
         cameraVideo.dataset.userId = userId.toString();
+        cameraVideo.dataset.streamType = 'camera';
         cameraVideo.autoplay = true;
         cameraVideo.playsInline = true;
         cameraVideo.srcObject = streams.camera;
@@ -589,9 +609,12 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         video: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 30 } },
         audio: false
       });
+      this.streamTypeMap.set(this.screenStream, { stream: this.screenStream, type: 'screen' });
+
       this.cameraStream = await navigator.mediaDevices.getUserMedia({
         video: { width: { max: 320 }, height: { max: 240 }, frameRate: { max: 30 } }
       });
+      this.streamTypeMap.set(this.cameraStream, { stream: this.cameraStream, type: 'camera' });
 
       this.isScreenSharing = true;
       this.isCameraEnabled = true;
@@ -600,6 +623,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         track.addEventListener('ended', () => {
           this.stopScreenShare();
         });
+      });
+      this.cameraStream.getTracks().forEach(track => {
+        track.contentHint = 'motion';
       });
 
       if (this.localStream) {
@@ -610,11 +636,13 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         ]);
         this.localStream.getVideoTracks().forEach(track => track.stop());
         this.localStream = newStream;
+        this.streamTypeMap.set(newStream, { stream: newStream, type: 'combined' });
       } else {
         this.localStream = new MediaStream([
           ...this.screenStream.getVideoTracks(),
           ...this.cameraStream.getVideoTracks()
         ]);
+        this.streamTypeMap.set(this.localStream, { stream: this.localStream, type: 'combined' });
       }
 
       if (this.localVideoRef?.nativeElement) {
@@ -637,6 +665,8 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       this.isCameraEnabled = false;
       this.screenStream?.getTracks().forEach(track => track.stop());
       this.cameraStream?.getTracks().forEach(track => track.stop());
+      this.streamTypeMap.delete(this.screenStream!);
+      this.streamTypeMap.delete(this.cameraStream!);
       this.screenStream = undefined;
       this.cameraStream = undefined;
       alert('Screen or camera sharing failed.');
@@ -649,6 +679,8 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     console.log('[ScreenShare] Stopping screen and camera share');
     this.screenStream?.getTracks().forEach(track => track.stop());
     this.cameraStream?.getTracks().forEach(track => track.stop());
+    this.streamTypeMap.delete(this.screenStream!);
+    this.streamTypeMap.delete(this.cameraStream!);
     this.screenStream = undefined;
     this.cameraStream = undefined;
     this.isScreenSharing = false;
@@ -657,7 +689,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     if (this.localStream) {
       const newStream = new MediaStream([...this.localStream.getAudioTracks()]);
       this.localStream.getVideoTracks().forEach(track => track.stop());
+      this.streamTypeMap.delete(this.localStream);
       this.localStream = newStream;
+      this.streamTypeMap.set(newStream, { stream: newStream, type: 'audio' });
       if (this.localVideoRef?.nativeElement) {
         this.localVideoRef.nativeElement.srcObject = this.localStream;
         this.safePlayVideo(this.localVideoRef.nativeElement);
@@ -829,8 +863,14 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
 
       const streams = this.remoteStreams.get(userId);
       if (streams) {
-        if (streams.camera) streams.camera.getTracks().forEach(track => track.stop());
-        if (streams.screen) streams.screen.getTracks().forEach(track => track.stop());
+        if (streams.camera) {
+          streams.camera.getTracks().forEach(track => track.stop());
+          this.streamTypeMap.delete(streams.camera);
+        }
+        if (streams.screen) {
+          streams.screen.getTracks().forEach(track => track.stop());
+          this.streamTypeMap.delete(streams.screen);
+        }
         this.remoteStreams.delete(userId);
       }
 
@@ -865,6 +905,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     this.localStream?.getTracks().forEach(track => track.stop());
     this.screenStream?.getTracks().forEach(track => track.stop());
     this.cameraStream?.getTracks().forEach(track => track.stop());
+    if (this.localStream) this.streamTypeMap.delete(this.localStream);
+    if (this.screenStream) this.streamTypeMap.delete(this.screenStream);
+    if (this.cameraStream) this.streamTypeMap.delete(this.cameraStream);
     this.localStream = undefined;
     this.screenStream = undefined;
     this.cameraStream = undefined;
@@ -878,6 +921,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     }
     this.audioContainerRef.nativeElement.innerHTML = '';
     this.remoteStreams.clear();
+    this.streamTypeMap.clear();
     this.socketService.sendMessage(`user_left_call:&${this.userId}`, false, 'audioRoom');
     this.debounceChangeDetection();
   }
