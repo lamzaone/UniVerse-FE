@@ -24,6 +24,14 @@ interface PeerConnection {
     camera?: MediaStreamTrack;
   };
   displayName: string;
+  retryCount: number;
+  lastConnectionAttempt: number;
+  lastOfferSent: number;
+  isPolite: boolean;
+  wasConnected: boolean;
+  connectionTimeout: any;
+  reconnectTimer: any;
+  lastCandidate: string | null;
 }
 
 interface ActiveWindow {
@@ -57,7 +65,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   cameraStream?: MediaStream;
 
   peerConnections = new Map<number, PeerConnection>();
-  remoteStreams = new Map<number, { screen?: MediaStream, camera?: MediaStream }>();
+  remoteStreams = new Map<number, { screen?: MediaStream; camera?: MediaStream }>();
   pendingCandidates = new Map<number, RTCIceCandidate[]>();
 
   isInTest = false;
@@ -69,6 +77,14 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   private changeDetectionTimeout: any;
   private negotiationLock = new Map<number, boolean>();
   private windowCheckInterval: any;
+  private readonly MAX_RETRIES = 2;
+  private readonly BASE_RETRY_DELAY = 1000;
+  private readonly ICE_CONNECTION_TIMEOUT = 3000;
+  private readonly OFFER_COOLDOWN = 1500;
+  private readonly INITIAL_CONNECTION_DELAY = 300;
+  private readonly MAX_PARALLEL_CONNECTIONS = 4;
+
+  private activeConnectionCount = 0;
 
   constructor(
     private userService: UsersService,
@@ -140,9 +156,13 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       }
 
       // Create connections to all users for audio
-      this.users.forEach(user => {
+      this.users.forEach((user, index) => {
         if (user.id !== parseInt(this.userId)) {
-          this.createPeerConnection(user.id);
+          setTimeout(() => {
+            if (this.isInTest && this.testUserIds.has(user.id)) {
+              this.createPeerConnection(user.id);
+            }
+          }, index * 100);
         }
       });
 
@@ -162,7 +182,6 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   private setupSocketListeners() {
     console.log('[Socket] Setting up socket listeners');
     this.socketService.onAudioRoomMessage((message: string) => {
-      // console.log('[Socket] Received message:', message);
       if (message.startsWith('user_joined_call')) {
         const userId = parseInt(message.split(':&')[1]);
         if (!isNaN(userId)) this.handleUserJoined(userId);
@@ -179,7 +198,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       } else {
         try {
           const data = JSON.parse(message);
-          this.handleSignalingData(data);
+          if (data.type === 'ice-candidate' || data.type === 'offer' || data.type === 'answer') {
+            this.handleSignalingData(data);
+          }
         } catch {
           console.log('[Socket] Non-JSON message:', message);
         }
@@ -212,7 +233,14 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         }
       }
       if (this.isInTest) {
-        this.createPeerConnection(userId);
+        const delay = this.activeConnectionCount < this.MAX_PARALLEL_CONNECTIONS
+          ? this.INITIAL_CONNECTION_DELAY
+          : this.INITIAL_CONNECTION_DELAY + Math.random() * 1000;
+        setTimeout(() => {
+          if (this.isInTest && this.testUserIds.has(userId)) {
+            this.createPeerConnection(userId);
+          }
+        }, delay);
       }
       this.debounceChangeDetection();
     }
@@ -222,7 +250,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     console.log(`[User] User ${userId} left test`);
     this.testUserIds.delete(userId);
     this.closePeerConnection(userId);
-    this.fetchInitialUsers();
+    this.users = this.users.filter(u => u.id !== userId);
     this.debounceChangeDetection();
   }
 
@@ -258,7 +286,11 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     if (this.peerConnections.has(userId)) {
       this.closePeerConnection(userId);
     }
+
+    this.activeConnectionCount++;
     const displayName = user?.name || `User ${userId}`;
+    const isPolite = parseInt(this.userId) < userId;
+
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.relay.metered.ca:80" },
@@ -272,11 +304,35 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
           username: "0e20581fb4b8fc2be07831e3",
           credential: "1KJmXjnD4HKrE2uk",
         }
-      ]
+      ],
+      iceTransportPolicy: 'all',
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+      iceCandidatePoolSize: 5
     });
-    const peer: PeerConnection = { pc, streams: {}, displayName };
+
+    const peer: PeerConnection = {
+      pc,
+      streams: {},
+      displayName,
+      retryCount: 0,
+      lastConnectionAttempt: Date.now(),
+      lastOfferSent: 0,
+      isPolite,
+      wasConnected: false,
+      connectionTimeout: null,
+      reconnectTimer: null,
+      lastCandidate: null
+    };
     this.peerConnections.set(userId, peer);
     this.pendingCandidates.set(userId, []);
+
+    peer.connectionTimeout = setTimeout(() => {
+      if (pc.connectionState !== 'connected' && pc.connectionState !== 'connecting') {
+        console.warn(`[Connection] Timeout for user ${userId}`);
+        this.scheduleReconnect(userId);
+      }
+    }, this.ICE_CONNECTION_TIMEOUT);
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
@@ -295,17 +351,19 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     };
 
     pc.ontrack = (event) => {
-      console.log(`[Track] Received track from user ${userId}:`, event.track.kind);
       const stream = event.streams[0];
-      const isScreen = event.track.kind === 'video' && event.track.contentHint === 'detail';
-      if (event.track.kind === 'audio') {
+      const track = event.track;
+      console.log(`[Track] Received ${track.kind} track from user ${userId}, stream id: ${stream.id}`);
+      if (track.kind === 'audio') {
         this.addAudioElement(userId, stream);
-      } else if (event.track.kind === 'video' && this.isAdmin) {
+      } else if (track.kind === 'video' && this.isAdmin) {
         const current = this.remoteStreams.get(userId) || {};
-        if (isScreen) {
+        if (stream.id === 'screen') {
           current.screen = stream;
-        } else {
+        } else if (stream.id === 'camera') {
           current.camera = stream;
+        } else {
+          current.camera = stream; // Fallback to camera
         }
         this.remoteStreams.set(userId, current);
         this.updateVideoElements(userId);
@@ -313,45 +371,133 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     };
 
     pc.onconnectionstatechange = () => {
-      console.log(`[Connection] State for user ${userId}: ${pc.connectionState}`);
-      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        setTimeout(() => this.reconnectPeer(userId), 1000);
-      } else if (pc.connectionState === 'closed') {
-        this.closePeerConnection(userId);
+      console.log(`[Connection] State with user ${userId}: ${pc.connectionState}`);
+      peer.lastConnectionAttempt = Date.now();
+      switch (pc.connectionState) {
+        case 'connected':
+          this.activeConnectionCount--;
+          peer.retryCount = 0;
+          peer.wasConnected = true;
+          clearTimeout(peer.connectionTimeout);
+          break;
+        case 'disconnected':
+          if (peer.wasConnected) {
+            this.scheduleReconnect(userId);
+          }
+          break;
+        case 'failed':
+          this.activeConnectionCount--;
+          this.scheduleReconnect(userId);
+          break;
+        case 'closed':
+          this.activeConnectionCount--;
+          this.closePeerConnection(userId);
+          break;
       }
     };
 
-    // Add audio track for all connections
-    if (this.localStream) {
-      const audioTrack = this.localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        pc.addTrack(audioTrack, this.localStream);
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[ICE] Connection state with user ${userId}: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+        this.scheduleReconnect(userId);
       }
-    }
+    };
 
-    // Add video tracks if we're non-admin connecting to admin
-    if (!this.isAdmin && user.isAdmin) {
-      this.updatePeerVideoTracks(peer);
-    }
+    pc.onsignalingstatechange = () => {
+      console.log(`[Signaling] State for user ${userId}: ${pc.signalingState}`);
+      if (pc.signalingState === 'stable') {
+        const pending = this.pendingCandidates.get(userId) || [];
+        while (pending.length > 0) {
+          const candidate = pending.shift();
+          if (candidate) {
+            pc.addIceCandidate(candidate).catch(e => console.error('[ICE] Error adding candidate:', e));
+          }
+        }
+        this.pendingCandidates.set(userId, []);
+      }
+    };
 
-    // Non-admins initiate connection to admins
-    if (!this.isAdmin && user.isAdmin) {
-      this.negotiateConnection(userId);
+    this.updatePeerTracks(peer);
+
+    if (!peer.isPolite && this.isInTest) {
+      setTimeout(() => {
+        if (this.peerConnections.has(userId)) {
+          this.negotiateConnection(userId);
+        }
+      }, 50 + Math.random() * 150);
     }
   }
 
-  private updatePeerVideoTracks(peer: PeerConnection) {
+  private scheduleReconnect(userId: number) {
+    const peer = this.peerConnections.get(userId);
+    if (!peer || !this.isInTest || !this.testUserIds.has(userId)) return;
+
+    if (peer.retryCount >= this.MAX_RETRIES) {
+      console.error(`[Reconnect] Max retries reached for user ${userId}`);
+      this.closePeerConnection(userId);
+      return;
+    }
+
+    const delay = this.getRetryDelay(peer.retryCount);
+    peer.retryCount++;
+    console.log(`[Reconnect] Scheduling reconnect to ${userId} in ${delay}ms (attempt ${peer.retryCount})`);
+
+    clearTimeout(peer.reconnectTimer);
+    peer.reconnectTimer = setTimeout(() => {
+      if (this.isInTest && this.testUserIds.has(userId)) {
+        this.reconnectPeer(userId);
+      }
+    }, delay);
+  }
+
+  private getRetryDelay(attempt: number): number {
+    const base = this.BASE_RETRY_DELAY * Math.pow(2, attempt);
+    return base * (0.75 + Math.random() * 0.5);
+  }
+
+  private reconnectPeer(userId: number) {
+    console.log(`[Reconnect] Attempting reconnect to user ${userId}`);
+    this.closePeerConnection(userId);
+    setTimeout(() => {
+      if (this.isInTest && this.testUserIds.has(userId)) {
+        this.createPeerConnection(userId);
+      }
+    }, 500);
+  }
+
+  private updatePeerTracks(peer: PeerConnection) {
     const tracks: MediaStreamTrack[] = [];
-    if (this.screenStream) {
-      tracks.push(...this.screenStream.getVideoTracks());
+    const screenTracks = this.screenStream ? this.screenStream.getVideoTracks() : [];
+    const cameraTracks = this.cameraStream ? this.cameraStream.getVideoTracks() : [];
+    const audioTracks = this.localStream ? this.localStream.getAudioTracks() : [];
+
+    if (audioTracks.length > 0) {
+      tracks.push(...audioTracks);
     }
-    if (this.cameraStream) {
-      tracks.push(...this.cameraStream.getVideoTracks());
+    if (!this.isAdmin) {
+      if (screenTracks.length > 0) {
+        tracks.push(...screenTracks);
+      }
+      if (cameraTracks.length > 0) {
+        tracks.push(...cameraTracks);
+      }
     }
+
     tracks.forEach(track => {
+      let streamId = 'unknown';
+      if (audioTracks.includes(track)) {
+        streamId = 'audio';
+      } else if (screenTracks.includes(track)) {
+        streamId = 'screen';
+      } else if (cameraTracks.includes(track)) {
+        streamId = 'camera';
+      }
+      const stream = new MediaStream([track]);
+      // stream.id is read-only; use a custom property if needed
+      (stream as any)._customStreamId = streamId;
       if (!peer.pc.getSenders().some(s => s.track === track)) {
-        console.log(`[Track] Adding video track to peer ${peer.displayName}: ${track.kind}`);
-        peer.pc.addTrack(track, new MediaStream([track]));
+        console.log(`[Track] Adding ${streamId} track to peer ${peer.displayName}`);
+        peer.pc.addTrack(track, stream);
       }
     });
   }
@@ -378,11 +524,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
 
     const streams = this.remoteStreams.get(userId) || {};
 
-    // Clear only specific streams we're about to replace
-    const existingScreen = userContainer.querySelector(`video.screen-share[data-user-id="${userId}"]`);
-    const existingCamera = userContainer.querySelector(`video.camera-video[data-user-id="${userId}"]`);
+    const existingScreen = userContainer.querySelector(`video.screen-share[data-user-id="${userId}"]`) as HTMLVideoElement;
+    const existingCamera = userContainer.querySelector(`video.camera-video[data-user-id="${userId}"]`) as HTMLVideoElement;
 
-    // Add screen stream if available
     if (streams.screen) {
       if (!existingScreen) {
         console.log(`[Video] Adding screen stream for user ${userId}`);
@@ -394,15 +538,14 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         screenVideo.srcObject = streams.screen;
         userContainer.appendChild(screenVideo);
         this.safePlayVideo(screenVideo);
-      } else if ((existingScreen as HTMLVideoElement).srcObject !== streams.screen) {
-        (existingScreen as HTMLVideoElement).srcObject = streams.screen;
-        this.safePlayVideo(existingScreen as HTMLVideoElement);
+      } else if (existingScreen.srcObject !== streams.screen) {
+        existingScreen.srcObject = streams.screen;
+        this.safePlayVideo(existingScreen);
       }
     } else if (existingScreen) {
       existingScreen.remove();
     }
 
-    // Add camera stream if available (positioned below screen)
     if (streams.camera) {
       if (!existingCamera) {
         console.log(`[Video] Adding camera stream for user ${userId}`);
@@ -412,13 +555,12 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         cameraVideo.autoplay = true;
         cameraVideo.playsInline = true;
         cameraVideo.srcObject = streams.camera;
-        // Insert after screen share or at the end if no screen share
         const referenceNode = existingScreen || null;
         userContainer.insertBefore(cameraVideo, referenceNode?.nextSibling || null);
         this.safePlayVideo(cameraVideo);
-      } else if ((existingCamera as HTMLVideoElement).srcObject !== streams.camera) {
-        (existingCamera as HTMLVideoElement).srcObject = streams.camera;
-        this.safePlayVideo(existingCamera as HTMLVideoElement);
+      } else if (existingCamera.srcObject !== streams.camera) {
+        existingCamera.srcObject = streams.camera;
+        this.safePlayVideo(existingCamera);
       }
     } else if (existingCamera) {
       existingCamera.remove();
@@ -453,8 +595,8 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
 
       this.isScreenSharing = true;
       this.isCameraEnabled = true;
-      this.screenStream.getVideoTracks()[0].contentHint = 'detail';
       this.screenStream.getTracks().forEach(track => {
+        track.contentHint = 'detail';
         track.addEventListener('ended', () => {
           this.stopScreenShare();
         });
@@ -480,11 +622,10 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         this.safePlayVideo(this.localVideoRef.nativeElement);
       }
 
-      // Update video tracks for admin connections only
       this.peerConnections.forEach((peer, userId) => {
         const user = this.users.find(u => u.id === userId);
         if (user?.isAdmin) {
-          this.updatePeerVideoTracks(peer);
+          this.updatePeerTracks(peer);
           if (peer.pc.signalingState === 'stable' && !this.negotiationLock.get(userId)) {
             this.negotiateConnection(userId);
           }
@@ -527,11 +668,10 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Update video tracks for admin connections only
     this.peerConnections.forEach((peer, userId) => {
       const user = this.users.find(u => u.id === userId);
       if (user?.isAdmin) {
-        this.updatePeerVideoTracks(peer);
+        this.updatePeerTracks(peer);
         if (peer.pc.signalingState === 'stable' && !this.negotiationLock.get(userId)) {
           this.negotiateConnection(userId);
         }
@@ -543,26 +683,40 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   private async negotiateConnection(userId: number) {
     const peer = this.peerConnections.get(userId);
     if (!peer || peer.pc.signalingState !== 'stable' || this.negotiationLock.get(userId)) {
-      console.log(`[Negotiation] Skipping for user ${userId}, state: ${peer?.pc.signalingState}, locked: ${this.negotiationLock.get(userId)}`);
       return;
     }
+
+    const now = Date.now();
+    if (peer.lastOfferSent > 0 && now - peer.lastOfferSent < this.OFFER_COOLDOWN) {
+      setTimeout(() => this.negotiateConnection(userId), this.OFFER_COOLDOWN - (now - peer.lastOfferSent));
+      return;
+    }
+
     this.negotiationLock.set(userId, true);
     try {
-      console.log(`[Negotiation] Creating offer for user ${userId}`);
-      const offer = await peer.pc.createOffer();
+      console.log(`[Negotiation] Creating offer for ${userId}`);
+      const offer = await peer.pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: this.isAdmin,
+        iceRestart: peer.retryCount > 0
+      });
       await peer.pc.setLocalDescription(offer);
+      peer.lastOfferSent = now;
+
       this.socketService.sendMessage(
         JSON.stringify({
           type: 'offer',
           sender: this.userId,
           receiver: userId,
-          sdp: offer.sdp
+          sdp: offer.sdp,
+          isInitial: peer.retryCount === 0
         }),
         false,
         'audioRoom'
       );
     } catch (error) {
       console.error('[Negotiation] Error:', error);
+      this.scheduleReconnect(userId);
     } finally {
       this.negotiationLock.set(userId, false);
     }
@@ -571,21 +725,10 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   private async handleSignalingData(data: any) {
     const senderId = parseInt(data.sender);
     const receiverId = parseInt(data.receiver);
-    if (receiverId !== parseInt(this.userId) || !this.testUserIds.has(senderId) || senderId === parseInt(this.userId)) {
-      console.log(`[Signaling] Ignoring data: receiver=${receiverId}, sender=${senderId}`);
+    if (isNaN(senderId) || isNaN(receiverId) || receiverId !== parseInt(this.userId) || !this.testUserIds.has(senderId) || senderId === parseInt(this.userId)) {
       return;
     }
 
-    const sender = this.users.find(u => u.id === senderId);
-    if (!sender) return;
-
-    // Admins only process video from non-admins
-    if (this.isAdmin && sender.isAdmin && data.type !== 'ice-candidate' && data.type !== 'offer') {
-      console.log(`[Signaling] Admin ignoring non-audio from other admin`);
-      return;
-    }
-
-    console.log(`[Signaling] Handling ${data.type} from user ${senderId}`);
     switch (data.type) {
       case 'offer':
         await this.handleOffer(senderId, data);
@@ -596,30 +739,31 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       case 'ice-candidate':
         await this.handleCandidate(senderId, data.candidate);
         break;
-      default:
-        console.warn(`[Signaling] Unknown type: ${data.type}`);
     }
   }
 
   private async handleOffer(userId: number, data: any) {
     let peer = this.peerConnections.get(userId);
     if (!peer) {
-      console.log(`[Offer] Creating peer connection for user ${userId}`);
       this.createPeerConnection(userId);
       peer = this.peerConnections.get(userId);
     }
     if (!peer || this.negotiationLock.get(userId)) {
-      console.warn(`[Offer] Skipping for user ${userId}: no peer or locked`);
       return;
     }
+
     this.negotiationLock.set(userId, true);
     try {
+      const sdp = new RTCSessionDescription(data);
       if (peer.pc.signalingState !== 'stable') {
-        console.log(`[Offer] Rolling back due to state: ${peer.pc.signalingState}`);
-        await peer.pc.setLocalDescription({ type: 'rollback' });
+        if (peer.isPolite) {
+          return;
+        } else {
+          await peer.pc.setLocalDescription({ type: 'rollback' });
+        }
       }
-      console.log(`[Offer] Setting remote description for user ${userId}`);
-      await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
+
+      await peer.pc.setRemoteDescription(sdp);
       const answer = await peer.pc.createAnswer();
       await peer.pc.setLocalDescription(answer);
       this.socketService.sendMessage(
@@ -632,16 +776,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         false,
         'audioRoom'
       );
-
-      // Process any pending ICE candidates
-      const candidates = this.pendingCandidates.get(userId) || [];
-      for (const candidate of candidates) {
-        console.log(`[Offer] Adding queued candidate for user ${userId}`);
-        await peer.pc.addIceCandidate(candidate).catch(error => console.error(`[ICE ${userId}] Error:`, error));
-      }
-      this.pendingCandidates.set(userId, []);
     } catch (error) {
-      console.error(`[Offer ${userId}] Error:`, error);
+      console.error(`[Offer ${userId}] Error handling offer:`, error);
+      this.scheduleReconnect(userId);
     } finally {
       this.negotiationLock.set(userId, false);
     }
@@ -650,76 +787,75 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   private async handleAnswer(userId: number, data: any) {
     const peer = this.peerConnections.get(userId);
     if (!peer || peer.pc.signalingState !== 'have-local-offer') {
-      console.warn(`[Answer] Invalid state for user ${userId}: ${peer?.pc.signalingState}`);
       return;
     }
     try {
-      console.log(`[Answer] Setting remote description for user ${userId}`);
       await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
     } catch (error) {
-      console.error(`[Answer ${userId}] Error:`, error);
+      console.error(`[Answer ${userId}] Error handling answer:`, error);
     }
   }
 
   private async handleCandidate(userId: number, candidate: any) {
-    let peer = this.peerConnections.get(userId);
-    if (!peer) {
-      console.log(`[ICE] Creating peer connection for user ${userId} due to candidate`);
-      this.createPeerConnection(userId);
-      peer = this.peerConnections.get(userId);
-    }
-    if (!peer) {
-      console.warn(`[ICE] No peer for user ${userId}`);
-      return;
-    }
+    const peer = this.peerConnections.get(userId);
+    if (!peer) return;
+
+    const candidateString = JSON.stringify(candidate);
+    if (peer.lastCandidate === candidateString) return;
+    peer.lastCandidate = candidateString;
+
     const rtcCandidate = new RTCIceCandidate(candidate);
-    if (peer.pc.remoteDescription && peer.pc.signalingState !== 'closed') {
-      console.log(`[ICE] Adding candidate for user ${userId}`);
-      await peer.pc.addIceCandidate(rtcCandidate).catch(error => console.error(`[ICE ${userId}] Error:`, error));
-    } else {
-      console.log(`[ICE] Queuing candidate for user ${userId}`);
-      const pending = this.pendingCandidates.get(userId) || [];
-      pending.push(rtcCandidate);
-      this.pendingCandidates.set(userId, pending);
+    try {
+      if (peer.pc.remoteDescription) {
+        await peer.pc.addIceCandidate(rtcCandidate);
+      } else {
+        const pending = this.pendingCandidates.get(userId) || [];
+        pending.push(rtcCandidate);
+        this.pendingCandidates.set(userId, pending);
+      }
+    } catch (error) {
+      console.error(`[ICE ${userId}] Error adding candidate:`, error);
     }
   }
 
   private closePeerConnection(userId: number) {
     const peer = this.peerConnections.get(userId);
     if (peer) {
-      console.log(`[Peer] Closing connection for user ${userId}`);
-      peer.pc.close();
+      if (peer.pc.connectionState !== 'closed') {
+        peer.pc.close();
+      }
+      clearTimeout(peer.connectionTimeout);
+      clearTimeout(peer.reconnectTimer);
+
       const streams = this.remoteStreams.get(userId);
-      if (streams?.screen) {
-        streams.screen.getTracks().forEach(track => track.stop());
+      if (streams) {
+        if (streams.camera) streams.camera.getTracks().forEach(track => track.stop());
+        if (streams.screen) streams.screen.getTracks().forEach(track => track.stop());
+        this.remoteStreams.delete(userId);
       }
-      if (streams?.camera) {
-        streams.camera.getTracks().forEach(track => track.stop());
-      }
-      this.remoteStreams.delete(userId);
+
+      const audioElements = this.audioContainerRef.nativeElement.querySelectorAll(`audio[data-user-id="${userId}"]`);
+      audioElements.forEach((audio: Element) => {
+        (audio as HTMLAudioElement).srcObject = null;
+        audio.remove();
+      });
+
       const userContainer = this.remoteVideoContainers.find(
         container => (container.nativeElement.closest('.user') as HTMLElement | null)?.dataset.userId === userId.toString()
       )?.nativeElement.querySelector('.remote-video');
+
       if (userContainer) {
-        const videos = userContainer.querySelectorAll(`video[data-user-id="${userId}"]`);
-        videos.forEach(video => video.remove());
+        const userVideos = userContainer.querySelectorAll(`video[data-user-id="${userId}"]`);
+        userVideos.forEach(video => {
+          (video as HTMLVideoElement).srcObject = null;
+          video.remove();
+        });
       }
-      const audioElements = this.audioContainerRef.nativeElement.querySelectorAll(`audio[data-user-id="${userId}"]`);
-      audioElements.forEach(audio => audio.remove());
+
       this.peerConnections.delete(userId);
       this.pendingCandidates.delete(userId);
       this.negotiationLock.delete(userId);
-    }
-  }
-
-  private reconnectPeer(userId: number) {
-    if (this.isInTest && this.testUserIds.has(userId)) {
-      this.closePeerConnection(userId);
-      setTimeout(() => {
-        if (this.isInTest && this.testUserIds.has(userId)) {
-          this.createPeerConnection(userId);
-        }
-      }, 1000 + Math.random() * 2000);
+      this.activeConnectionCount = Math.max(0, this.activeConnectionCount - 1);
     }
   }
 
