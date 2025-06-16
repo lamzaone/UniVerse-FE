@@ -32,6 +32,7 @@ interface PeerConnection {
   connectionTimeout: any;
   reconnectTimer: any;
   lastCandidate: string | null;
+  pendingMetadata: { trackId: string; streamType: 'screen' | 'camera' }[];
 }
 
 interface ActiveWindow {
@@ -73,6 +74,8 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   remoteStreams = new Map<number, { screen?: MediaStream; camera?: MediaStream }>();
   pendingCandidates = new Map<number, RTCIceCandidate[]>();
   private streamTypeMap = new Map<MediaStream, StreamTypeMap>();
+  private trackTypeMap = new Map<string, 'screen' | 'camera'>(); // Map track IDs to types
+  private pendingTracks = new Map<number, { track: MediaStreamTrack; stream: MediaStream }[]>(); // Buffer tracks until metadata arrives
 
   isInTest = false;
   isTestStarted = false;
@@ -85,7 +88,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   private windowCheckInterval: any;
   private readonly MAX_RETRIES = 2;
   private readonly BASE_RETRY_DELAY = 1000;
-  private readonly ICE_CONNECTION_TIMEOUT = 3000;
+  private readonly ICE_CONNECTION_TIMEOUT = 5000; // Increased to prevent premature timeouts
   private readonly OFFER_COOLDOWN = 1500;
   private readonly INITIAL_CONNECTION_DELAY = 300;
   private readonly MAX_PARALLEL_CONNECTIONS = 4;
@@ -205,7 +208,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       } else {
         try {
           const data = JSON.parse(message);
-          if (data.type === 'ice-candidate' || data.type === 'offer' || data.type === 'answer') {
+          if (data.type === 'ice-candidate' || data.type === 'offer' || data.type === 'answer' || data.type === 'track-metadata') {
             this.handleSignalingData(data);
           }
         } catch {
@@ -329,10 +332,12 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       wasConnected: false,
       connectionTimeout: null,
       reconnectTimer: null,
-      lastCandidate: null
+      lastCandidate: null,
+      pendingMetadata: []
     };
     this.peerConnections.set(userId, peer);
     this.pendingCandidates.set(userId, []);
+    this.pendingTracks.set(userId, []);
 
     peer.connectionTimeout = setTimeout(() => {
       if (pc.connectionState !== 'connected' && pc.connectionState !== 'connecting') {
@@ -360,16 +365,23 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     pc.ontrack = (event) => {
       const stream = event.streams[0];
       const track = event.track;
-      console.log(`[Track] Received ${track.kind} track from user ${userId}, stream id: ${stream.id}, label: ${track.label}`);
+      console.log(`[Track] Received ${track.kind} track from user ${userId}, stream id: ${stream.id}, label: ${track.label}, track id: ${track.id}`);
       if (track.kind === 'audio') {
         this.addAudioElement(userId, stream);
       } else if (track.kind === 'video' && this.isAdmin) {
-        const current = this.remoteStreams.get(userId) || {};
-        const isScreen = track.label.toLowerCase().includes('screen');
-        current[isScreen ? 'screen' : 'camera'] = stream;
-        peer.streams[isScreen ? 'screen' : 'camera'] = track;
-        this.remoteStreams.set(userId, current);
-        this.updateVideoElements(userId);
+        const trackType = this.trackTypeMap.get(track.id);
+        if (trackType) {
+          const current = this.remoteStreams.get(userId) || {};
+          current[trackType] = stream;
+          peer.streams[trackType] = track;
+          this.remoteStreams.set(userId, current);
+          this.updateVideoElements(userId);
+        } else {
+          console.log(`[Track] Buffering track ${track.id} for user ${userId} until metadata arrives`);
+          const pending = this.pendingTracks.get(userId) || [];
+          pending.push({ track, stream });
+          this.pendingTracks.set(userId, pending);
+        }
       }
     };
 
@@ -382,6 +394,23 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
           peer.retryCount = 0;
           peer.wasConnected = true;
           clearTimeout(peer.connectionTimeout);
+          // Send any pending metadata
+          if (peer.pendingMetadata.length > 0) {
+            peer.pendingMetadata.forEach(metadata => {
+              this.socketService.sendMessage(
+                JSON.stringify({
+                  type: 'track-metadata',
+                  sender: this.userId,
+                  receiver: userId,
+                  trackId: metadata.trackId,
+                  streamType: metadata.streamType
+                }),
+                false,
+                'audioRoom'
+              );
+            });
+            peer.pendingMetadata = [];
+          }
           break;
         case 'disconnected':
           if (peer.wasConnected) {
@@ -502,9 +531,13 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       }
       const stream = new MediaStream([track]);
       if (!peer.pc.getSenders().some(s => s.track === track)) {
-        console.log(`[Track] Adding ${streamType} track to peer ${peer.displayName}`);
+        console.log(`[Track] Adding ${streamType} track to peer ${peer.displayName}, track id: ${track.id}`);
         peer.pc.addTrack(track, stream);
         this.streamTypeMap.set(stream, { stream, type: streamType });
+        // Buffer track metadata until connection is stable
+        if (streamType === 'screen' || streamType === 'camera') {
+          peer.pendingMetadata.push({ trackId: track.id, streamType });
+        }
       }
     });
   }
@@ -534,44 +567,48 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     const existingScreen = userContainer.querySelector(`video.screen-share[data-user-id="${userId}"]`) as HTMLVideoElement;
     const existingCamera = userContainer.querySelector(`video.camera-video[data-user-id="${userId}"]`) as HTMLVideoElement;
 
-    if (streams.screen) {
-      if (!existingScreen) {
-        console.log(`[Video] Adding screen stream for user ${userId}`);
-        const screenVideo = document.createElement('video');
-        screenVideo.classList.add('screen-share');
-        screenVideo.dataset.userId = userId.toString();
-        screenVideo.dataset.streamType = 'screen';
-        screenVideo.autoplay = true;
-        screenVideo.playsInline = true;
-        screenVideo.srcObject = streams.screen;
-        userContainer.appendChild(screenVideo);
+    if (streams.screen && !existingScreen) {
+      console.log(`[Video] Adding screen stream for user ${userId}`);
+      const screenVideo = document.createElement('video');
+      screenVideo.classList.add('screen-share');
+      screenVideo.dataset.userId = userId.toString();
+      screenVideo.dataset.streamType = 'screen';
+      screenVideo.autoplay = true;
+      screenVideo.playsInline = true;
+      setTimeout(() => {
+        screenVideo.srcObject = streams.screen ?? null;
         this.safePlayVideo(screenVideo);
-      } else if (existingScreen.srcObject !== streams.screen) {
-        existingScreen.srcObject = streams.screen;
+      }, 100); // Delay to prevent play interruption
+      userContainer.appendChild(screenVideo);
+    } else if (streams.screen && existingScreen && existingScreen.srcObject !== streams.screen) {
+      setTimeout(() => {
+        existingScreen.srcObject = streams.screen ?? null;
         this.safePlayVideo(existingScreen);
-      }
-    } else if (existingScreen) {
+      }, 100);
+    } else if (!streams.screen && existingScreen) {
       existingScreen.remove();
     }
 
-    if (streams.camera) {
-      if (!existingCamera) {
-        console.log(`[Video] Adding camera stream for user ${userId}`);
-        const cameraVideo = document.createElement('video');
-        cameraVideo.classList.add('camera-video');
-        cameraVideo.dataset.userId = userId.toString();
-        cameraVideo.dataset.streamType = 'camera';
-        cameraVideo.autoplay = true;
-        cameraVideo.playsInline = true;
-        cameraVideo.srcObject = streams.camera;
-        const referenceNode = existingScreen || null;
-        userContainer.insertBefore(cameraVideo, referenceNode?.nextSibling || null);
+    if (streams.camera && !existingCamera) {
+      console.log(`[Video] Adding camera stream for user ${userId}`);
+      const cameraVideo = document.createElement('video');
+      cameraVideo.classList.add('camera-video');
+      cameraVideo.dataset.userId = userId.toString();
+      cameraVideo.dataset.streamType = 'camera';
+      cameraVideo.autoplay = true;
+      cameraVideo.playsInline = true;
+      setTimeout(() => {
+        cameraVideo.srcObject = streams.camera ?? null;
         this.safePlayVideo(cameraVideo);
-      } else if (existingCamera.srcObject !== streams.camera) {
-        existingCamera.srcObject = streams.camera;
+      }, 100);
+      const referenceNode = existingScreen || null;
+      userContainer.insertBefore(cameraVideo, referenceNode?.nextSibling || null);
+    } else if (streams.camera && existingCamera && existingCamera.srcObject !== streams.camera) {
+      setTimeout(() => {
+        existingCamera.srcObject = streams.camera ?? null;
         this.safePlayVideo(existingCamera);
-      }
-    } else if (existingCamera) {
+      }, 100);
+    } else if (!streams.camera && existingCamera) {
       existingCamera.remove();
     }
 
@@ -749,6 +786,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     const senderId = parseInt(data.sender);
     const receiverId = parseInt(data.receiver);
     if (isNaN(senderId) || isNaN(receiverId) || receiverId !== parseInt(this.userId) || !this.testUserIds.has(senderId) || senderId === parseInt(this.userId)) {
+      console.warn(`[Signaling] Ignoring invalid message: sender=${senderId}, receiver=${receiverId}, userId=${this.userId}`);
       return;
     }
 
@@ -761,6 +799,9 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
         break;
       case 'ice-candidate':
         await this.handleCandidate(senderId, data.candidate);
+        break;
+      case 'track-metadata':
+        this.handleTrackMetadata(senderId, data);
         break;
     }
   }
@@ -841,6 +882,31 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     }
   }
 
+  private handleTrackMetadata(userId: number, data: any) {
+    if (data.trackId && data.streamType) {
+      console.log(`[TrackMetadata] Received metadata for user ${userId}: track ${data.trackId} is ${data.streamType}`);
+      this.trackTypeMap.set(data.trackId, data.streamType);
+      // Process any pending tracks for this user
+      const pending = this.pendingTracks.get(userId) || [];
+      const remaining: { track: MediaStreamTrack; stream: MediaStream }[] = [];
+      pending.forEach(({ track, stream }) => {
+        if (track.id === data.trackId) {
+          const peer = this.peerConnections.get(userId);
+          if (peer) {
+            const current = this.remoteStreams.get(userId) || {};
+            current[data.streamType as 'screen' | 'camera'] = stream;
+            peer.streams[data.streamType as 'screen' | 'camera'] = track;
+            this.remoteStreams.set(userId, current);
+            this.updateVideoElements(userId);
+          }
+        } else {
+          remaining.push({ track, stream });
+        }
+      });
+      this.pendingTracks.set(userId, remaining);
+    }
+  }
+
   private closePeerConnection(userId: number) {
     const peer = this.peerConnections.get(userId);
     if (peer) {
@@ -853,11 +919,17 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       const streams = this.remoteStreams.get(userId);
       if (streams) {
         if (streams.camera) {
-          streams.camera.getTracks().forEach(track => track.stop());
+          streams.camera.getTracks().forEach(track => {
+            track.stop();
+            this.trackTypeMap.delete(track.id);
+          });
           this.streamTypeMap.delete(streams.camera);
         }
         if (streams.screen) {
-          streams.screen.getTracks().forEach(track => track.stop());
+          streams.screen.getTracks().forEach(track => {
+            track.stop();
+            this.trackTypeMap.delete(track.id);
+          });
           this.streamTypeMap.delete(streams.screen);
         }
         this.remoteStreams.delete(userId);
@@ -883,6 +955,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
 
       this.peerConnections.delete(userId);
       this.pendingCandidates.delete(userId);
+      this.pendingTracks.delete(userId);
       this.negotiationLock.delete(userId);
       this.activeConnectionCount = Math.max(0, this.activeConnectionCount - 1);
     }
@@ -911,6 +984,8 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     this.audioContainerRef.nativeElement.innerHTML = '';
     this.remoteStreams.clear();
     this.streamTypeMap.clear();
+    this.trackTypeMap.clear();
+    this.pendingTracks.clear();
     this.socketService.sendMessage(`user_left_call:&${this.userId}`, false, 'audioRoom');
     this.debounceChangeDetection();
   }
