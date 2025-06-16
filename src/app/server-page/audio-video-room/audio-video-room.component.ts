@@ -200,10 +200,30 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
   const pc = new RTCPeerConnection({
     iceServers: [
-      // Keep your existing ICE servers
-      { urls: "stun:stun.relay.metered.ca:80" },
-      // ... other servers ...
-    ],
+      {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:standard.relay.metered.ca:80",
+        username: "0e20581fb4b8fc2be07831e3",
+        credential: "1KJmXjnD4HKrE2uk",
+      },
+      {
+        urls: "turn:standard.relay.metered.ca:80?transport=tcp",
+        username: "0e20581fb4b8fc2be07831e3",
+        credential: "1KJmXjnD4HKrE2uk",
+      },
+      {
+        urls: "turn:standard.relay.metered.ca:443",
+        username: "0e20581fb4b8fc2be07831e3",
+        credential: "1KJmXjnD4HKrE2uk",
+      },
+      {
+        urls: "turns:standard.relay.metered.ca:443?transport=tcp",
+        username: "0e20581fb4b8fc2be07831e3",
+        credential: "1KJmXjnD4HKrE2uk",
+      },
+  ],
     iceTransportPolicy: 'all',
     bundlePolicy: 'max-bundle',
     rtcpMuxPolicy: 'require',
