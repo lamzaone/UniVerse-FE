@@ -360,25 +360,14 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     pc.ontrack = (event) => {
       const stream = event.streams[0];
       const track = event.track;
-      console.log(`[Track] Received ${track.kind} track from user ${userId}, stream id: ${stream.id}`);
+      console.log(`[Track] Received ${track.kind} track from user ${userId}, stream id: ${stream.id}, label: ${track.label}`);
       if (track.kind === 'audio') {
         this.addAudioElement(userId, stream);
       } else if (track.kind === 'video' && this.isAdmin) {
         const current = this.remoteStreams.get(userId) || {};
-        const streamType = this.streamTypeMap.get(stream)?.type;
-        if (streamType === 'screen') {
-          current.screen = stream;
-          peer.streams.screen = track;
-        } else if (streamType === 'camera') {
-          current.camera = stream;
-          peer.streams.camera = track;
-        } else {
-          const settings = track.getSettings();
-          const isScreen = track.contentHint === 'detail' ||
-                         (settings.width && settings.width >= 1280);
-          current[isScreen ? 'screen' : 'camera'] = stream;
-          peer.streams[isScreen ? 'screen' : 'camera'] = track;
-        }
+        const isScreen = track.label.toLowerCase().includes('screen');
+        current[isScreen ? 'screen' : 'camera'] = stream;
+        peer.streams[isScreen ? 'screen' : 'camera'] = track;
         this.remoteStreams.set(userId, current);
         this.updateVideoElements(userId);
       }
