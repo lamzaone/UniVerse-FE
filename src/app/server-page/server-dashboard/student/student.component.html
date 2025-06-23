@@ -1,1 +1,53 @@
-<p>student works!</p>
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="header">
+    <h1>{{ current_server?.name }} Overview</h1>
+    <p>Student Dashboard</p>
+  </header>
+
+
+
+  <!-- Assignments Summary -->
+  <section class="card assignments-card">
+    <h2>Assignments</h2>
+    <div *ngFor="let room of assignments | keyvalue" class="assignment-room">
+      <h3>Room ID: {{ room.key }}</h3>
+      <div class="assignment-list">
+        <div *ngFor="let assignment of room.value" class="assignment-item">
+          <p>Assignment ID: {{ assignment.assignment_id }}</p>
+          <p>Grade: {{ assignment.grade }}</p>
+          <p>Due Date: {{ assignment.due_date | date:'short' || 'N/A' }}</p>
+          <p>Date: {{ assignment.date || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="!(assignments | keyvalue).length" class="no-data">
+      No assignments available
+    </div>
+  </section>
+
+  <!-- Grades Card -->
+  <section class="card grades-card">
+    <h2>Grades</h2>
+    <div class="grades-grid">
+
+      <div *ngFor="let grade of grades | keyvalue" class="grade-item">
+        <p *ngIf="grade.value.assignment_id">Assignment ID: {{ grade.value.assignment_id }}</p>
+        <p *ngIf="grade.value.room_id">Room ID: {{ grade.value.room_id }}</p>
+        <p>Grade: <span>{{ grade.value.grade }}</span></p>
+        <p *ngIf="grade.value.date">Date: {{ grade.value.date }}</p>
+      </div>
+      <div *ngIf="!(grades | keyvalue).length" class="no-data">
+        No grades available
+      </div>
+    </div>
+  </section>
+
+  <!-- Attendance Chart -->
+  <section class="card attendance-card">
+    <h2>Attendance Summary</h2>
+    <canvas id="attendanceChart" height="200"></canvas>
+  </section>
+
+
+</div>

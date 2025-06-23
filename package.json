@@ -59,6 +59,7 @@
     "ace-builds": "^1.41.0",
     "axios": "1.7.5",
     "bootstrap": "^5.3.5",
+    "chart.js": "^4.5.0",
     "font-awesome": "^4.7.0",
     "gapi": "0.0.3",
     "gapi-client": "0.0.3",
