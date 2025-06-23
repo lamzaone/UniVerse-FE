@@ -1,8 +1,10 @@
 .dashboard-container {
-  height: 100&;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 1rem;
   background-color: #f3f4f6;
-  overflow: scroll;
+  overflow: scroll !important;
 
   @media (min-width: 640px) {
     padding: 1.5rem;

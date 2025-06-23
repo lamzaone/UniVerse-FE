@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, effect, OnInit } from '@angular/core';
 import { ServersService } from '../../../services/servers.service';
 import { UsersService } from '../../../services/users.service';
 import { Chart, registerables } from 'chart.js';
@@ -50,8 +50,8 @@ interface ServerOverview {
 export class StudentComponent implements OnInit {
   grades: { [key: string]: Grade } = {};
   attendances: AttendanceSummary = {};
+  current_server = this.serversService.currentServer;
   assignments: AssignmentsSummary = {};
-  current_server: { id: number; name: string } | null = null;
   errorMessage: string | null = null;
 
   constructor(
@@ -59,35 +59,37 @@ export class StudentComponent implements OnInit {
     private userService: UsersService,
   ) {
     Chart.register(...registerables);
+
+
+
+    effect(() => {
+      const server = this.serversService.currentServer();
+      const serverId = server?.id;
+      (async () => {
+        try {
+          const response = await api.get<ServerOverview>(`/server/${serverId}/overview`);
+          const data = response.data;
+          this.grades = data.grades || {};
+          this.attendances = data.attendance_summary || {};
+          this.assignments = data.assignments_summary || {};
+          this.renderAttendanceChart();
+        } catch (err: any) {
+          this.errorMessage = err?.response?.data?.detail || 'Failed to load server overview';
+          console.error('API error:', err);
+        }
+      })();
+    });
   }
 
   ngOnInit(): void {
-    this.current_server = this.serversService.currentServer();
-    if (this.current_server) {
-      this.fetchServerOverview();
+    if (this.current_server()) {
     } else {
       this.errorMessage = 'No server selected';
     }
+
+
   }
 
-  private fetchServerOverview(): void {
-    const serverId = this.current_server?.id;
-
-
-    (async () => {
-      try {
-        const response = await api.get<ServerOverview>(`/server/${serverId}/overview`);
-        const data = response.data;
-        this.grades = data.grades || {};
-        this.attendances = data.attendance_summary || {};
-        this.assignments = data.assignments_summary || {};
-        this.renderAttendanceChart();
-      } catch (err: any) {
-        this.errorMessage = err?.response?.data?.detail || 'Failed to load server overview';
-        console.error('API error:', err);
-      }
-    })();
-  }
 
   private renderAttendanceChart(): void {
     const ctx = document.getElementById('attendanceChart') as HTMLCanvasElement;
