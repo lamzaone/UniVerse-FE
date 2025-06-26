@@ -64,6 +64,84 @@
   p {
     font-size: 0.875rem;
     color: #4b5563;
+
+    span {
+      font-weight: 600;
+    }
   }
 }
 
+.assignment-room {
+  margin-bottom: 1rem;
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.assignment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.assignment-item {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+
+  p {
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+}
+
+.no-data {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  padding: 1rem;
+}
+
+.attendance-card {
+  .attendance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    max-width: 100%;
+  }
+
+  .attendance-square {
+    aspect-ratio: 1; /* Ensures squares */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #1f2937;
+    transition: opacity 0.2s;
+
+    &.present {
+      background-color: #10b981;
+    }
+
+    &.absent {
+      background-color: #ef4444;
+    }
+
+    &.excused {
+      background-color: #f59e0b;
+    }
+
+    &.missing {
+      background-color: #d1d5db;
+      opacity: 0.5;
+    }
+  }
+}

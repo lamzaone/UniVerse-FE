@@ -5,8 +5,6 @@
     <p>Student Dashboard</p>
   </header>
 
-
-
   <!-- Assignments Summary -->
   <section class="card assignments-card">
     <h2>Assignments</h2>
@@ -17,7 +15,7 @@
           <p>Assignment ID: {{ assignment.assignment_id }}</p>
           <p>Grade: {{ assignment.grade }}</p>
           <p>Due Date: {{ assignment.due_date | date:'short' || 'N/A' }}</p>
-          <p>Date: {{ assignment.date || 'N/A' }}</p>
+          <p *ngIf="assignment.date">Date: {{ assignment.date }}</p>
         </div>
       </div>
     </div>
@@ -30,7 +28,6 @@
   <section class="card grades-card">
     <h2>Grades</h2>
     <div class="grades-grid">
-
       <div *ngFor="let grade of grades | keyvalue" class="grade-item">
         <p *ngIf="grade.value.assignment_id">Assignment ID: {{ grade.value.assignment_id }}</p>
         <p *ngIf="grade.value.room_id">Room ID: {{ grade.value.room_id }}</p>
@@ -43,11 +40,16 @@
     </div>
   </section>
 
-  <!-- Attendance Chart -->
+  <!-- Attendance Summary -->
   <section class="card attendance-card">
     <h2>Attendance Summary</h2>
-    <canvas id="attendanceChart" height="200"></canvas>
+    <div class="attendance-grid">
+      <div *ngFor="let week of getWeeks()" class="attendance-square" [ngClass]="getWeekStatus(week)">
+        <span *ngIf="getWeekStatus(week) !== 'missing'">Week {{ week }}</span>
+      </div>
+    </div>
+    <div *ngIf="!(attendances | keyvalue).length" class="no-data">
+      No attendance data available
+    </div>
   </section>
-
-
 </div>

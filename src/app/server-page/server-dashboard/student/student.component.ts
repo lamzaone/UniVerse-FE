@@ -146,4 +146,26 @@ export class StudentComponent implements OnInit {
       }
     });
   }
+
+  getWeeks(): number[] {
+    const maxWeeks = 14;
+    const existingWeeks = Object.keys(this.attendances).map(week => parseInt(week, 10)).sort((a, b) => a - b);
+    const weeks: number[] = [];
+    for (let i = 1; i <= maxWeeks; i++) {
+      weeks.push(i);
+    }
+    return weeks;
+  }
+
+  getWeekStatus(week: number): string {
+    const weekStr = week.toString();
+    if (this.attendances[weekStr]) {
+      const { present, absent, excused } = this.attendances[weekStr];
+      if (present > 0 && absent === 0 && excused === 0) return 'present';
+      if (absent > 0 && present === 0 && excused === 0) return 'absent';
+      if (excused > 0 && present === 0 && absent === 0) return 'excused';
+      return 'missing'; // Fallback if mixed or no clear majority
+    }
+    return 'missing';
+  }
 }
