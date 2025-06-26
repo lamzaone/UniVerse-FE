@@ -72,7 +72,6 @@ export class StudentComponent implements OnInit {
           this.grades = data.grades || {};
           this.attendances = data.attendance_summary || {};
           this.assignments = data.assignments_summary || {};
-          this.renderAttendanceChart();
         } catch (err: any) {
           this.errorMessage = err?.response?.data?.detail || 'Failed to load server overview';
           console.error('API error:', err);
@@ -91,61 +90,7 @@ export class StudentComponent implements OnInit {
   }
 
 
-  private renderAttendanceChart(): void {
-    const ctx = document.getElementById('attendanceChart') as HTMLCanvasElement;
-    if (!ctx) {
-      console.error('Canvas element not found');
-      return;
-    }
 
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: Object.keys(this.attendances).map(week => `Week ${week}`),
-        datasets: [
-          {
-            label: 'Present',
-            data: Object.values(this.attendances).map((week: any) => week.present || 0),
-            backgroundColor: '#10b981',
-            borderColor: '#059669',
-            borderWidth: 1
-          },
-          {
-            label: 'Absent',
-            data: Object.values(this.attendances).map((week: any) => week.absent || 0),
-            backgroundColor: '#ef4444',
-            borderColor: '#dc2626',
-            borderWidth: 1
-          },
-          {
-            label: 'Excused',
-            data: Object.values(this.attendances).map((week: any) => week.excused || 0),
-            backgroundColor: '#f59e0b',
-            borderColor: '#d97706',
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            stacked: true,
-            title: { display: true, text: 'Week' }
-          },
-          y: {
-            stacked: true,
-            beginAtZero: true,
-            title: { display: true, text: 'Count' }
-          }
-        },
-        plugins: {
-          legend: { position: 'top' }
-        }
-      }
-    });
-  }
 
   getWeeks(): number[] {
     const maxWeeks = 14;

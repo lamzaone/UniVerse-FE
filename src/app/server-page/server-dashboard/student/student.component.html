@@ -14,7 +14,7 @@
         <div *ngFor="let assignment of room.value" class="assignment-item">
           <p>Assignment ID: {{ assignment.assignment_id }}</p>
           <p>Grade: {{ assignment.grade }}</p>
-          <p>Due Date: {{ assignment.due_date | date:'short' || 'N/A' }}</p>
+          <p>Due Date: {{ assignment.due_date | date:'short' }}</p>
           <p *ngIf="assignment.date">Date: {{ assignment.date }}</p>
         </div>
       </div>
