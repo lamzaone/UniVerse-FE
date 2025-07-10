@@ -258,7 +258,6 @@ export class AssignmentsComponent implements OnInit {
       }
       this.fetchMessages();
     });
-
   }
 
   selectedFiles: any[] = [];
@@ -486,6 +485,22 @@ export class AssignmentsComponent implements OnInit {
     }
 
     this.messages.set(groupedMessages);
+  }
+
+  async deleteMessage() {
+    if (!this.clickedMessageId) return;
+    try {
+      await api.delete(`/server/${this.serversService.currentServer().id}/assignment/${this.route_id}/message/${this.clickedMessageId}`, {
+        data: {
+          room_id: this.route_id,
+          user_token: this.authService.userData().token
+        }
+      });
+      this.showContextMenu = false; // Hide context menu after deletion
+      this.fetchMessages(); // Refresh messages after deletion
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
   }
 
   clearSearch() {

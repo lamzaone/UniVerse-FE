@@ -218,11 +218,9 @@ export class TextRoomComponent implements OnInit {
       if (data === 'room_deleted') {
         this.router.navigate(['server', this.serversService.currentServer().id, 'dashboard']);
         return;
-        // TODO: check if this works
       }
       this.fetchMessages();
     });
-
   }
 
   selectedFiles: any[] = [];
@@ -384,5 +382,18 @@ export class TextRoomComponent implements OnInit {
     this.messageText = this.clickedMessage?.message || '';
   }
 
+  async deleteMessage(): Promise<void> {
+    if (!this.clickedMessageId) return;
+
+    try {
+      await api.delete(`/server/${this.serversService.currentServer().id}/room/${this.route_id}/message/${this.clickedMessageId}`, {
+        data: { user_token: this.authService.userData().token }
+      });
+      this.showContextMenu = false; // Hide context menu after deletion
+      this.fetchMessages(); // Refresh messages after deletion
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
+  }
 
 }

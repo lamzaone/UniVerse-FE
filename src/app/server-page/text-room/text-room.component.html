@@ -91,7 +91,7 @@
 
         @if (serverAccessLevel > 0) {
           @if (isMessage) {
-            <li>Delete</li>
+            <li (click)="deleteMessage()">Delete</li>
           }
         }
         @if (isMessage) {
@@ -99,7 +99,7 @@
         }
         @if (isMessage && this.clickedMessage.user_id === this.currentUser().id) {
           <li (click)="editMessage(clickedMessageId)">Edit</li>
-          <li *ngIf="serverAccessLevel == 0">Delete</li>
+          <li (click)="deleteMessage()" *ngIf="serverAccessLevel == 0">Delete</li>
         }
 
       </ul>

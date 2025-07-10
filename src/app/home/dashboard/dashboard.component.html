@@ -11,7 +11,8 @@
   <div class="card-grid">
     <div *ngFor="let deadline of upcomingDeadlines()" class="card">
       <h3>{{ deadline.server_name }}</h3>
-      <p [routerLink]="['/server', deadline.server_id, 'assignments', deadline.assignment_id]">Assignment: {{ deadline.assignment_name }}</p>
+      <span style="display: inline;">Assignment: </span>
+      <span style="display: inline; text-decoration: underline; cursor: pointer; color: #ccc;" [routerLink]="['/server', deadline.server_id, 'assignments', deadline.assignment_id]">{{ deadline.assignment_name }}</span>
       <p>Due Date: {{ formatDate(deadline.due_date) }}</p>
     </div>
     <div *ngIf="upcomingDeadlines().length === 0" class="no-data">

@@ -75,8 +75,9 @@ export class DashboardComponent {
       .slice(0, 5)); // Show top 5 upcoming deadlines
   });
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private serverService: ServersService) {
     // Initialize user
+    this.serverService.currentServer.set(null); // Reset current server
     const user = this.authService.getUser();
     this.user.set(user ? {
       id: Number(user.id) || 0,

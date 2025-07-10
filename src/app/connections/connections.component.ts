@@ -65,42 +65,61 @@ export class ConnectionsComponent {
     // Fetch users and access levels when server changes
     effect(async () => {
       const serverId = this.serverService.currentServer()?.id;
-      if (serverId) {
-        console.log('server id is ' + serverId);
-        const userIds = await this.userService.getAllUsers(Number(serverId));
-        const onlineUserIds = await this.userService.getOnlineUsers(Number(serverId));
+      console.log('Effect triggered, serverId:', serverId, 'Type:', typeof serverId);
 
-        // Fetch user info and access levels
-        const users = await Promise.all(
-          userIds.map(async (userId: any) => {
-            const userInfo = await this.userService.getUserInfo(userId);
-            if (userInfo.name.split(' ').length >= 3) {
-              userInfo.name = this.simplyfyName(userInfo.name);
-            }
-            const accessLevel = await this.getUserAccessLevel(serverId, Number(userId));
-            console.log('userInfo:', userInfo);
-            return {
-              id: Number(userInfo.id),
-              name: userInfo.name,
-              picture: userInfo.picture || 'default-avatar.png',
-              isOnline: onlineUserIds.includes(userId),
-              access_level: accessLevel
-            };
-          })
-        );
+      if (serverId != null && serverId !== '' && !isNaN(Number(serverId))) {
+        console.log('Processing serverId:', serverId);
+        try {
+          const userIds = await this.userService.getAllUsers(Number(serverId));
+          console.log('Fetched userIds:', userIds);
+          const onlineUserIds = await this.userService.getOnlineUsers(Number(serverId));
+          console.log('Fetched onlineUserIds:', onlineUserIds);
 
-        // Exclude currentUser from userList
-        this.userList.set(users.filter(user => user.id !== this.currentUserId));
-        console.log('userList:', this.userList());
-        this.updateUseruserEvent();
-        this.categorizeUsers();
+          // Fetch user info and access levels
+          const users = await Promise.all(
+            userIds.map(async (userId: any) => {
+              const userInfo = await this.userService.getUserInfo(userId);
+              console.log('Fetched userInfo for userId:', userId, userInfo);
+              if (userInfo.name.split(' ').length >= 3) {
+                userInfo.name = this.simplyfyName(userInfo.name);
+              }
+              const accessLevel = await this.getUserAccessLevel(serverId, Number(userId));
+              return {
+                id: Number(userInfo.id),
+                name: userInfo.name,
+                picture: userInfo.picture || 'default-avatar.png',
+                isOnline: onlineUserIds.includes(userId),
+                access_level: accessLevel
+              };
+            })
+          );
+
+          // Exclude currentUser from userList
+          const filteredUsers = users.filter(user => user.id !== this.currentUserId);
+          console.log('Filtered userList:', filteredUsers);
+          this.userList.set(filteredUsers);
+          this.updateUseruserEvent();
+          this.categorizeUsers();
+        } catch (error) {
+          console.error('Error fetching users for serverId:', serverId, error);
+          this.clearUserLists();
+        }
+      } else {
+        console.log('serverId is invalid, clearing userList');
+        this.clearUserLists();
       }
-    });
+    }, { allowSignalWrites: true });
 
     // Update currentUserId and serverAccessLevel when signals change
     effect(() => {
-      this.serverAccessLevel = this.serverService.currentServer().access_level || 0;
-      this.currentUserId = this.currentUser().id;
+      try{
+        this.serverAccessLevel = this.serverService.currentServer().access_level || 0;
+        this.currentUserId = this.currentUser().id;
+      }
+      catch (error) {
+        console.error('Error updating currentUserId or serverAccessLevel:', error);
+      }
+
     });
 
     this.listenToSocket();
@@ -124,6 +143,15 @@ export class ConnectionsComponent {
     this.professors.set(users.filter(user => user.access_level! > 1));
     console.log('Assistants:', this.assistants());
     console.log('Professors:', this.professors());
+  }
+
+  private clearUserLists() {
+    this.userList.set([]);
+    this.onlineUsers.set([]);
+    this.offlineUsers.set([]);
+    this.assistants.set([]);
+    this.professors.set([]);
+    this.updateUseruserEvent();
   }
 
   listenToSocket() {
