@@ -47,6 +47,7 @@
       <div class="room"
       *ngFor="let room of category.assignments"
         [ngClass]="room.type.split(' ')[0]"
+        [attr.room-id]="room.id"
         [routerLink]="[room.type.split(' ')[0], room.id]"
         routerLinkActive="router-link-active">
       {{ getRoomIcon(room.type) }} {{ room.name }}
