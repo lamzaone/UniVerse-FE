@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import axios from 'axios';
 import api from './api.service';
-interface UserInfo {
-  id: string;
+export interface UserInfo {
+  id: number;
   name: string;
-  avatar: string;
-  // Add any other fields that you expect from the user data
+  email: string;
+  nickname: string;
+  picture: string;
 }
 
 @Injectable({
@@ -44,19 +45,21 @@ export class UsersService {
     // Check if the user is already in the cache
     const cachedUser = this.getUserFromCache(userId);
     if (cachedUser) {
-      return Promise.resolve(cachedUser); // Return cached user info
+      return Promise.resolve(cachedUser);
     }
 
     // If the user is not in the cache, fetch from the API
-    return await api.get(`http://lamzaone.go.ro:8000/api/user/${userId}`).then(response => {
-      const userInfo = response.data;
+    try {
+      const response = await api.get(`/user/${userId}`);
+      const userInfo: UserInfo = response.data;
       this.userCache[userId] = userInfo; // Store user info in cache
       return userInfo;
-    }).catch(error => {
+    } catch (error) {
       console.error(`Failed to fetch user info for userId: ${userId}`, error);
       throw error;
-    });
+    }
   }
+
 
   // Method to clear a user from the cache (useful if user info is outdated)
   clearUserCache(userId: string): void {

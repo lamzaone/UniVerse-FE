@@ -1,14 +1,13 @@
-<div class="container">
-  <div class="current-user">
+<div class="container" (contextmenu)="onRightClick($event)">
+  <div class="current-user" [attr.user-id]="currentUser()?.id ?? '0'">
     <div class="user">
       <div class="user-avatar">
         <img [src]="currentUser().picture" alt="user avatar">
-        <!-- TODO: make status dot reflect status -->
-        <div class = "status-dot"></div>
+        <div class="status-dot"></div>
       </div>
       <div class="user-info">
         <div class="user-info-name">
-          <p>{{simplyfyName(currentUser().name)}}</p>
+          <p>{{simplyfyName(currentUser()?.name ?? 'Unknown User')}}</p>
         </div>
         <div class="user-info-status">
           <p>Online</p>
@@ -17,14 +16,51 @@
     </div>
   </div>
 
-  <div class="status-online" *ngIf="onlineUsers().length > 0">
-    <h4>Online - {{onlineUsers().length}}</h4>
-    <div class="user" *ngFor="let user of onlineUsers()">
+  <div class="professors" *ngIf="professors().length > 0">
+    <h4>Professors - {{professors().length}}</h4>
+    <div class="user" *ngFor="let user of professors()" [attr.user-id]="user.id">
       <div class="user-avatar">
         <img [src]="user.picture" alt="user avatar">
-        <div class = "status-dot"></div>
+        <div class="status-dot" [ngStyle]="{'background-color': user.isOnline ? '#00ff00' : '#606060'}"></div>
       </div>
       <div class="user-info">
+        <div class="user-info-name">
+          <p>{{user.name}}</p>
+        </div>
+        <div class="user-info-status">
+          <p>{{user.isOnline ? 'Online' : 'Offline'}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="assistants" *ngIf="assistants().length > 0">
+    <h4>Assistants - {{assistants().length}}</h4>
+    <div class="user" *ngFor="let user of assistants()" [attr.user-id]="user.id">
+      <div class="user-avatar">
+        <img [src]="user.picture" alt="user avatar">
+        <div class="status-dot" [ngStyle]="{'background-color': user.isOnline ? '#00ff00' : '#606060'}"></div>
+      </div>
+      <div class="user-info">
+        <div class="user-info-name">
+          <p>{{user.name}}</p>
+        </div>
+        <div class="user-info-status">
+          <p>{{user.isOnline ? 'Online' : 'Offline'}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="status-online" *ngIf="onlineUsers().length > 0">
+    <h4>Online - {{onlineUsers().length}}</h4>
+    <div class="user" *ngFor="let user of onlineUsers()" [attr.user-id]="user.id">
+      <div class="user-avatar" [attr.user-id]="user.id">
+        <img [src]="user.picture" alt="user avatar">
+        <div class="status-dot"></div>
+      </div>
+      <div class="user-info" [attr.user-id]="user.id">
         <div class="user-info-name">
           <p>{{user.name}}</p>
         </div>
@@ -37,19 +73,42 @@
 
   <div class="status-offline" *ngIf="offlineUsers().length > 0">
     <h4>Offline - {{offlineUsers().length}}</h4>
-    <div class="user" *ngFor="let user of offlineUsers()">
+    <div class="user" *ngFor="let user of offlineUsers()" [attr.user-id]="user.id">
       <div class="user-avatar">
         <img [src]="user.picture" alt="user avatar">
-        <div class = "status-dot" [ngStyle]="{'background-color': '#606060'}"></div>
+        <div class="status-dot" [ngStyle]="{'background-color': '#606060'}"></div>
       </div>
       <div class="user-info">
         <div class="user-info-name">
           <p>{{user.name}}</p>
         </div>
-        <!-- <div class="user-info-status">
-          <p>Offline</p>
-        </div> -->
       </div>
     </div>
   </div>
+
+
+</div>
+
+<div class="custom-context-menu" *ngIf="showContextMenu" [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y">
+  <ul>
+    @if(clickedUserId === null){
+      <li (click)="LogOut()">Log Out</li>
+    }
+
+    @if(serverAccessLevel > 0){
+    @if (serverAccessLevel === 3 && isUser && clickedUser && clickedUser.access_level! < 1) {
+      <li (click)="promoteToAssistant()">Promote to Assistant</li>
+      }
+    @if (serverAccessLevel === 3 && isUser && clickedUser && clickedUser.access_level === 1) {
+      <li (click)="promoteToLevel2()">Promote to Level 2</li>
+      }
+    @if (serverAccessLevel === 3 && isUser && clickedUser && clickedUser.access_level! > 0 && clickedUser.access_level! < 3) {
+      <li (click)="demoteUser()">Demote</li>
+      }
+    @if (serverAccessLevel > 1 && isUser && clickedUser) {
+      <li (click)="removeUser()">Remove User</li>
+      }
+    }
+
+  </ul>
 </div>
