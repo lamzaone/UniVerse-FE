@@ -77,10 +77,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     try {
       const res = await api.get(`http://lamzaone.go.ro:8000/api/room/${this.roomId}/users`);
       this.users = await Promise.all(
-        res.data.userIds.map(async (id: string) => {
-          const userInfo = await this.userService.getUserInfo(id);
-          return { ...userInfo, id: parseInt(id) };
-        })
+        res.data.userIds.map(async (id: string) => (
+          await this.userService.getUserInfo(id)
+        ))
       );
       this.voiceUserIds = new Set(this.users.map(u => u.id));
       this.detectChanges();
@@ -100,7 +99,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       } else {
         try {
           const data = JSON.parse(message);
-          if (['offer', 'answer', 'ice-candidate', 'track-metadata'].includes(data.type)) {
+          if (['offer', 'answer', 'ice-candidate', 'track-metadata', 'track-stopped'].includes(data.type)) {
             this.handleSignalingData(data);
           }
         } catch (error) {
@@ -219,7 +218,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       }
     }, this.ICE_CONNECTION_TIMEOUT);
 
-    // Add local tracks
     this.addLocalTracksToPeer(peer);
 
     if (!isPolite) {
@@ -233,18 +231,25 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     streams.audio = stream;
     this.remoteStreams.set(userId, streams);
 
-    const audio = document.createElement('audio');
-    audio.srcObject = stream;
-    audio.autoplay = true;
-    audio.dataset.userId = userId.toString();
-    this.audioContainerRef.nativeElement.appendChild(audio);
+    const existingAudio = this.audioContainerRef.nativeElement.querySelector(`audio[data-user-id="${userId}"]`) as HTMLAudioElement;
+    if (existingAudio) {
+      existingAudio.srcObject = stream;
+    } else {
+      const audio = document.createElement('audio');
+      audio.srcObject = stream;
+      audio.autoplay = true;
+      audio.dataset.userId = userId.toString();
+      this.audioContainerRef.nativeElement.appendChild(audio);
+    }
 
     track.onended = () => {
       console.log(`[Track] Audio track ${track.id} ended for user ${userId}`);
       streams.audio?.getTracks().forEach(t => t.stop());
       delete streams.audio;
       this.remoteStreams.set(userId, streams);
-      audio.remove();
+      this.audioContainerRef.nativeElement
+        .querySelectorAll(`audio[data-user-id="${userId}"]`)
+        .forEach(audio => audio.remove());
       this.detectChanges();
     };
   }
@@ -256,7 +261,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const trackType = peer.tracks.get(track.id)?.type || 'camera'; // Default to camera
+    const trackType = peer.tracks.get(track.id)?.type || 'camera';
     const streams = this.remoteStreams.get(userId) || {};
     let targetStream = streams[trackType];
     if (!targetStream) {
@@ -293,6 +298,17 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       this.screenStream.getVideoTracks().forEach(track => tracks.push({ track, type: 'screen' }));
     }
 
+    // Remove stopped tracks from peer
+    const senders = peer.pc.getSenders();
+    senders.forEach(sender => {
+      if (sender.track && !tracks.some(t => t.track === sender.track)) {
+        console.log(`[Track] Removing stopped track ${sender.track.id} from peer ${peer.displayName}`);
+        peer.pc.removeTrack(sender);
+        peer.tracks.delete(sender.track.id);
+      }
+    });
+
+    // Add active tracks
     tracks.forEach(({ track, type }) => {
       if (!peer.pc.getSenders().some(s => s.track === track)) {
         console.log(`[Track] Adding ${type} track ${track.id} to peer ${peer.displayName}`);
@@ -302,7 +318,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           JSON.stringify({
             type: 'track-metadata',
             sender: this.userId,
-            receiver: peer.pc.remoteDescription ? parseInt(this.users.find(u => u.name === peer.displayName)?.id.toString() || '0') : 0,
+            receiver: parseInt(this.users.find(u => u.name === peer.displayName)?.id.toString() || '0'),
             trackId: track.id,
             streamType: type,
           }),
@@ -351,6 +367,10 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           video.remove();
         }
       });
+      if (!liveTracks.length) {
+        delete streams.screen;
+        this.remoteStreams.set(userId, streams);
+      }
     }
 
     // Handle camera
@@ -379,6 +399,10 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           video.remove();
         }
       });
+      if (!liveTracks.length) {
+        delete streams.camera;
+        this.remoteStreams.set(userId, streams);
+      }
     }
 
     this.detectChanges();
@@ -419,8 +443,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   async toggleScreenShare() {
     if (this.isScreenSharing) {
       this.screenStream?.getTracks().forEach(track => {
+        console.log(`[Track] Stopping screen track ${track.id}`);
         track.stop();
-        track.dispatchEvent(new Event('ended'));
+        this.notifyTrackStopped(track.id);
       });
       this.screenStream = null;
       this.isScreenSharing = false;
@@ -435,6 +460,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
         this.screenStream.getTracks().forEach(track => {
           track.contentHint = 'detail';
           track.onended = () => {
+            console.log(`[Track] Screen track ${track.id} ended`);
             this.toggleScreenShare();
           };
         });
@@ -458,8 +484,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   async toggleCamera() {
     if (this.isCameraEnabled) {
       this.cameraStream?.getTracks().forEach(track => {
+        console.log(`[Track] Stopping camera track ${track.id}`);
         track.stop();
-        track.dispatchEvent(new Event('ended'));
+        this.notifyTrackStopped(track.id);
       });
       this.cameraStream = null;
       this.isCameraEnabled = false;
@@ -488,6 +515,21 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       }
     });
     this.detectChanges();
+  }
+
+  private notifyTrackStopped(trackId: string) {
+    this.peerConnections.forEach((peer, userId) => {
+      this.socketService.sendMessage(
+        JSON.stringify({
+          type: 'track-stopped',
+          sender: this.userId,
+          receiver: userId,
+          trackId,
+        }),
+        false,
+        'audioRoom'
+      );
+    });
   }
 
   private updateLocalStream() {
@@ -556,6 +598,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
         break;
       case 'track-metadata':
         this.handleTrackMetadata(senderId, data);
+        break;
+      case 'track-stopped':
+        this.handleTrackStopped(senderId, data);
         break;
     }
   }
@@ -651,7 +696,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     if (trackInfo.track.readyState === 'live') {
       newStream.addTrack(trackInfo.track);
     } else {
-      console.log(`[TrackMetadata] Track ${data.trackId} is not live, skipping add`);
+      console.log(`[TrackMetadata] Track ${data.trackId} is not live, removing`);
       peer.tracks.delete(data.trackId);
       if (!newStream.getTracks().length) {
         delete streams[data.streamType];
@@ -659,6 +704,32 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
 
     this.remoteStreams.set(userId, streams);
+    this.updateVideoElements(userId);
+  }
+
+  private handleTrackStopped(userId: number, data: { trackId: string }) {
+    const peer = this.peerConnections.get(userId);
+    if (!peer || !data.trackId) return;
+
+    console.log(`[TrackStopped] User ${userId}: track ${data.trackId} stopped`);
+    const trackInfo = peer.tracks.get(data.trackId);
+    if (!trackInfo) return;
+
+    const streams = this.remoteStreams.get(userId) || {};
+    const stream = streams[trackInfo.type];
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        if (track.id === trackInfo.track.id) {
+          stream.removeTrack(track);
+        }
+      });
+      if (!stream.getTracks().length) {
+        delete streams[trackInfo.type];
+        this.remoteStreams.set(userId, streams);
+      }
+    }
+
+    peer.tracks.delete(data.trackId);
     this.updateVideoElements(userId);
   }
 
@@ -700,9 +771,18 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
   leaveCall() {
     this.peerConnections.forEach((_, userId) => this.closePeerConnection(userId));
-    this.localStream?.getTracks().forEach(track => track.stop());
-    this.screenStream?.getTracks().forEach(track => track.stop());
-    this.cameraStream?.getTracks().forEach(track => track.stop());
+    this.localStream?.getTracks().forEach(track => {
+      track.stop();
+      this.notifyTrackStopped(track.id);
+    });
+    this.screenStream?.getTracks().forEach(track => {
+      track.stop();
+      this.notifyTrackStopped(track.id);
+    });
+    this.cameraStream?.getTracks().forEach(track => {
+      track.stop();
+      this.notifyTrackStopped(track.id);
+    });
 
     this.localStream = null;
     this.screenStream = null;
