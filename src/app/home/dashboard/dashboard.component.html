@@ -1,12 +1,64 @@
-<p>dashboard works!</p>
-<h1 class="title">
-  {{ 'PAGES.HOME.TITLE' | translate }}
-</h1>
-<a routerLink="/detail">{{ 'PAGES.HOME.GO_TO_DETAIL' | translate }}</a>
+<div class="container">
+  <div *ngIf="user()" class="user-profile">
+    <h1>Welcome {{ user()!.name }}</h1>
+    <img [src]="user()!.picture" [alt]="user()!.name" class="profile-picture">
+    <p>Email: {{ user()!.email }}</p>
+    <button (click)="logout()" class="logout-button">Logout</button>
+  </div>
 
-<div *ngIf="user">
-  <h1>{{ 'PAGES.HOME.WELCOME' | translate }} <br>{{ user().name }}</h1>
-  <img [src]="user().picture" alt="{{ user().name }}">
-  <p>Email: {{ user().email }}</p>
-  <button (click)="logout()">{{ 'PAGES.HOME.LOGOUT' |  translate}}</button>
+  <h2 class="section-title">Upcoming Deadlines</h2>
+  <div class="card-grid">
+    <div *ngFor="let deadline of upcomingDeadlines()" class="card">
+      <h3>{{ deadline.server_name }}</h3>
+      <p [routerLink]="['/server', deadline.server_id, 'assignments', deadline.assignment_id]">Assignment: {{ deadline.assignment_name }}</p>
+      <p>Due Date: {{ formatDate(deadline.due_date) }}</p>
+    </div>
+    <div *ngIf="upcomingDeadlines().length === 0" class="no-data">
+      No upcoming deadlines
+    </div>
+  </div>
+
+  <h2 class="section-title">Your Servers</h2>
+  <div class="card-grid">
+    <div *ngFor="let server of servers()" class="card">
+      <h3>{{ server.server_name }}</h3>
+      <p>Role: {{ getRole(server.access_level) }}</p>
+
+      <h4>Grades</h4>
+      <ul *ngIf="server.grades.length > 0; else noGrades">
+        <li *ngFor="let grade of server.grades">
+          Assignment {{ grade.assignment_id }}: {{ grade.grade }} ({{ formatDate(grade.date) }})
+        </li>
+      </ul>
+      <ng-template #noGrades>
+        <p>No grades available</p>
+      </ng-template>
+
+      <h4>Attendance</h4>
+      <ul *ngIf="server.attendance_summary && (server.attendance_summary | keyvalue).length > 0; else noAttendance">
+        <li *ngFor="let week of server.attendance_summary | keyvalue">
+          Week {{ week.key }}:
+          <span *ngIf="week.value.present === 1">Present</span>
+          <span *ngIf="week.value.absent === 1">
+            <span *ngIf="week.value.present === 1">, </span>Absent
+          </span>
+          <span *ngIf="week.value.excused === 1">
+            <span *ngIf="week.value.present === 1 || week.value.absent === 1">, </span>Excused
+          </span>
+        </li>
+      </ul>
+      <ng-template #noAttendance>
+        <p>No attendance records</p>
+      </ng-template>
+
+      <div *ngIf="server.professor_stats" class="professor-stats">
+        <h4>Professor Statistics</h4>
+        <p>Total Members: {{ server.professor_stats.member_count }}</p>
+        <p>Ungraded Assignments: {{ server.professor_stats.ungraded_assignments }}</p>
+      </div>
+    </div>
+    <div *ngIf="servers().length === 0" class="no-data">
+      You are not part of any servers
+    </div>
+  </div>
 </div>

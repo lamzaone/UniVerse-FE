@@ -7,13 +7,13 @@
 
   <!-- Assignments Summary -->
   <section class="card assignments-card">
-    <h2>Assignments</h2>
+    <h2>Assignments due soon</h2>
     <div *ngFor="let room of assignments | keyvalue" class="assignment-room">
-      <h3>Room ID: {{ room.key }}</h3>
+      <h3>Assignment ID: {{ room.key }}</h3>
       <div class="assignment-list">
         <div *ngFor="let assignment of room.value" class="assignment-item">
-          <p>Assignment ID: {{ assignment.assignment_id }}</p>
-          <p>Grade: {{ assignment.grade }}</p>
+          <p *ngIf="assignment.assignment_id">Submission ID: {{ assignment.assignment_id }}</p>
+          <p *ngIf="assignment.assignment_id">Grade: {{ assignment.grade || "Ungraded" }}</p>
           <p>Due Date: {{ assignment.due_date | date:'short' }}</p>
           <p *ngIf="assignment.date">Date: {{ assignment.date }}</p>
         </div>
