@@ -111,7 +111,7 @@ export class DashboardComponent {
 
   getRole(accessLevel: number): string {
     switch (accessLevel) {
-      case 0: return 'Member';
+      case 0: return 'Student';
       case 1: return 'Assistant';
       case 2: return 'Professor';
       case 3: return 'Admin';

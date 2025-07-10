@@ -1,8 +1,17 @@
-.container{
+:root {
+  --light-grey: #2c2c2c; /* Dark card background */
+  --dark-grey: #b0b0b0; /* Light text for contrast */
+}
+
+.container {
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: scroll;
+  overflow: auto; /* Changed from 'scroll' for smoother scrolling */
+  padding: 2rem;
+  background: #1a1a1a; /* Dark background for container */
+  color: #e0e0e0; /* Default text color */
 }
 
 .user-profile {
@@ -11,7 +20,7 @@
 
   h1 {
     font-size: 2rem;
-    color: #333;
+    color: #e0e0e0; /* Light text for name */
   }
 
   .profile-picture {
@@ -20,17 +29,18 @@
     border-radius: 50%;
     margin: 10px 0;
     object-fit: cover;
+    border: 2px solid #4a90e2; /* Subtle blue border */
   }
 
   p {
     font-size: 1.1rem;
-    color: #666;
+    color: #b0b0b0; /* Muted text for email */
   }
 
   .logout-button {
     padding: 10px 20px;
-    background-color: #dc3545;
-    color: white;
+    background-color: #ff6b6b; /* Softer red for dark theme */
+    color: #1a1a1a; /* Dark text for contrast */
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -38,14 +48,14 @@
     transition: background-color 0.3s;
 
     &:hover {
-      background-color: #c82333;
+      background-color: #e55a5a; /* Darker red on hover */
     }
   }
 }
 
 .section-title {
   font-size: 1.8rem;
-  color: #333;
+  color: #e0e0e0; /* Light text */
   margin: 20px 0;
 }
 
@@ -56,31 +66,36 @@
 }
 
 .card {
-  background: #fff;
+  background: var(--light-grey); /* Dark card background */
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Stronger shadow for depth */
   padding: 20px;
-  transition: transform 0.2s;
+  transition: transform 0.2s, background 0.3s;
 
   &:hover {
     transform: translateY(-5px);
+    background: #343434; /* Slightly lighter on hover */
   }
 
   h3 {
+    width: 100%;
     font-size: 1.4rem;
-    color: #007bff;
-    margin-bottom: 10px;
+    color: var(--white); /* Muted blue for server names */
+    margin: 0;
+    border-bottom: 1px solid #444; /* Darker border */
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
   }
 
   h4 {
     font-size: 1.2rem;
-    color: #333;
+    color: #90bae7; /* Lighter blue for subtitles */
     margin: 15px 0 10px;
   }
 
   p, li {
     font-size: 1rem;
-    color: #555;
+    color: var(--white); /* Light text for content */
     margin: 5px 0;
   }
 
@@ -96,16 +111,16 @@
   .professor-stats {
     margin-top: 15px;
     padding-top: 10px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #444; /* Darker border */
   }
 }
 
 .no-data {
   text-align: center;
   font-size: 1.1rem;
-  color: #666;
+  color: #b0b0b0; /* Muted text */
   padding: 20px;
-  background: #f8f9fa;
+  background: #242424; /* Dark background */
   border-radius: 8px;
 }
 

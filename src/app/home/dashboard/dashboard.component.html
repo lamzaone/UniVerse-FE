@@ -4,6 +4,7 @@
     <img [src]="user()!.picture" [alt]="user()!.name" class="profile-picture">
     <p>Email: {{ user()!.email }}</p>
     <button (click)="logout()" class="logout-button">Logout</button>
+    <br><br><hr>
   </div>
 
   <h2 class="section-title">Upcoming Deadlines</h2>
@@ -18,7 +19,7 @@
     </div>
   </div>
 
-  <h2 class="section-title">Your Servers</h2>
+  <h2 class="section-title">Your Courses</h2>
   <div class="card-grid">
     <div *ngFor="let server of servers()" class="card">
       <h3>{{ server.server_name }}</h3>
@@ -27,7 +28,7 @@
       <h4>Grades</h4>
       <ul *ngIf="server.grades.length > 0; else noGrades">
         <li *ngFor="let grade of server.grades">
-          Assignment {{ grade.assignment_id }}: {{ grade.grade }} ({{ formatDate(grade.date) }})
+          {{ grade.assignment_id ? 'Assignment' : 'Grade'}}  {{ grade.assignment_id }}: {{ grade.grade }} ({{ formatDate(grade.date) }})
         </li>
       </ul>
       <ng-template #noGrades>

@@ -22,6 +22,7 @@ html, body {
   display: flex;
   padding:7px;
   flex-direction: row;
+  box-sizing: border-box;
 
   background-color: var(--dark-grey);
 
@@ -45,6 +46,15 @@ markdown {
 }
 
 md-editor {
+
+  & .btn-group::before{
+    background-color: var(--light-grey) !important;
+    display: none !important;
+  }
+
+  & .ace_print-margin {
+    background-color: var(--dark-grey) !important;
+  }
   // background-color: red;
   & .md-editor-container{
     // background-color: yellow;
@@ -55,23 +65,6 @@ md-editor {
       // background-color: blue;
       padding: 10px;
       border-radius: 10px;
-
-      // & .edit-container{
-      //   & .ace_text-input{
-      //     background-color: var(--dark-grey) !important;
-      //     color: var(--white) !important;
-      //     font-size: 1rem !important;
-      //     padding: 10px !important;
-      //     border-radius: 10px !important;
-      //   }
-      //   & .ace_gutter{
-      //     background-color: var(--dark-grey) !important;
-      //     color: var(--white) !important;
-      //     font-size: 1rem !important;
-      //     padding: 10px !important;
-      //     border-radius: 10px !important;
-      //   }
-      // }
 
       & .tool-bar {
         background-color: var(--grey) !important;
@@ -118,7 +111,7 @@ md-editor {
   background-color: var(--grey) !important;
   color: var(--white) !important;
   font-size: 1rem !important;
-  padding: 10px !important;
+  // padding: 10px !important;
   border-radius: 10px !important;
 }
 
@@ -132,7 +125,6 @@ md-editor {
     background-color: var(--grey) !important;
     color: var(--white) !important;
     font-size: 1rem !important;
-    padding: 10px !important;
     border-radius: 10px !important;
   }
 }
