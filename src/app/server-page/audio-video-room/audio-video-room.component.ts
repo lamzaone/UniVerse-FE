@@ -77,9 +77,10 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     try {
       const res = await api.get(`http://lamzaone.go.ro:8000/api/room/${this.roomId}/users`);
       this.users = await Promise.all(
-        res.data.userIds.map(async (id: string) => (
-          await this.userService.getUserInfo(id)
-        ))
+        res.data.userIds.map(async (id: string) => {
+          const userInfo = await this.userService.getUserInfo(id);
+          return { ...userInfo, id: parseInt(id) };
+        })
       );
       this.voiceUserIds = new Set(this.users.map(u => u.id));
       this.detectChanges();
@@ -99,6 +100,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       } else {
         try {
           const data = JSON.parse(message);
+          console.log(`[Socket] Received message: ${data.type} from user ${data.sender}`);
           if (['offer', 'answer', 'ice-candidate', 'track-metadata', 'track-stopped'].includes(data.type)) {
             this.handleSignalingData(data);
           }
@@ -195,6 +197,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     };
 
     pc.ontrack = ({ track, streams }) => {
+      console.log(`[Track] Ontrack event for user ${userId}, track id: ${track.id}, kind: ${track.kind}`);
       if (track.kind === 'audio') {
         this.handleAudioTrack(userId, track, streams[0]);
       } else if (track.kind === 'video') {
@@ -255,13 +258,16 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   private handleVideoTrack(userId: number, peer: PeerConnection, track: MediaStreamTrack, stream: MediaStream) {
-    console.log(`[Track] Received video track from user ${userId}, track id: ${track.id}`);
+    console.log(`[Track] Received video track from user ${userId}, track id: ${track.id}, readyState: ${track.readyState}`);
     if (track.readyState !== 'live') {
       console.log(`[Track] Ignoring non-live track ${track.id}`);
       return;
     }
 
+    // Register track even if metadata hasn't arrived yet
     const trackType = peer.tracks.get(track.id)?.type || 'camera';
+    peer.tracks.set(track.id, { track, type: trackType });
+
     const streams = this.remoteStreams.get(userId) || {};
     let targetStream = streams[trackType];
     if (!targetStream) {
@@ -270,7 +276,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
     targetStream.addTrack(track);
     this.remoteStreams.set(userId, streams);
-    peer.tracks.set(track.id, { track, type: trackType });
 
     this.updateVideoElements(userId);
 
@@ -297,6 +302,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     if (this.screenStream) {
       this.screenStream.getVideoTracks().forEach(track => tracks.push({ track, type: 'screen' }));
     }
+
+    console.log(`[Track] Adding tracks to peer ${peer.displayName}:`, tracks.map(t => `${t.type}:${t.track.id}`));
 
     // Remove stopped tracks from peer
     const senders = peer.pc.getSenders();
@@ -340,11 +347,13 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
 
     const streams = this.remoteStreams.get(userId) || {};
+    const activeTrackIds: string[] = [];
 
     // Handle screen share
     if (streams.screen) {
       const liveTracks = streams.screen.getVideoTracks().filter(t => t.readyState === 'live');
       liveTracks.forEach(track => {
+        activeTrackIds.push(track.id);
         const video = userContainer.querySelector(`video.screen-share[data-track-id="${track.id}"]`) as HTMLVideoElement;
         if (!video) {
           console.log(`[Video] Adding screen stream for user ${userId}, track ${track.id}`);
@@ -360,13 +369,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           userContainer.appendChild(newVideo);
         }
       });
-      userContainer.querySelectorAll('video.screen-share').forEach(video => {
-        const trackId = (video as HTMLVideoElement).dataset.trackId;
-        if (!trackId || !liveTracks.some(t => t.id === trackId)) {
-          console.log(`[Video] Removing screen stream for user ${userId}, track ${trackId}`);
-          video.remove();
-        }
-      });
       if (!liveTracks.length) {
         delete streams.screen;
         this.remoteStreams.set(userId, streams);
@@ -377,6 +379,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     if (streams.camera) {
       const liveTracks = streams.camera.getVideoTracks().filter(t => t.readyState === 'live');
       liveTracks.forEach(track => {
+        activeTrackIds.push(track.id);
         const video = userContainer.querySelector(`video.camera-video[data-track-id="${track.id}"]`) as HTMLVideoElement;
         if (!video) {
           console.log(`[Video] Adding camera stream for user ${userId}, track ${track.id}`);
@@ -392,18 +395,20 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           userContainer.insertBefore(newVideo, userContainer.querySelector('video.screen-share')?.nextSibling || null);
         }
       });
-      userContainer.querySelectorAll('video.camera-video').forEach(video => {
-        const trackId = (video as HTMLVideoElement).dataset.trackId;
-        if (!trackId || !liveTracks.some(t => t.id === trackId)) {
-          console.log(`[Video] Removing camera stream for user ${userId}, track ${trackId}`);
-          video.remove();
-        }
-      });
       if (!liveTracks.length) {
         delete streams.camera;
         this.remoteStreams.set(userId, streams);
       }
     }
+
+    // Remove stale video elements
+    userContainer.querySelectorAll('video').forEach(video => {
+      const trackId = video.dataset.trackId;
+      if (!trackId || !activeTrackIds.includes(trackId)) {
+        console.log(`[Video] Removing stale video for user ${userId}, track ${trackId}`);
+        video.remove();
+      }
+    });
 
     this.detectChanges();
   }
@@ -445,6 +450,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       this.screenStream?.getTracks().forEach(track => {
         console.log(`[Track] Stopping screen track ${track.id}`);
         track.stop();
+        track.dispatchEvent(new Event('ended'));
         this.notifyTrackStopped(track.id);
       });
       this.screenStream = null;
@@ -486,6 +492,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       this.cameraStream?.getTracks().forEach(track => {
         console.log(`[Track] Stopping camera track ${track.id}`);
         track.stop();
+        track.dispatchEvent(new Event('ended'));
         this.notifyTrackStopped(track.id);
       });
       this.cameraStream = null;
@@ -518,6 +525,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   private notifyTrackStopped(trackId: string) {
+    console.log(`[Track] Sending track-stopped for track ${trackId}`);
     this.peerConnections.forEach((peer, userId) => {
       this.socketService.sendMessage(
         JSON.stringify({
@@ -712,24 +720,32 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     if (!peer || !data.trackId) return;
 
     console.log(`[TrackStopped] User ${userId}: track ${data.trackId} stopped`);
+    console.log(`[TrackStopped] Peer tracks before:`, Array.from(peer.tracks.keys()));
     const trackInfo = peer.tracks.get(data.trackId);
-    if (!trackInfo) return;
+    if (!trackInfo) {
+      console.warn(`[TrackStopped] Track ${data.trackId} not found for user ${userId}`);
+      return;
+    }
 
     const streams = this.remoteStreams.get(userId) || {};
     const stream = streams[trackInfo.type];
     if (stream) {
       stream.getTracks().forEach(track => {
         if (track.id === trackInfo.track.id) {
+          console.log(`[TrackStopped] Removing track ${track.id} from stream`);
           stream.removeTrack(track);
+          track.stop();
         }
       });
       if (!stream.getTracks().length) {
+        console.log(`[TrackStopped] Deleting empty stream ${trackInfo.type} for user ${userId}`);
         delete streams[trackInfo.type];
         this.remoteStreams.set(userId, streams);
       }
     }
 
     peer.tracks.delete(data.trackId);
+    console.log(`[TrackStopped] Peer tracks after:`, Array.from(peer.tracks.keys()));
     this.updateVideoElements(userId);
   }
 
@@ -737,6 +753,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     const peer = this.peerConnections.get(userId);
     if (!peer) return;
 
+    console.log(`[Peer] Closing connection for user ${userId}`);
     peer.pc.close();
     clearTimeout(peer.connectionTimeout);
 
@@ -745,7 +762,10 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       (['audio', 'camera', 'screen'] as const).forEach(type => {
         const stream = streams[type];
         if (stream) {
-          stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+          stream.getTracks().forEach((track: MediaStreamTrack) => {
+            console.log(`[Peer] Stopping track ${track.id} for user ${userId}`);
+            track.stop();
+          });
           delete streams[type];
         }
       });
@@ -761,7 +781,11 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     )?.nativeElement;
 
     if (userContainer) {
-      userContainer.querySelectorAll(`video[data-user-id="${userId}"]`).forEach(video => video.remove());
+      userContainer.querySelectorAll(`video[data-user-id="${userId}"]`).forEach(video => {
+        const videoEl = video as HTMLVideoElement;
+        console.log(`[Peer] Removing video for user ${userId}, track ${videoEl.dataset.trackId}`);
+        videoEl.remove();
+      });
     }
 
     this.peerConnections.delete(userId);
@@ -772,14 +796,17 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   leaveCall() {
     this.peerConnections.forEach((_, userId) => this.closePeerConnection(userId));
     this.localStream?.getTracks().forEach(track => {
+      console.log(`[Leave] Stopping local track ${track.id}`);
       track.stop();
       this.notifyTrackStopped(track.id);
     });
     this.screenStream?.getTracks().forEach(track => {
+      console.log(`[Leave] Stopping screen track ${track.id}`);
       track.stop();
       this.notifyTrackStopped(track.id);
     });
     this.cameraStream?.getTracks().forEach(track => {
+      console.log(`[Leave] Stopping camera track ${track.id}`);
       track.stop();
       this.notifyTrackStopped(track.id);
     });
