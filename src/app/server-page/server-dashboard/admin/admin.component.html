@@ -9,7 +9,7 @@
       <div class="card-content">
         <p>Manage faculty weeks.</p>
         <button class="btn btn-primary" (click)="startNewWeek()">Start new week</button>
-        <button class="btn btn-secondary" routerLink="/admin/courses">Delete week</button>
+        <button class="btn btn-secondary" (click)="deleteLastWeek()">Delete week</button>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <!-- <div class="card">
       <h2>Assistants</h2>
       <div class="card-content"><p>View and manage professor records.</p>
       <button class="btn btn-primary" routerLink="/admin/professors">View assistants</button>
@@ -39,7 +39,7 @@
       <div class="card-content"><p>Generate reports on courses, students, and professors.</p>
       <button class="btn btn-primary" routerLink="/admin/reports">Generate Reports</button>
       </div>
-    </div>
+    </div> -->
 
     <!--
     <div class="card">

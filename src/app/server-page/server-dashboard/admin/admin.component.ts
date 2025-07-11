@@ -51,4 +51,16 @@ export class AdminComponent {
 
   }
 
+
+  async deleteLastWeek(){
+    try {
+      await api.delete('http://lamzaone.go.ro:8000/api/server/' + this.server_id + '/weeks/delete', {});
+      this.weeks = this.weeks.slice(0, -1); // Remove the last week from the local array
+    }
+    catch (error) {
+      console.error('Error deleting last week:', error);
+
+    }
+  }
+
 }
