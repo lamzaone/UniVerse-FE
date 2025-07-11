@@ -11,7 +11,7 @@
       </div>
       <div  *ngIf="serverAccessLevel > 0" class="search-dropdown">
         Ungraded users:
-        <select [(ngModel)]="selectedUser" (change)="this.searchQuery = selectedUser; filterMessages()">
+        <select title="selectedUser" (change)="this.searchQuery = selectedUser; filterMessages()">
           <option value="">All Users</option>
           <option *ngFor="let user of usersWithoutGrades" [value]="user.name">{{ user.name }}</option>
         </select>
