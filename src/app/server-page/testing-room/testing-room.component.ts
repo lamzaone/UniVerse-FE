@@ -15,6 +15,7 @@ import { SocketService } from '../../services/socket.service';
 import { ServersService } from '../../services/servers.service';
 import { ElectronService } from '../../services/electron.service';
 import api from '../../services/api.service';
+import { Router, RouterModule } from '@angular/router';
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -33,7 +34,7 @@ interface ActiveWindow {
 @Component({
   selector: 'app-testing-room',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './testing-room.component.html',
   styleUrls: ['./testing-room.component.scss']
 })
@@ -59,6 +60,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   isCameraEnabled = false;
   isMicMuted = false;
 
+  sources: { id: string; name: string; thumbnail: string }[] = [];
   peerConnections = new Map<number, PeerConnection>();
   remoteStreams = new Map<number, { camera?: MediaStream; screen?: MediaStream; audio?: MediaStream }>();
   pendingCandidates = new Map<number, RTCIceCandidate[]>();
@@ -72,7 +74,8 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     private socketService: SocketService,
     private serverService: ServersService,
     private electronService: ElectronService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router:Router
   ) {}
 
   async ngOnInit() {
@@ -81,6 +84,12 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     this.setupSocketListeners();
     this.socketService.joinAudioRoom(this.roomId.toString());
     this.startWindowTracking();
+    // Make it redirect to server dashboard if user that is not admin accesses without electron
+    // if (!this.isAdmin && !this.electronService.isElectron()) {
+    //   // create screen alert
+    //   alert('You have to access this page by using the Desktop Client. Redirecting to dashboard.');
+    //   return;
+    // }
   }
 
   ngOnDestroy() {
@@ -522,40 +531,101 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     this.detectChanges();
   }
 
-  async startScreenShare() {
+  async startScreenShare(sourceId?: string) {
     if (this.isScreenSharing || this.isAdmin) return;
 
     try {
-      this.screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 30 } },
-        audio: false,
-      });
-      this.isScreenSharing = true;
+        let constraints: MediaStreamConstraints;
 
-      this.screenStream.getTracks().forEach(track => {
-        track.contentHint = 'detail';
-        track.onended = () => {
-          console.log(`[Track] Screen track ${track.id} ended`);
-          this.stopScreenShare();
-        };
-      });
+        if (this.electronService.isElectron() && !sourceId) {
+            // In Electron, fetch available sources for selection
+            const selectedSource = await this.electronService.showScreenPicker();
 
-      this.updateLocalStream();
-      this.peerConnections.forEach((peer, userId) => {
-        if (this.users.find(u => u.id === userId)?.isAdmin) {
-          this.addLocalTracksToPeer(peer);
-          if (peer.pc.signalingState === 'stable' && !this.negotiationLock.get(userId)) {
-            this.negotiateConnection(userId);
-          }
+            if (!selectedSource) {
+                console.log('User cancelled screen selection');
+                return;
+            }
+
+            sourceId = selectedSource.id;
+            console.log('Selected source:', selectedSource.name);
         }
-      });
-      this.detectChanges();
-    } catch (error) {
-      console.error('[ScreenShare] Failed:', error);
-      this.isScreenSharing = false;
-      this.screenStream = null;
+
+        if (this.electronService.isElectron() && sourceId) {
+            // Electron-specific constraints for desktop capture
+            constraints = {
+                audio: false,
+                video: {
+                    mandatory: {
+                        chromeMediaSource: 'desktop',
+                        chromeMediaSourceId: sourceId,
+                        minWidth: 1280,
+                        maxWidth: 1920,
+                        minHeight: 720,
+                        maxHeight: 1080,
+                        minFrameRate: 15,
+                        maxFrameRate: 30
+                    }
+                } as any // Cast to any to avoid TypeScript errors
+            };
+        } else {
+            // Standard browser constraints
+            constraints = {
+                video: {
+                    width: { max: 1920 },
+                    height: { max: 1080 },
+                    frameRate: { max: 30 },
+                },
+                audio: false
+            };
+        }
+
+        // Use getUserMedia for Electron, getDisplayMedia for browser
+        this.screenStream = this.electronService.isElectron() && sourceId
+            ? await navigator.mediaDevices.getUserMedia(constraints)
+            : await navigator.mediaDevices.getDisplayMedia(constraints);
+
+        this.isScreenSharing = true;
+
+        this.screenStream.getTracks().forEach(track => {
+            track.contentHint = 'detail';
+            track.onended = () => {
+                console.log(`[Track] Screen track ${track.id} ended`);
+                this.stopScreenShare();
+            };
+        });
+
+        // Display the stream in a video element
+        const videoElement = document.querySelector('video');
+        if (videoElement) {
+            videoElement.srcObject = this.screenStream;
+        }
+        console.log('Screen sharing started:', this.screenStream);
+
+        this.updateLocalStream();
+        this.peerConnections.forEach((peer, userId) => {
+            if (this.users.find(u => u.id === userId)?.isAdmin) {
+                this.addLocalTracksToPeer(peer);
+                if (peer.pc.signalingState === 'stable' && !this.negotiationLock.get(userId)) {
+                    this.negotiateConnection(userId);
+                }
+            }
+        });
+        this.detectChanges();
+    } catch (error: any) {
+        console.error('[ScreenShare] Failed:', error);
+        this.isScreenSharing = false;
+        this.screenStream = null;
+        this.sources = [];
+        if (error instanceof DOMException) {
+            console.error(`DOMException: ${error.name} - ${error.message}`);
+            if (error.name === 'NotAllowedError') {
+                console.error('User denied screen sharing permission');
+            } else if (error.name === 'NotSupportedError') {
+                console.error('Screen sharing not supported. Ensure browser/Electron supports getDisplayMedia.');
+            }
+        }
     }
-  }
+}
 
   async startCamera() {
     if (this.isCameraEnabled || this.isAdmin) return;

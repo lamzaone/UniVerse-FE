@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, desktopCapturer } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
 import api from '../src/app/services/api.service';
+
 let win: BrowserWindow | null = null;
 const args = process.argv.slice(1),
   serve = args.some(val => val === '--serve');
@@ -13,8 +14,8 @@ function createWindow(): BrowserWindow {
   win = new BrowserWindow({
     x: 0,
     y: 0,
-    width: size.width/2,
-    height: size.height/2,
+    width: size.width / 2,
+    height: size.height / 2,
     minHeight: 600,
     minWidth: 800,
     autoHideMenuBar: true,
@@ -22,22 +23,20 @@ function createWindow(): BrowserWindow {
       nodeIntegration: true,
       allowRunningInsecureContent: serve,
       contextIsolation: false,
+      webSecurity: false, // Required for screen sharing in development; use cautiously
     },
   });
 
   if (serve) {
     const debug = require('electron-debug');
     debug();
-
     require('electron-reloader')(module);
     win.loadURL('http://lamzaone.go.ro:4200');
   } else {
     let pathIndex = './index.html';
-
     if (fs.existsSync(path.join(__dirname, '../dist/index.html'))) {
       pathIndex = '../dist/index.html';
     }
-
     const url = new URL(path.join('file:', __dirname, pathIndex));
     win.loadURL(url.href);
   }
@@ -50,8 +49,6 @@ function createWindow(): BrowserWindow {
 }
 
 try {
-  // app.disableHardwareAcceleration();
-
   app.on('ready', () => setTimeout(createWindow, 400));
 
   app.on('window-all-closed', () => {
@@ -68,6 +65,37 @@ try {
 } catch (e) {
   console.error('Error during app initialization:', e);
 }
+
+// Screen sharing handler
+ipcMain.handle('get-screen-sources', async () => {
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ['window', 'screen'],
+      thumbnailSize: { width: 150, height: 150 },
+    });
+    return sources.map(source => ({
+      id: source.id,
+      name: source.name,
+      thumbnail: source.thumbnail.toDataURL(),
+    }));
+  } catch (error) {
+    console.error('Error getting screen sources:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('show-screen-picker', async (event) => {
+  const sources = await desktopCapturer.getSources({
+    types: ['screen', 'window'],
+    thumbnailSize: { width: 800, height: 450 }
+  });
+
+  return sources.map(source => ({
+    id: source.id,
+    name: source.name,
+    thumbnail: source.thumbnail.toDataURL()
+  }));
+});
 
 ipcMain.on('google-oauth-login', async (event) => {
   const authWindow = new BrowserWindow({
@@ -106,7 +134,7 @@ ipcMain.on('google-oauth-login', async (event) => {
 
           win?.webContents.send('google-oauth-success', response.data);
           console.log('Server Response:', response.data);
-        } catch (error:any) {
+        } catch (error: any) {
           win?.webContents.send('google-oauth-error', error.response ? error.response.data : error.message);
         }
 

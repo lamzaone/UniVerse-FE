@@ -13,6 +13,7 @@ import { UsersService } from '../../services/users.service';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import api from '../../services/api.service';
+import { ElectronService } from '../../services/electron.service';
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -45,6 +46,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   isInCall = false;
   isScreenSharing = false;
   isCameraEnabled = false;
+
+  sources: { id: string; name: string; thumbnail: string }[] = [];
   isMicMuted = false;
 
   peerConnections = new Map<number, PeerConnection>();
@@ -58,7 +61,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     private userService: UsersService,
     private authService: AuthService,
     private socketService: SocketService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private electronService: ElectronService
   ) {}
 
   async ngOnInit() {
@@ -447,8 +451,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
   }
 
-  async toggleScreenShare() {
+  async toggleScreenShare(sourceId?: string) {
     if (this.isScreenSharing) {
+      // Stop screen sharing
       this.screenStream?.getTracks().forEach(track => {
         console.log(`[Track] Stopping screen track ${track.id}`);
         track.stop();
@@ -456,14 +461,61 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       });
       this.screenStream = null;
       this.isScreenSharing = false;
+      this.sources = [];
     } else {
       try {
-        this.screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 30 } },
-          audio: false,
-        });
+        if (this.isElectron && !sourceId) {
+          // In Electron, fetch available sources for selection
+          const selectedSource = await this.electronService.showScreenPicker();
+
+          if (!selectedSource) {
+            console.log('User cancelled screen selection');
+            return;
+          }
+
+          sourceId = selectedSource.id;
+          console.log('Selected source:', selectedSource.name);
+        }
+
+        let constraints: MediaStreamConstraints;
+
+        if (this.isElectron && sourceId) {
+          // Electron-specific constraints for desktop capture
+          constraints = {
+            audio: false,
+            video: {
+              mandatory: {
+                chromeMediaSource: 'desktop',
+                chromeMediaSourceId: sourceId,
+                minWidth: 1280,
+                maxWidth: 1920,
+                minHeight: 720,
+                maxHeight: 1080,
+                minFrameRate: 15,
+                maxFrameRate: 30
+              }
+            } as any // Cast to any to avoid TypeScript errors
+          };
+        } else {
+          // Standard browser constraints
+          constraints = {
+            video: {
+              width: { max: 1920 },
+              height: { max: 1080 },
+              frameRate: { max: 30 },
+            },
+            audio: false
+          };
+        }
+
+        // Use getUserMedia for Electron, getDisplayMedia for browser
+        this.screenStream = this.isElectron && sourceId
+          ? await navigator.mediaDevices.getUserMedia(constraints)
+          : await navigator.mediaDevices.getDisplayMedia(constraints);
+
         this.isScreenSharing = true;
 
+        // Configure stream tracks
         this.screenStream.getTracks().forEach(track => {
           track.contentHint = 'detail';
           track.onended = () => {
@@ -471,13 +523,30 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
             this.toggleScreenShare();
           };
         });
-      } catch (error) {
+
+        // Display the stream in a video element
+        const videoElement = document.querySelector('video');
+        if (videoElement) {
+          videoElement.srcObject = this.screenStream;
+        }
+        console.log('Screen sharing started:', this.screenStream);
+      } catch (error: any) {
         console.error('[ScreenShare] Failed:', error);
         this.isScreenSharing = false;
         this.screenStream = null;
+        this.sources = [];
+        if (error instanceof DOMException) {
+          console.error(`DOMException: ${error.name} - ${error.message}`);
+          if (error.name === 'NotAllowedError') {
+            console.error('User denied screen sharing permission');
+          } else if (error.name === 'NotSupportedError') {
+            console.error('Screen sharing not supported. Ensure browser/Electron supports getDisplayMedia.');
+          }
+        }
       }
     }
 
+    // Update WebRTC connections
     this.updateLocalStream();
     this.peerConnections.forEach((peer, userId) => {
       this.addLocalTracksToPeer(peer);
@@ -485,6 +554,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
         this.negotiateConnection(userId);
       }
     });
+
     this.detectChanges();
   }
 
@@ -834,4 +904,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   private detectChanges() {
     this.cdr.detectChanges();
   }
+
+  get isElectron(): boolean {
+      return this.electronService.isElectron();
+    }
 }
