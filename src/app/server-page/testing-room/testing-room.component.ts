@@ -201,12 +201,21 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
     console.log(`[Window] User ${userId} active window: ${windowTitle}`);
     const existing = this.activeWindows.find(w => w.userId === userId);
     if (existing) {
-      existing.windowTitle = windowTitle;
-      existing.timestamp = Date.now();
+      // Only update timestamp if the window title has changed
+      if (existing.windowTitle !== windowTitle) {
+        existing.windowTitle = windowTitle;
+        existing.timestamp = Date.now();
+        console.log(`[Window] Updated timestamp for user ${userId} due to window change`);
+      } else {
+        console.log(`[Window] No change in window title for user ${userId}`);
+      }
     } else {
       this.activeWindows.push({ userId, windowTitle, timestamp: Date.now() });
+      console.log(`[Window] Added new window entry for user ${userId}`);
     }
+    console.log('[Window] Active windows:', this.activeWindows);
     this.sortUsersByActivity();
+    console.log('[Window] Sorted users:', this.users.map(u => ({ id: u.id, name: u.name })));
     this.detectChanges();
   }
 
@@ -966,11 +975,14 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
       const aSharing = this.remoteStreams.get(a.id)?.screen ? 1 : 0;
       const bSharing = this.remoteStreams.get(b.id)?.screen ? 1 : 0;
 
-      if (aSharing > bSharing) return -1;
-      if (aSharing < bSharing) return 1;
-      if (!aWindow) return 1;
-      if (!bWindow) return -1;
-      return bWindow.timestamp - aWindow.timestamp;
+      // Prioritize users with recent window updates
+      if (!aWindow && !bWindow) return aSharing - bSharing; // If no window updates, sort by screen sharing
+      if (!aWindow) return 1; // Users without window updates go to the end
+      if (!bWindow) return -1; // Users with window updates come first
+      if (aWindow.timestamp !== bWindow.timestamp) {
+        return bWindow.timestamp - aWindow.timestamp; // Sort by most recent window update
+      }
+      return aSharing - bSharing; // If timestamps are equal, sort by screen sharing
     });
   }
 

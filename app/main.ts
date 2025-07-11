@@ -97,6 +97,23 @@ ipcMain.handle('show-screen-picker', async (event) => {
   }));
 });
 
+ipcMain.on('get-active-window', async (event) => {
+  try {
+    // Use desktopCapturer to get window information
+    const sources = await desktopCapturer.getSources({ types: ['window'] });
+    // Find the focused window (active window)
+    const activeWindow = sources.find(source => source.name !== '' && source.name !== 'Electron');
+    if (activeWindow) {
+      event.reply('get-active-window-response', { title: activeWindow.name });
+    } else {
+      event.reply('get-active-window-response', null);
+    }
+  } catch (error) {
+    console.error('Error getting active window:', error);
+    event.reply('get-active-window-response', null);
+  }
+});
+
 ipcMain.on('google-oauth-login', async (event) => {
   const authWindow = new BrowserWindow({
     width: 500,
