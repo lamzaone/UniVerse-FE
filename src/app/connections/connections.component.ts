@@ -273,12 +273,15 @@ export class ConnectionsComponent {
     if (!serverId) return;
 
     try {
-      await api.patch(`/server/${serverId}/user/${this.clickedUser.id}/access_level`, {access_level:1});
+      await api.patch(`/server/${serverId}/user/${this.clickedUser.id}/access_level`, { access_level: 1 });
       this.userList.update(list =>
-        list.map(user =>
-          user.id === this.clickedUser!.id ? { ...user, access_level: 1 } : user
-        )
+      list.map(user =>
+        user.id === this.clickedUser!.id ? { ...user, access_level: 1 } : user
+      )
       );
+      // Remove user from online and offline lists
+      this.onlineUsers.update(list => list.filter(user => user.id !== this.clickedUser!.id));
+      this.offlineUsers.update(list => list.filter(user => user.id !== this.clickedUser!.id));
       this.categorizeUsers();
       this.showContextMenu = false;
     } catch (error) {
@@ -293,13 +296,22 @@ export class ConnectionsComponent {
     if (!serverId) return;
 
     try {
-      await api.patch(`/server/${serverId}/user/${this.clickedUser.id}/access_level`,{ access_level: 2 });
+      await api.patch(`/server/${serverId}/user/${this.clickedUser.id}/access_level`, { access_level: 2 });
       this.userList.update(list =>
-        list.map(user =>
-          user.id === this.clickedUser!.id ? { ...user, access_level: 2 } : user
-        )
+      list.map(user =>
+        user.id === this.clickedUser!.id ? { ...user, access_level: 2 } : user
+      )
       );
-      this.categorizeUsers();
+      // Update assistants and professors lists explicitly
+      this.assistants.update(list => list.filter(user => user.id !== this.clickedUser!.id));
+      this.professors.update(list => {
+      const alreadyInProfessors = list.some(user => user.id === this.clickedUser!.id);
+      if (!alreadyInProfessors) {
+        const promotedUser = this.userList().find(user => user.id === this.clickedUser!.id);
+        return promotedUser ? [...list, promotedUser] : list;
+      }
+      return list;
+      });
       this.showContextMenu = false;
     } catch (error) {
       console.error(`Error promoting user ${this.clickedUser.id} to level 2:`, error);
@@ -315,14 +327,27 @@ export class ConnectionsComponent {
     const newAccessLevel = Math.max(0, this.clickedUser.access_level - 1);
     try {
       await api.patch(
-        `/server/${serverId}/user/${this.clickedUser.id}/access_level`,
-        { access_level: newAccessLevel }
+      `/server/${serverId}/user/${this.clickedUser.id}/access_level`,
+      { access_level: newAccessLevel }
       );
       this.userList.update(list =>
-        list.map(user =>
-          user.id === this.clickedUser!.id ? { ...user, access_level: newAccessLevel } : user
-        )
+      list.map(user =>
+        user.id === this.clickedUser!.id ? { ...user, access_level: newAccessLevel } : user
+      )
       );
+      // If demoted to access_level 0, add to online/offline lists
+      if (newAccessLevel === 0) {
+      const updatedUser = this.userList().find(user => user.id === this.clickedUser!.id);
+      if (updatedUser) {
+        if (updatedUser.isOnline) {
+        this.onlineUsers.update(list => [...list, updatedUser]);
+        this.offlineUsers.update(list => list.filter(user => user.id !== updatedUser.id));
+        } else {
+        this.offlineUsers.update(list => [...list, updatedUser]);
+        this.onlineUsers.update(list => list.filter(user => user.id !== updatedUser.id));
+        }
+      }
+      }
       this.categorizeUsers();
       this.showContextMenu = false;
     } catch (error) {

@@ -1,6 +1,6 @@
 <div class="container" (contextmenu)="onRightClick($event)">
     <div class="search">
-      <div  *ngIf="serverAccessLevel > 0" class="search-bar">
+      <div class="search-bar" *ngIf="this.serverAccessLevel > 0">
         <input
           type="text"
           placeholder="Filter by user name"
@@ -9,9 +9,9 @@
         />
 
       </div>
-      <div  *ngIf="serverAccessLevel > 0" class="search-dropdown">
+      <div class="search-dropdown" *ngIf="this.serverAccessLevel > 0">
         Ungraded users:
-        <select title="selectedUser" (change)="this.searchQuery = selectedUser; filterMessages()">
+        <select [(ngModel)]="selectedUser" (change)="this.searchQuery = selectedUser; filterMessages()">
           <option value="">All Users</option>
           <option *ngFor="let user of usersWithoutGrades" [value]="user.name">{{ user.name }}</option>
         </select>
@@ -111,7 +111,7 @@
       @if (serverAccessLevel > 0) {
         @if (isMessage) {
           <li (click)="showGrading = !showGrading"> Grade</li>
-          <li (click)="deleteMessage()">Delete</li>
+          <li>Delete</li>
         }
       }
       @if (isMessage) {
@@ -119,7 +119,7 @@
       }
       @if (isMessage && this.clickedMessage.user_id === this.currentUser().id) {
         <li (click)="editMessage(clickedMessageId)">Edit</li>
-        <li (click)="deleteMessage()" *ngIf="serverAccessLevel == 0">Delete</li>
+        <li *ngIf="serverAccessLevel == 0">Delete</li>
       }
 
     </ul>
