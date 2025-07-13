@@ -84,6 +84,11 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
+    if (!this.electronService.isElectron() && !this.isAdmin) {
+      alert('You must be an admin to access the testing room in the web version.');
+      this.router.navigate(['/server', this.serverService.currentServer().id, 'dashboard']);
+    }
+
     console.log('[Init] Starting testing room');
     await this.fetchUsers();
     this.setupSocketListeners();
