@@ -15,7 +15,7 @@ import { SocketService } from '../../services/socket.service';
 import { ServersService } from '../../services/servers.service';
 import { ElectronService } from '../../services/electron.service';
 import api from '../../services/api.service';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -34,7 +34,7 @@ interface ActiveWindow {
 @Component({
   selector: 'app-testing-room',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule],
   templateUrl: './testing-room.component.html',
   styleUrls: ['./testing-room.component.scss']
 })
@@ -79,17 +79,19 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
+    if (!this.isAdmin && !this.electronService.isElectron()) {
+      // create screen alert
+      alert('You have to access this page by using the Desktop Client. Redirecting to dashboard.');
+      this.router.navigate(['/server/'+this.serverService.currentServer().id+'/dashboard']);
+      return;
+    }
     console.log('[Init] Starting testing room');
     await this.fetchUsers();
     this.setupSocketListeners();
     this.socketService.joinAudioRoom(this.roomId.toString());
     this.startWindowTracking();
     // Make it redirect to server dashboard if user that is not admin accesses without electron
-    // if (!this.isAdmin && !this.electronService.isElectron()) {
-    //   // create screen alert
-    //   alert('You have to access this page by using the Desktop Client. Redirecting to dashboard.');
-    //   return;
-    // }
+
   }
 
   ngOnDestroy() {
@@ -150,7 +152,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   }
 
   private async handleUserJoined(userId: number) {
-    if (userId === parseInt(this.userId) || this.testUserIds.has(userId)) return;
+    // if (userId === parseInt(this.userId) || this.testUserIds.has(userId)) return;
 
     console.log(`[User] User ${userId} joined`);
     this.testUserIds.add(userId);
