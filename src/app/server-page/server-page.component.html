@@ -8,6 +8,7 @@
     <aside class="server-info" #serverinfo>
       <div class="banner" routerLink="/server/{{server().id}}/dashboard">
         <h1>{{server().name}}</h1>
+        <p class="description">{{server().description}}</p>
         <p class="invite-code"><b>invite: {{server().invite_code}}</b></p>
 
       </div>
