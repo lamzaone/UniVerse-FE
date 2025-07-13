@@ -21,6 +21,9 @@ interface PeerConnection {
   isPolite: boolean;
   tracks: Map<string, { track: MediaStreamTrack; type: 'audio' | 'camera' | 'screen' }>;
   connectionTimeout?: any;
+  connectionAttemptCount: number;
+  lastConnectionAttempt?: number;
+  pendingTrackMetadata: { trackId: string; streamType: 'camera' | 'screen' }[];
 }
 
 @Component({
@@ -56,6 +59,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
   private negotiationLock = new Map<number, boolean>();
   private readonly ICE_CONNECTION_TIMEOUT = 3000;
+  private readonly MAX_CONNECTION_ATTEMPTS = 3;
+  private readonly RECONNECT_BACKOFF_MS = 2000;
 
   constructor(
     private userService: UsersService,
@@ -115,7 +120,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   private async handleUserJoined(userId: number) {
-    // if (userId === parseInt(this.userId) || this.voiceUserIds.has(userId)) return;
+    if (userId === parseInt(this.userId) || this.voiceUserIds.has(userId)) return;
 
     console.log(`[User] User ${userId} joined`);
     this.voiceUserIds.add(userId);
@@ -130,7 +135,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
 
     if (this.isInCall) {
-      this.createPeerConnection(userId);
+      this.initiatePeerConnection(userId);
+      // Send current track metadata to the new user
+      this.sendTrackMetadataToUser(userId);
     }
   }
 
@@ -142,11 +149,37 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     this.detectChanges();
   }
 
-  private createPeerConnection(userId: number) {
-    if (this.peerConnections.has(userId)) {
-      this.closePeerConnection(userId);
+  private shouldAttemptReconnect(userId: number): boolean {
+    const peer = this.peerConnections.get(userId);
+    if (!peer) return true;
+
+    const now = Date.now();
+    const attemptCount = peer.connectionAttemptCount || 0;
+    const lastAttempt = peer.lastConnectionAttempt || 0;
+
+    if (peer.pc.connectionState === 'connected') {
+      return false;
     }
 
+    if (attemptCount >= this.MAX_CONNECTION_ATTEMPTS ||
+        (lastAttempt && (now - lastAttempt < this.RECONNECT_BACKOFF_MS))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private initiatePeerConnection(userId: number) {
+    if (!this.shouldAttemptReconnect(userId)) {
+      console.log(`[Connection] Skipping connection attempt for user ${userId}`);
+      return;
+    }
+
+    this.closePeerConnection(userId);
+    this.createPeerConnection(userId);
+  }
+
+  private createPeerConnection(userId: number) {
     const user = this.users.find(u => u.id === userId);
     const displayName = user?.name || `User ${userId}`;
     const isPolite = parseInt(this.userId) < userId;
@@ -176,7 +209,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           username: "0e20581fb4b8fc2be07831e3",
           credential: "1KJmXjnD4HKrE2uk",
         },
-    ],
+      ],
     });
 
     const peer: PeerConnection = {
@@ -184,6 +217,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       displayName,
       isPolite,
       tracks: new Map(),
+      connectionAttemptCount: (this.peerConnections.get(userId)?.connectionAttemptCount || 0) + 1,
+      lastConnectionAttempt: Date.now(),
+      pendingTrackMetadata: []
     };
 
     this.peerConnections.set(userId, peer);
@@ -211,14 +247,29 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       } else if (track.kind === 'video') {
         this.handleVideoTrack(userId, peer, track, streams[0]);
       }
+      // Process any pending track metadata
+      const pendingMetadata = peer.pendingTrackMetadata.find(m => m.trackId === track.id);
+      if (pendingMetadata) {
+        this.handleTrackMetadata(userId, pendingMetadata);
+        peer.pendingTrackMetadata = peer.pendingTrackMetadata.filter(m => m.trackId !== track.id);
+      }
     };
 
     pc.onconnectionstatechange = () => {
       console.log(`[Connection] State for ${userId}: ${pc.connectionState}`);
       if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-        this.closePeerConnection(userId);
+        if (this.shouldAttemptReconnect(userId)) {
+          setTimeout(() => {
+            if (this.voiceUserIds.has(userId) && this.isInCall) {
+              console.log(`[Connection] Attempting reconnect for user ${userId}`);
+              this.initiatePeerConnection(userId);
+            }
+          }, this.RECONNECT_BACKOFF_MS);
+        }
       } else if (pc.connectionState === 'connected') {
         clearTimeout(peer.connectionTimeout);
+        peer.connectionAttemptCount = 0;
+        this.peerConnections.set(userId, peer);
       }
     };
 
@@ -226,6 +277,14 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       if (pc.connectionState !== 'connected') {
         console.warn(`[Connection] Timeout for user ${userId}`);
         this.closePeerConnection(userId);
+        if (this.shouldAttemptReconnect(userId)) {
+          setTimeout(() => {
+            if (this.voiceUserIds.has(userId) && this.isInCall) {
+              console.log(`[Connection] Attempting reconnect after timeout for user ${userId}`);
+              this.initiatePeerConnection(userId);
+            }
+          }, this.RECONNECT_BACKOFF_MS);
+        }
       }
     }, this.ICE_CONNECTION_TIMEOUT);
 
@@ -272,6 +331,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Default to camera if no metadata yet, will be updated by handleTrackMetadata
     const trackType = peer.tracks.get(track.id)?.type || 'camera';
     const streams = this.remoteStreams.get(userId) || {};
     let targetStream = streams[trackType];
@@ -319,7 +379,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Add active tracks
+    // Add active tracks and send metadata
     tracks.forEach(({ track, type }) => {
       if (!peer.pc.getSenders().some(s => s.track === track)) {
         console.log(`[Track] Adding ${type} track ${track.id} to peer ${peer.displayName}`);
@@ -337,6 +397,36 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           'audioRoom'
         );
       }
+    });
+  }
+
+  private sendTrackMetadataToUser(userId: number) {
+    const peer = this.peerConnections.get(userId);
+    if (!peer) return;
+
+    const tracks: { track: MediaStreamTrack; type: 'audio' | 'camera' | 'screen' }[] = [];
+    if (this.localStream) {
+      this.localStream.getAudioTracks().forEach(track => tracks.push({ track, type: 'audio' }));
+    }
+    if (this.cameraStream) {
+      this.cameraStream.getVideoTracks().forEach(track => tracks.push({ track, type: 'camera' }));
+    }
+    if (this.screenStream) {
+      this.screenStream.getVideoTracks().forEach(track => tracks.push({ track, type: 'screen' }));
+    }
+
+    tracks.forEach(({ track, type }) => {
+      this.socketService.sendMessage(
+        JSON.stringify({
+          type: 'track-metadata',
+          sender: this.userId,
+          receiver: userId,
+          trackId: track.id,
+          streamType: type,
+        }),
+        false,
+        'audioRoom'
+      );
     });
   }
 
@@ -440,7 +530,8 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
       this.users.forEach(user => {
         if (user.id !== parseInt(this.userId) && this.voiceUserIds.has(user.id)) {
-          this.createPeerConnection(user.id);
+          this.initiatePeerConnection(user.id);
+          this.sendTrackMetadataToUser(user.id);
         }
       });
 
@@ -453,7 +544,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
   async toggleScreenShare(sourceId?: string) {
     if (this.isScreenSharing) {
-      // Stop screen sharing
       this.screenStream?.getTracks().forEach(track => {
         console.log(`[Track] Stopping screen track ${track.id}`);
         track.stop();
@@ -465,22 +555,17 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     } else {
       try {
         if (this.isElectron && !sourceId) {
-          // In Electron, fetch available sources for selection
           const selectedSource = await this.electronService.showScreenPicker();
-
           if (!selectedSource) {
             console.log('User cancelled screen selection');
             return;
           }
-
           sourceId = selectedSource.id;
           console.log('Selected source:', selectedSource.name);
         }
 
         let constraints: MediaStreamConstraints;
-
         if (this.isElectron && sourceId) {
-          // Electron-specific constraints for desktop capture
           constraints = {
             audio: false,
             video: {
@@ -494,10 +579,9 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
                 minFrameRate: 15,
                 maxFrameRate: 30
               }
-            } as any // Cast to any to avoid TypeScript errors
+            } as any
           };
         } else {
-          // Standard browser constraints
           constraints = {
             video: {
               width: { max: 1920 },
@@ -508,14 +592,11 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           };
         }
 
-        // Use getUserMedia for Electron, getDisplayMedia for browser
         this.screenStream = this.isElectron && sourceId
           ? await navigator.mediaDevices.getUserMedia(constraints)
           : await navigator.mediaDevices.getDisplayMedia(constraints);
 
         this.isScreenSharing = true;
-
-        // Configure stream tracks
         this.screenStream.getTracks().forEach(track => {
           track.contentHint = 'detail';
           track.onended = () => {
@@ -524,11 +605,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           };
         });
 
-        // Display the stream in a video element
-        const videoElement = document.querySelector('video');
-        if (videoElement) {
-          videoElement.srcObject = this.screenStream;
-        }
         console.log('Screen sharing started:', this.screenStream);
       } catch (error: any) {
         console.error('[ScreenShare] Failed:', error);
@@ -546,7 +622,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Update WebRTC connections
     this.updateLocalStream();
     this.peerConnections.forEach((peer, userId) => {
       this.addLocalTracksToPeer(peer);
@@ -573,7 +648,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
           video: { width: { max: 320 }, height: { max: 240 }, frameRate: { max: 30 } },
         });
         this.isCameraEnabled = true;
-
         this.cameraStream.getTracks().forEach(track => {
           track.contentHint = 'motion';
         });
@@ -685,7 +759,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   private async handleOffer(userId: number, data: any) {
     let peer = this.peerConnections.get(userId);
     if (!peer) {
-      this.createPeerConnection(userId);
+      this.initiatePeerConnection(userId);
       peer = this.peerConnections.get(userId)!;
     }
 
@@ -749,11 +823,22 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
 
   private handleTrackMetadata(userId: number, data: { trackId: string; streamType: 'camera' | 'screen' }) {
     const peer = this.peerConnections.get(userId);
-    if (!peer || !data.trackId || !['camera', 'screen'].includes(data.streamType)) return;
+    if (!peer || !data.trackId || !['camera', 'screen'].includes(data.streamType)) {
+      console.warn(`[TrackMetadata] Invalid metadata for user ${userId}:`, data);
+      return;
+    }
 
     console.log(`[TrackMetadata] User ${userId}: track ${data.trackId} is ${data.streamType}`);
     const trackInfo = peer.tracks.get(data.trackId);
-    if (!trackInfo || trackInfo.type === data.streamType) return;
+
+    if (!trackInfo) {
+      // Store pending metadata if track hasn't arrived yet
+      peer.pendingTrackMetadata.push({ trackId: data.trackId, streamType: data.streamType });
+      this.peerConnections.set(userId, peer);
+      return;
+    }
+
+    if (trackInfo.type === data.streamType) return;
 
     const oldType = trackInfo.type;
     trackInfo.type = data.streamType;
@@ -807,6 +892,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
     }
 
     peer.tracks.delete(data.trackId);
+    peer.pendingTrackMetadata = peer.pendingTrackMetadata.filter(m => m.trackId !== data.trackId);
     this.updateVideoElements(userId);
   }
 
@@ -906,6 +992,6 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   get isElectron(): boolean {
-      return this.electronService.isElectron();
-    }
+    return this.electronService.isElectron();
+  }
 }
