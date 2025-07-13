@@ -101,16 +101,21 @@ export class AssignmentsComponent implements OnInit {
   }
 
   editorOptions = {
-    autofocus: true, // Auto-focus the editor
-    showPreviewPanel: false, // Show the preview panel
-    showToolbar: true, // Show the toolbar with buttons like bold, italic, etc.
-    toolbarPosition: 'top', // Position of the toolbar (top/bottom)
-    showSaveButton: false, // Option to hide the save button
-    height: '300px', // Set editor height
-    theme: 'dark', // Theme can be light or dark depending on the library
-    showPreviewButton: false, // Show the preview button
-    syntaxHighlighting: true, // Enable syntax highlighting in code blocks
-    enableAdvancedFeatures: true // Enable or disable advanced features like tables, strikethrough, etc.
+    previewRender: () => "", // disables preview render
+    showPreviewPanel: false, // optional, may not have effect
+    showToolbar: true,
+    toolbar: [
+      'bold',
+      'italic',
+      'underline',
+      'strikethrough',
+      'link',
+      'code',
+      'quote',
+      'unordered-list',
+      'ordered-list',
+    ],
+    hideIcons: ['TogglePreview', 'FullScreen', 'Image'],
   };
 
 
