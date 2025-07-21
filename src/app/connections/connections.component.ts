@@ -76,23 +76,31 @@ export class ConnectionsComponent {
           console.log('Fetched onlineUserIds:', onlineUserIds);
 
           // Fetch user info and access levels
-          const users = await Promise.all(
-            userIds.map(async (userId: any) => {
-              const userInfo = await this.userService.getUserInfo(userId);
-              console.log('Fetched userInfo for userId:', userId, userInfo);
+            // Fetch all access levels in one request
+            const token = this.authService.getUser().token || localStorage.getItem('token');
+            const accessLevelsResponse = await api.post('/server/accesses', {
+            token,
+            server_id: serverId
+            });
+            const accessLevels: { user_id: number; access_level: number }[] = accessLevelsResponse?.data || [];
+
+            // Use the optimized getUsersInfoByIds method from userService
+            const usersInfo = await this.userService.getUsersInfoByIds(userIds);
+
+            const users = usersInfo.map(userInfo => {
               if (userInfo.name.split(' ').length >= 3) {
-                userInfo.name = this.simplyfyName(userInfo.name);
+              userInfo.name = this.simplyfyName(userInfo.name);
               }
-              const accessLevel = await this.getUserAccessLevel(serverId, Number(userId));
+              const accessLevelObj = accessLevels.find(a => a.user_id === Number(userInfo.id));
+              const accessLevel = accessLevelObj ? accessLevelObj.access_level : 0;
               return {
-                id: Number(userInfo.id),
-                name: userInfo.name,
-                picture: userInfo.picture || 'default-avatar.png',
-                isOnline: onlineUserIds.includes(userId),
-                access_level: accessLevel
+              id: Number(userInfo.id),
+              name: userInfo.name,
+              picture: userInfo.picture || 'default-avatar.png',
+              isOnline: onlineUserIds.includes(String(userInfo.id)),
+              access_level: accessLevel
               };
-            })
-          );
+            });
 
           // Exclude currentUser from userList
           const filteredUsers = users.filter(user => user.id !== this.currentUserId);

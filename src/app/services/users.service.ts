@@ -60,6 +60,39 @@ export class UsersService {
     }
   }
 
+    async getUsersInfoByIds(userIds: string[]): Promise<UserInfo[]> {
+      // Check cache for each userId and collect missing ones
+      const cachedUsers: UserInfo[] = [];
+      const missingUserIds: string[] = [];
+
+      for (const userId of userIds) {
+        const cachedUser = this.getUserFromCache(userId);
+        if (cachedUser) {
+          cachedUsers.push(cachedUser);
+        } else {
+          missingUserIds.push(userId);
+        }
+      }
+
+      // If all users are cached, return them
+      if (missingUserIds.length === 0) {
+        return Promise.resolve(cachedUsers);
+      }
+
+      // Fetch missing users from API
+      try {
+        const response = await api.post('http://lamzaone.go.ro:8000/api/users/info', { userIds: missingUserIds });
+        const fetchedUsers: UserInfo[] = response.data;
+        for (const userInfo of fetchedUsers) {
+          this.userCache[userInfo.id] = userInfo;
+        }
+        return [...cachedUsers, ...fetchedUsers];
+      } catch (error) {
+        console.error('Failed to fetch users info', error);
+        throw error;
+      }
+    }
+
 
   // Method to clear a user from the cache (useful if user info is outdated)
   clearUserCache(userId: string): void {

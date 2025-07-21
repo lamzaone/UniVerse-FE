@@ -154,7 +154,7 @@ export class TestingRoomComponent implements OnInit, OnDestroy {
   }
 
   private async handleUserJoined(userId: number) {
-    if (userId === parseInt(this.userId) || this.testUserIds.has(userId)) return;
+    // if (userId === parseInt(this.userId) || this.testUserIds.has(userId)) return;
 
     console.log(`[User] User ${userId} joined`);
     this.testUserIds.add(userId);

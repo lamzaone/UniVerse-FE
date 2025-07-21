@@ -120,7 +120,7 @@ export class AudioVideoRoomComponent implements OnInit, OnDestroy {
   }
 
   private async handleUserJoined(userId: number) {
-    if (userId === parseInt(this.userId) || this.voiceUserIds.has(userId)) return;
+    // if (userId === parseInt(this.userId) || this.voiceUserIds.has(userId)) return;
 
     console.log(`[User] User ${userId} joined`);
     this.voiceUserIds.add(userId);
